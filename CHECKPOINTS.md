@@ -6,11 +6,11 @@
 
 ## C1 — El arnés está completo
 
-- [ ] Existen los 4 archivos base: `AGENTS.md`, `init.sh`, `feature_list.json`,
+- [ ] Existen los 4 archivos base: `AGENTS.md`, `init.ps1`, `feature_list.json`,
       `progress/current.md`.
 - [ ] Existen los 3 docs: `docs/architecture.md`, `docs/conventions.md`,
       `docs/verification.md`.
-- [ ] `./init.sh` termina con exit code 0.
+- [ ] `.\init.ps1` termina con exit code 0.
 
 ## C2 — El estado es coherente
 
@@ -21,27 +21,30 @@
 
 ## C3 — El código respeta la arquitectura
 
-- [ ] `src/` solo contiene los módulos previstos en `docs/architecture.md`.
-- [ ] No hay dependencias externas en `requirements.txt` (debe estar vacío
-      o no existir).
-- [ ] No hay `print()` sueltos para debug, ni TODOs sin contexto.
+- [ ] La estructura de carpetas sigue lo definido en `docs/architecture.md`.
+- [ ] `src/shared/domain/` no importa nada de `@prisma/client`, `electron`,
+      ni ninguna dependencia de infraestructura.
+- [ ] `src/shared/application/` solo importa de `src/shared/domain/`.
+- [ ] Los use cases reciben dependencias por constructor (inyección), no
+      importan implementaciones concretas.
+- [ ] No hay `console.log` sueltos para debug, ni TODOs sin contexto.
+- [ ] No hay `any` sin un comentario justificando el boundary.
 
 ## C4 — La verificación es real
 
-- [ ] `tests/` tiene al menos un test por módulo de `src/`.
-- [ ] Los tests usan `tempfile.TemporaryDirectory()`, no mocks de fs.
-- [ ] `python3 -m unittest discover -s tests -v` muestra > 0 tests
-      y todos verdes.
+- [ ] `tests/` tiene tests por capa: `domain/`, `application/`, `infrastructure/`.
+- [ ] Los tests de infrastructure usan SQLite real temporal, no mocks de DB.
+- [ ] `pnpm test` muestra > 0 tests y todos verdes.
+- [ ] `pnpm build` compila sin errores de TypeScript.
 
 ## C5 — La sesión se cerró bien
 
-- [ ] No hay archivos sin trackear sospechosos (`*.tmp`, `__pycache__`
-      fuera del `.gitignore`).
+- [ ] No hay archivos sin trackear sospechosos (`*.tmp`, `node_modules` fuera
+      del `.gitignore`).
 - [ ] `progress/history.md` tiene una entrada por la última sesión.
 - [ ] La última feature trabajada está reflejada en su estado correcto.
 
 ---
 
-**Cómo usar este archivo:** un agente revisor (`.claude/agents/reviewer.md`)
-recorre cada checkbox, marca `[x]` o `[ ]`, y rechaza el cierre de sesión
-si quedan boxes vacíos en C1-C5.
+**Cómo usar este archivo:** un agente revisor recorre cada checkbox, marca
+`[x]` o `[ ]`, y rechaza el cierre de sesión si quedan boxes vacíos en C1-C5.

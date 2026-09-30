@@ -7,56 +7,70 @@
 
 ### Nivel 1 — Tests unitarios (obligatorio)
 
-Toda función pública en `src/` tiene al menos un test en `tests/` que:
+Toda función pública en `src/shared/` tiene al menos un test que:
 
 1. Cubre el camino feliz.
 2. Cubre al menos un camino de error si la función puede fallar.
 
 Comando:
 ```bash
-python3 -m unittest discover -s tests -v
+pnpm test
 ```
 
-### Nivel 2 — Test de integración del CLI (obligatorio para features de UI)
+### Nivel 2 — Tests de integración (obligatorio para features de infraestructura)
 
-Las features que añaden comandos al CLI se verifican ejecutando el CLI real
-contra un archivo temporal:
+Las features que tocan persistencia (Prisma), APIs externas (Google Books),
+o IPC se verifican con tests de integración contra una base de datos SQLite
+temporal (`:memory:` o archivo en `os.tmpdir()`):
 
-```python
-import subprocess, tempfile, os
-with tempfile.TemporaryDirectory() as d:
-    env = {**os.environ, "NOTES_FILE": os.path.join(d, "notes.json")}
-    out = subprocess.check_output(
-        ["python3", "-m", "src.cli", "add", "hola", "--body", "mundo"],
-        env=env, text=True,
-    )
-    assert "id=" in out
+```typescript
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient({
+  datasources: { db: { url: "file::memory:" } },
+});
+
+// ... test con datos reales
 ```
 
-### Nivel 3 — Smoke test manual (opcional pero recomendado)
+### Nivel 3 — Test visual / smoke test (obligatorio para features de UI)
 
-Antes de cerrar la sesión, ejecuta un flujo end-to-end con un archivo
-temporal en `/tmp`:
+Las features que agregan vistas o componentes se verifican ejecutando la app:
 
 ```bash
-NOTES_FILE=/tmp/notes_demo.json python3 -m src.cli add "test" --body "x"
-NOTES_FILE=/tmp/notes_demo.json python3 -m src.cli list
-rm /tmp/notes_demo.json
+pnpm dev
+```
+
+Y comprobando visualmente que:
+- El componente se renderiza sin errores en consola.
+- La interacción funciona (clicks, forms, navegación).
+- El layout responde a diferentes tamaños de ventana.
+
+### Nivel 4 — Build de producción (al cerrar sesión)
+
+Antes de cerrar, verificar que la app compila sin errores:
+
+```bash
+pnpm build
 ```
 
 ## Anti-patrones (no hacer)
 
-- ❌ "He añadido el comando, debería funcionar." → falta test ejecutable.
-- ❌ Test que solo verifica que la función no lanza excepción. → tiene que
+- ❌ "He añadido el componente, debería funcionar." → falta test ejecutable.
+- ❌ Test que solo verifica que la función no lanza excepción → tiene que
   comprobar el resultado concreto.
-- ❌ `mock` del filesystem. → usa `tempfile.TemporaryDirectory()` real.
-- ❌ Marcar la feature como `done` sin pasar `./init.sh`.
+- ❌ Mockear Prisma en tests de infrastructure → usar base de datos real temporal.
+- ❌ Marcar la feature como `done` sin pasar `pnpm test`.
+- ❌ Importar implementaciones concretas en tests de application → usar mocks
+  que implementen los ports.
 
 ## Verificación final antes de cerrar
 
 ```bash
-./init.sh           # debe terminar con [OK] Entorno listo
+pnpm test          # Todos los tests pasan
+pnpm build         # Build sin errores de TypeScript
+.\init.ps1         # Validación del harness
 ```
 
-Si `./init.sh` está rojo, **no** marques nada como `done`. Anota el bloqueo
+Si alguno está rojo, **no** marques nada como `done`. Anotá el bloqueo
 en `progress/current.md` con estado `blocked` en `feature_list.json`.

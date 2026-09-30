@@ -1,6 +1,15 @@
 {
-  "project": "notes-cli",
-  "description": "CLI minimalista de notas en Python. Sirve como ejemplo didáctico de Harness Engineering.",
+  "project": "booklog",
+  "description": "Aplicación de escritorio (Electron) para registro y seguimiento de lecturas personales. Clean Architecture con TypeScript, React, Prisma + SQLite.",
+  "stack": {
+    "runtime": "Electron + electron-vite",
+    "language": "TypeScript (strict)",
+    "frontend": "React 18+, Tailwind CSS v4, Lucide Icons",
+    "database": "SQLite vía Prisma ORM",
+    "external_api": "Google Books API (API Key configurable)",
+    "testing": "Vitest",
+    "package_manager": "pnpm"
+  },
   "rules": {
     "one_feature_at_a_time": true,
     "require_tests_to_close": true,
@@ -9,94 +18,226 @@
   "features": [
     {
       "id": 1,
-      "name": "storage_layer",
-      "title": "Capa de almacenamiento JSON",
-      "description": "Lectura/escritura atómica de notas en un archivo JSON. Crea el archivo si no existe.",
+      "name": "project_scaffolding",
+      "title": "Scaffolding del proyecto Electron + Vite + React",
+      "description": "Inicialización del proyecto con electron-vite, estructura de carpetas Clean Architecture, configuración de TypeScript strict, Tailwind CSS v4, pnpm y Vitest.",
       "acceptance": [
-        "Existe src/storage.py con funciones load() y save(notes)",
-        "save() es atómico (escritura a archivo temporal + rename)",
-        "load() devuelve [] si el archivo no existe",
-        "tests/test_storage.py cubre los 3 casos anteriores"
+        "El proyecto se inicia con `pnpm dev` y abre una ventana Electron con un 'Hello World' de React",
+        "TypeScript strict está habilitado en tsconfig.json (strict: true, noUncheckedIndexedAccess: true)",
+        "Tailwind CSS v4 funciona en el renderer (un elemento con clase utilitaria se renderiza correctamente)",
+        "La estructura de carpetas sigue Clean Architecture: src/main/, src/renderer/, src/preload/, src/shared/domain/, src/shared/application/, src/shared/infrastructure/",
+        "Vitest está configurado y un test placeholder pasa con `pnpm test`",
+        "Lucide Icons está instalado y un ícono de ejemplo se renderiza"
       ],
       "status": "done"
     },
     {
       "id": 2,
-      "name": "note_model",
-      "title": "Modelo de Nota",
-      "description": "Estructura inmutable que representa una nota con id, title, body, created_at.",
+      "name": "database_schema",
+      "title": "Schema de base de datos con Prisma + SQLite",
+      "description": "Definición del schema de Prisma con los modelos Book y ReadingSession. Configuración de Prisma para SQLite con la ruta dinámica al userData de Electron.",
       "acceptance": [
-        "Existe src/notes.py con la clase/dataclass Note",
-        "Note.new(title, body) genera id incremental y created_at en ISO 8601",
-        "tests/test_notes.py valida creación y serialización"
+        "Existe prisma/schema.prisma con provider sqlite",
+        "Modelo Book con campos: id (autoincrement), googleBooksId (opcional, unique), title, authors (string serializado), coverUrl (opcional), pageCount (opcional), isbn (opcional), status (enum: TO_READ, READING, FINISHED, ABANDONED), rating (opcional, 1-5), notes (opcional), createdAt, updatedAt",
+        "Modelo ReadingSession con campos: id, bookId (FK a Book), startPage, endPage (opcional), minutesRead (opcional), date, createdAt",
+        "`pnpm prisma generate` ejecuta sin errores",
+        "`pnpm prisma migrate dev` crea la base SQLite y aplica la migración inicial",
+        "tests/infrastructure/test_prisma_connection.test.ts verifica que se puede conectar, crear y leer un Book"
       ],
-      "status": "done"
+      "status": "pending"
     },
     {
       "id": 3,
-      "name": "cli_add_list",
-      "title": "Comandos add y list en el CLI",
-      "description": "Permite añadir una nota y listar todas las notas existentes.",
+      "name": "domain_entities",
+      "title": "Entidades y puertos del dominio",
+      "description": "Definición de entidades de dominio (Book, ReadingSession), value objects, y las interfaces de repositorio (ports) que la capa de infraestructura implementará.",
       "acceptance": [
-        "`python -m src.cli add 'titulo' --body 'texto'` imprime el id creado",
-        "`python -m src.cli list` imprime una línea por nota: `<id>  <created_at>  <title>`",
-        "tests/test_cli.py cubre ambos comandos con un archivo temporal"
+        "Existe src/shared/domain/entities/Book.ts con la entidad Book y sus validaciones (rating entre 1-5, status válido)",
+        "Existe src/shared/domain/entities/ReadingSession.ts con la entidad ReadingSession y validación (endPage >= startPage)",
+        "Existe src/shared/domain/ports/BookRepository.ts con la interfaz: findAll, findById, create, update, delete, findByStatus",
+        "Existe src/shared/domain/ports/ReadingSessionRepository.ts con la interfaz: findByBookId, create, delete, getStatsForBook",
+        "Existe src/shared/domain/ports/BookSearchService.ts con la interfaz: searchByQuery(query: string) => BookSearchResult[]",
+        "Las entidades son independientes de Prisma (no importan nada de @prisma/client)",
+        "tests/domain/test_book_entity.test.ts y test_reading_session_entity.test.ts cubren validaciones y creación"
       ],
-      "status": "done"
+      "status": "pending"
     },
     {
       "id": 4,
-      "name": "cli_show_delete",
-      "title": "Comandos show y delete en el CLI",
-      "description": "Permite ver y eliminar notas por id.",
+      "name": "infrastructure_repositories",
+      "title": "Implementación de repositorios con Prisma",
+      "description": "Implementación concreta de los puertos de repositorio usando Prisma. Incluye mappers entre entidades de dominio y modelos de Prisma.",
       "acceptance": [
-        "`python -m src.cli show <id>` imprime título, fecha y cuerpo",
-        "`python -m src.cli delete <id>` elimina y confirma con un mensaje",
-        "Ambos comandos devuelven exit code != 0 si el id no existe",
-        "tests/test_cli.py cubre éxito y fallo"
+        "Existe src/shared/infrastructure/persistence/PrismaBookRepository.ts que implementa BookRepository",
+        "Existe src/shared/infrastructure/persistence/PrismaReadingSessionRepository.ts que implementa ReadingSessionRepository",
+        "Existen mappers en src/shared/infrastructure/persistence/mappers/ para convertir entre modelos Prisma y entidades de dominio",
+        "tests/infrastructure/test_book_repository.test.ts cubre CRUD completo con una DB SQLite temporal",
+        "tests/infrastructure/test_reading_session_repository.test.ts cubre creación, consulta por libro, y estadísticas"
       ],
-      "status": "done"
+      "status": "pending"
     },
     {
       "id": 5,
-      "name": "cli_search",
-      "title": "Comando search",
-      "description": "Búsqueda por substring en título o cuerpo (case-insensitive).",
+      "name": "use_cases_books",
+      "title": "Casos de uso de libros",
+      "description": "Capa de aplicación con los casos de uso para gestión de libros: agregar, listar, actualizar estado, calificar, eliminar.",
       "acceptance": [
-        "`python -m src.cli search 'palabra'` lista las notas que contienen la palabra",
-        "Si no hay coincidencias, exit code 1 y mensaje claro",
-        "tests/test_cli.py cubre coincidencia, no-coincidencia y case-insensitivity"
+        "Existe src/shared/application/use-cases/AddBook.ts",
+        "Existe src/shared/application/use-cases/ListBooks.ts con filtro opcional por status",
+        "Existe src/shared/application/use-cases/UpdateBookStatus.ts",
+        "Existe src/shared/application/use-cases/RateBook.ts",
+        "Existe src/shared/application/use-cases/DeleteBook.ts",
+        "Cada use case recibe sus dependencias por constructor (inyección de dependencias)",
+        "tests/application/test_book_use_cases.test.ts cubre cada caso de uso con repositorio mock"
       ],
-      "status": "done"
+      "status": "pending"
     },
     {
       "id": 6,
-      "name": "cli_edit",
-      "title": "Comando edit",
-      "description": "Permite modificar el título y/o cuerpo de una nota existente por id.",
+      "name": "use_cases_reading_sessions",
+      "title": "Casos de uso de sesiones de lectura",
+      "description": "Casos de uso para registrar y consultar sesiones de lectura: registrar sesión, obtener historial de un libro, obtener estadísticas.",
       "acceptance": [
-        "`python -m src.cli edit <id> --title 'nuevo'` actualiza solo el título",
-        "`python -m src.cli edit <id> --body 'nuevo'` actualiza solo el cuerpo",
-        "Pasar ambos flags actualiza ambos campos en la misma llamada",
-        "Si no se pasa ningún flag, exit code != 0 y mensaje claro",
-        "Si el id no existe, exit code != 0 y mensaje en stderr",
-        "tests/test_cli.py cubre éxito (cada flag y combinado), id inexistente y ausencia de flags"
+        "Existe src/shared/application/use-cases/LogReadingSession.ts",
+        "Existe src/shared/application/use-cases/GetBookReadingHistory.ts",
+        "Existe src/shared/application/use-cases/GetReadingStats.ts (páginas totales, tiempo total, promedio por sesión)",
+        "tests/application/test_reading_session_use_cases.test.ts cubre cada caso de uso"
       ],
-      "status": "done"
+      "status": "pending"
     },
     {
       "id": 7,
-      "name": "cli_recent",
-      "title": "Comando recent",
-      "description": "Lista las N notas más recientes, ordenadas por created_at descendente.",
+      "name": "ipc_layer",
+      "title": "Capa IPC (Main ↔ Renderer)",
+      "description": "Definición de los canales IPC tipados, handlers en el proceso main, y el preload bridge. El renderer consume una API tipada sin saber que usa IPC.",
       "acceptance": [
-        "`python -m src.cli recent` lista las 5 notas más recientes por defecto",
-        "`python -m src.cli recent --limit 10` permite cambiar el número",
-        "El orden es por `created_at` de más reciente a más antigua",
-        "Cada línea sigue el formato `<id>\\t<created_at>\\t<title>` (mismo que `list`)",
-        "Si no hay notas, exit code 0 y no imprime nada (consistente con `list`)",
-        "Si `--limit` es <= 0, exit code != 0 y mensaje claro en stderr",
-        "tests/test_cli.py cubre: orden por defecto, límite custom, archivo vacío, límite inválido"
+        "Existe src/shared/infrastructure/ipc/channels.ts con los nombres de canales como constantes tipadas",
+        "Existe src/main/ipc/bookHandlers.ts que registra handlers de IPC para las operaciones de libros",
+        "Existe src/main/ipc/readingSessionHandlers.ts para las operaciones de sesiones",
+        "Existe src/preload/index.ts que expone las APIs via contextBridge",
+        "Existe src/renderer/src/services/bookService.ts que consume el preload bridge (el renderer no sabe de IPC)",
+        "La API del preload está tipada end-to-end (los tipos se comparten desde src/shared/)",
+        "tests/ipc/test_ipc_contracts.test.ts verifica que los tipos de request/response son consistentes"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 8,
+      "name": "ui_library_view",
+      "title": "Vista de biblioteca (listado de libros)",
+      "description": "Pantalla principal que muestra la biblioteca del usuario. Grid/lista de libros con portada, título, autor, estado y rating. Filtros por estado.",
+      "acceptance": [
+        "Existe src/renderer/src/pages/LibraryPage.tsx como vista principal",
+        "Muestra los libros en un grid responsive con tarjetas que incluyen: portada (o placeholder), título, autor(es), estado (badge con color), y rating (estrellas)",
+        "Hay filtros funcionales por estado: Todos, Por Leer, Leyendo, Terminados, Abandonados",
+        "Estado vacío con mensaje e ícono cuando no hay libros",
+        "Se usa TanStack Query para el fetching de datos desde el servicio",
+        "El diseño usa Tailwind CSS con una estética moderna y dark mode"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 9,
+      "name": "ui_add_book_manual",
+      "title": "Formulario de agregar libro manualmente",
+      "description": "Modal o vista para agregar un libro con los datos ingresados manualmente por el usuario.",
+      "acceptance": [
+        "Existe src/renderer/src/components/AddBookModal.tsx",
+        "Formulario con campos: título (requerido), autor(es), cantidad de páginas, ISBN, notas",
+        "Validación de formulario del lado del cliente (título no vacío, páginas > 0 si se ingresa)",
+        "Al guardar, el libro se persiste y aparece en la biblioteca",
+        "Feedback visual de éxito/error (toast o notificación)",
+        "El modal se puede cerrar con Escape o click fuera"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 10,
+      "name": "google_books_search",
+      "title": "Búsqueda de libros vía Google Books API",
+      "description": "Integración con Google Books API para buscar libros por título/autor/ISBN y auto-completar los datos del libro.",
+      "acceptance": [
+        "Existe src/shared/infrastructure/api/GoogleBooksService.ts que implementa BookSearchService",
+        "La búsqueda se dispara desde el modal de agregar libro con un campo de búsqueda",
+        "Los resultados se muestran en una lista seleccionable con portada, título, autor(es) y año",
+        "Al seleccionar un resultado, se pre-llenan los campos del formulario (título, autores, portada, páginas, ISBN)",
+        "La API key es configurable desde un settings de la app (no hardcodeada en código)",
+        "Si no hay API key configurada, la búsqueda se deshabilita con un mensaje indicando cómo configurarla",
+        "tests/infrastructure/test_google_books_service.test.ts cubre parsing de respuesta con datos mockeados"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 11,
+      "name": "ui_book_detail",
+      "title": "Vista de detalle del libro",
+      "description": "Pantalla de detalle que muestra toda la información de un libro, permite editar estado/rating/notas, y muestra el historial de sesiones de lectura.",
+      "acceptance": [
+        "Existe src/renderer/src/pages/BookDetailPage.tsx",
+        "Muestra: portada (grande), título, autores, páginas, ISBN, estado (editable), rating (editable con estrellas clickeables), notas (editables)",
+        "Sección de sesiones de lectura con tabla/lista mostrando fecha, páginas leídas, tiempo",
+        "Botón para registrar nueva sesión de lectura (abre modal)",
+        "Estadísticas del libro: páginas leídas / total, porcentaje de avance, tiempo total de lectura",
+        "Botón de eliminar libro con confirmación",
+        "Navegación de vuelta a la biblioteca"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 12,
+      "name": "ui_reading_session_form",
+      "title": "Formulario de sesión de lectura",
+      "description": "Modal para registrar una sesión de lectura asociada a un libro.",
+      "acceptance": [
+        "Existe src/renderer/src/components/LogReadingSessionModal.tsx",
+        "Campos: fecha (default hoy), página inicio, página fin, minutos de lectura (opcional)",
+        "Validación: página fin >= página inicio, fecha no futura, minutos >= 0",
+        "Al guardar, la sesión se persiste y se actualiza la vista de detalle",
+        "Si la página fin == total de páginas del libro, sugerir cambiar estado a FINISHED"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 13,
+      "name": "ui_dashboard_stats",
+      "title": "Dashboard con estadísticas de lectura",
+      "description": "Vista de dashboard con estadísticas globales de lectura del usuario.",
+      "acceptance": [
+        "Existe src/renderer/src/pages/DashboardPage.tsx",
+        "Muestra: total de libros leídos, libros en curso, páginas totales leídas, tiempo total de lectura",
+        "Gráfico o visualización de libros leídos por mes (últimos 12 meses)",
+        "Lista de libros recientes (últimos 5 actualizados)",
+        "El dashboard es la landing page de la app o es accesible desde el sidebar"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 14,
+      "name": "app_navigation_layout",
+      "title": "Layout principal y navegación",
+      "description": "Shell de la aplicación con sidebar de navegación, routing entre vistas, y controles de ventana.",
+      "acceptance": [
+        "Existe un layout con sidebar fijo que incluye: logo/nombre, links a Dashboard, Biblioteca, Settings",
+        "Routing funcional entre las vistas (React Router o equivalente)",
+        "Controles de ventana personalizados (minimizar, maximizar, cerrar) integrados en el titlebar",
+        "La ventana es frameless con drag region en el titlebar",
+        "Responsive: el sidebar colapsa en tamaños pequeños",
+        "Transiciones suaves entre vistas"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 15,
+      "name": "settings_page",
+      "title": "Página de configuración",
+      "description": "Vista de settings para configurar la API key de Google Books y otras preferencias de la app.",
+      "acceptance": [
+        "Existe src/renderer/src/pages/SettingsPage.tsx",
+        "Campo para ingresar/editar la API key de Google Books con botón de test (verifica que la key funciona)",
+        "La API key se persiste de forma segura en el main process (electron-store o similar, no en localStorage)",
+        "Toggle para dark/light mode",
+        "Info de la versión de la app",
+        "Las preferencias persisten entre reinicios de la app"
       ],
       "status": "pending"
     }
