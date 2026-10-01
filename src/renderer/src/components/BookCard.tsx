@@ -6,7 +6,7 @@ import { resolveCoverUrl } from '../services/coverService.js'
 
 export interface BookCardProps {
   book: BookPrimitives
-  onClick?: (book: BookPrimitives) => void
+  onClick?: ((book: BookPrimitives) => void) | (() => void)
 }
 
 const STATUS_CONFIG: Record<BookStatus, { label: string; badgeClass: string }> = {

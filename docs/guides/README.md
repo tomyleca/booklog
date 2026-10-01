@@ -17,6 +17,7 @@
 | `react-query-tailwind-library.md` | TanStack Query, Tailwind CSS v4 e IPC en la vista de biblioteca | Feature 8 (UI biblioteca) |
 | `react-modal-forms.md` | Formularios modales, validación, accesibilidad e invalidación reactiva | Feature 9 (UI agregar libro manual) |
 | `external-api-integration.md` | Búsqueda en Google Books, sanitización, debounce y persistencia offline | Feature 10 (Google Books search) |
+| `react-book-detail-view.md` | Vista de detalle de libro, edición de progreso en línea y bitácora de notas | Feature 11 (UI detalle del libro y notas) |
 
 Las guías se crean conforme se implementan las features relacionadas, no antes.
 

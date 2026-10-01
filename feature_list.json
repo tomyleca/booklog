@@ -181,7 +181,7 @@
         "Botón de eliminar libro con confirmación",
         "Navegación de vuelta a la biblioteca"
       ],
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": 12,
@@ -195,7 +195,7 @@
         "Existe src/renderer/src/components/AddNoteModal.tsx para registrar notas como ideas/reflexiones",
         "Feedback visual y actualización reactiva en el detalle del libro"
       ],
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "id": 13,

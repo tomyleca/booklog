@@ -11,7 +11,11 @@ import { EmptyLibraryState } from '../components/EmptyLibraryState.js'
 import { AddBookModal } from '../components/AddBookModal.js'
 import type { BookPrimitives } from '../../../shared/infrastructure/ipc/contracts.js'
 
-export function LibraryPage(): JSX.Element {
+export interface LibraryPageProps {
+  onSelectBook?: (bookId: number) => void
+}
+
+export function LibraryPage({ onSelectBook }: LibraryPageProps = {}): JSX.Element {
   const [selectedStatus, setSelectedStatus] = useState<FilterStatus>('ALL')
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
 
@@ -141,7 +145,14 @@ export function LibraryPage(): JSX.Element {
                 onResetFilter={() => setSelectedStatus('ALL')}
               />
             ) : (
-              <BookGrid books={books} />
+              <BookGrid
+                books={books}
+                onBookClick={(book) => {
+                  if (book.id !== undefined && onSelectBook) {
+                    onSelectBook(book.id)
+                  }
+                }}
+              />
             )}
           </>
         )}

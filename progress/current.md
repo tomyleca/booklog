@@ -3,55 +3,40 @@
 > Este archivo se vacía al cerrar cada sesión y se mueve a `history.md`.
 > Mientras trabajas, **mantenlo actualizado en tiempo real**, no al final.
 
-- **Feature en curso:** #10 - `google_books_search` (Búsqueda de libros vía Google Books API con descarga de portada)
-- **Inicio:** 2026-09-30 22:34
+- **Feature en curso:** #11 - `ui_book_detail` (Vista de detalle del libro y gestión de notas)
+- **Inicio:** 2026-09-30 22:54
 - **Agente:** leader (coordinando implementer + reviewer)
 
 ## Plan
 
 1. **Alineación con el usuario y visión global**:
-   - Integración de `GoogleBooksService` implementando el puerto `BookSearchService`.
-   - Consulta a la API pública de Google Books (`https://www.googleapis.com/books/v1/volumes?q=...`), con soporte para API Key configurable opcional (sin key funciona para cuotas públicas estándar de búsqueda).
-   - Canal IPC tipado `search:books` expuesto a través de `preload` y `bookService.search(query)`.
-   - Componente `GoogleBooksSearch` integrado en el slot de búsqueda de `AddBookModal`:
-     - Input de búsqueda con botón "Buscar" (o debounce).
-     - Lista desplegable o tarjetas de resultados con portada, título, autores y año.
-     - Al hacer click en un resultado: autocompleta automáticamente los campos del formulario (título, autores, páginas, ISBN, portada remota y googleBooksId).
-     - Al guardar, el formulario persiste el libro y descarga la portada a `userData/covers` mediante el flujo offline-first ya probado en la Feature #7 y #9.
-2. **Implementación de Servicio de API (`src/shared/infrastructure/api/GoogleBooksService.ts`)**:
-   - Implementa `BookSearchService`.
-   - Consume el endpoint con `fetch` nativo de Node.
-   - Parsea resultados (`volumeInfo`), sanitizando autores, ISBN-13 / ISBN-10, conteo de páginas y thumbnail (`https` forzado).
-3. **IPC Handlers y Preload**:
-   - Agregar canal `SEARCH: { BOOKS: 'search:books' }` en `channels.ts` y contratos en `contracts.ts`.
-   - Handler en Main que invoca `GoogleBooksService.searchByQuery(query)` retornando `IpcResult<BookSearchResult[]>`.
-   - Exponer en `window.api.search.books(query)`.
-4. **Componente de Búsqueda en Renderer (`src/renderer/src/components/GoogleBooksSearch.tsx`)**:
-   - Integrado en `AddBookModal.tsx` mediante el slot `renderSearchSlot`.
-   - Estado de búsqueda, lista de resultados seleccionable, estados de carga y mensaje si no hay resultados.
-5. **Pruebas Automatizadas**:
-   - `tests/infrastructure/test_google_books_service.test.ts`: Pruebas unitarias de parsing y manejo de respuestas mockeadas de Google Books API.
-   - `tests/renderer/test_google_books_search.test.ts`: Pruebas de integración del buscador y autocompletado en el formulario.
-6. **Documentación**:
-   - Guía técnica `docs/guides/external-api-integration.md` con diagramas Mermaid de secuencia (Renderer -> IPC -> Main -> Google Books API -> Preload -> Auto-fill).
-   - ADR `docs/decisions/010-google-books-search.md`.
-7. **Auditoría y Cierre**:
-   - Revisión con subagente `reviewer` y verificación con `pnpm test`, `typecheck`, `lint` y `build`.
+   - Conexión con `LibraryPage`: Al hacer clic en cualquier tarjeta de libro (`BookCard`), la aplicación navega/transiciona a la vista de detalle `BookDetailPage`.
+   - Elementos visuales del libro: portada local (o placeholder neutro con `BookOpen`), título, autores, metadatos (ISBN, páginas), selector de estado reactivo, selector de calificación con estrellas interactivo, y barra de progreso de lectura.
+   - Gestión de notas: lista cronológica de reflexiones/ideas, con opción de eliminar nota y agregar nueva nota.
+   - Eliminación del libro: botón con diálogo de confirmación que invoca `bookService.delete(id)` y retorna a la biblioteca.
+   - Botón "Volver a la Biblioteca".
+2. **Implementación de Componentes**:
+   - `src/renderer/src/pages/BookDetailPage.tsx`: Vista de detalle conectada con TanStack Query (`bookService.getById(id)` y `noteService.getByBook(id)`).
+   - Integración de navegación en `App.tsx` (gestión de estado de vista activa: `'library'` vs `'detail'`, pasando `selectedBookId`).
+3. **Pruebas Automatizadas**:
+   - `tests/renderer/test_book_detail_page.test.ts`: Renderizado de datos del libro, edición de estado, cambio de calificación, visualización de notas, eliminación de notas y confirmación de borrado.
+4. **Documentación**:
+   - Guía conceptual `docs/guides/react-book-detail-view.md`.
+   - ADR `docs/decisions/011-ui-book-detail.md`.
+5. **Auditoría y Cierre**:
+   - Revisión con subagente `reviewer` y `git commit & push`.
 
 ## Bitácora
 
-- 22:34: Feature #9 cerrada con éxito. Iniciada Feature #10 (`google_books_search`).
-- 22:40: Acordado diseño con usuario: disparo automático con debounce de 500ms y disparo inmediato con Enter/botón, pestañas "Buscar en Google" / "Carga manual", autocompletado y persistencia offline de portadas.
-- 22:43: Implementado `GoogleBooksService` con sanitización de HTTPS, ISBN y año.
-- 22:44: Agregado canal IPC `search:books` en `channels.ts`, `contracts.ts`, `searchHandlers.ts` y preload.
-- 22:45: Actualizado `AddBookModal` con pestañas, buscador debounce/Enter, tarjetas interactivas de libros, autocompletado y confirmación.
-- 22:46: Implementados 9 tests unitarios para `GoogleBooksService`, 3 tests IPC y 13 tests de integración para `AddBookModal`.
-- 22:48: Redactado ADR `docs/decisions/010-google-books-search.md` y guía técnica `docs/guides/external-api-integration.md`.
-- 22:49: Verificación completa exitosa: 210 tests pasando, typecheck en verde, linter sin errores, build exitoso. Generado reporte en `progress/report_google_books_search.md`.
+- 22:54: Feature #10 cerrada y cambios pusheados con éxito a `origin/main`. Iniciada Feature #11 (`ui_book_detail`).
+- 22:56: Decisiones de diseño acordadas con el usuario recibidas.
+- 23:04: Implementación completa de `BookDetailPage.tsx`, actualización de `LibraryPage.tsx`, `BookCard.tsx`, `App.tsx`, creación de 25 pruebas unitarias/integración en `tests/renderer/test_book_detail_page.test.ts`, ADR 011 y guía técnica `docs/guides/react-book-detail-view.md`. Todos los checks en verde (237 tests pasan, 0 errores de typecheck y lint, build de producción exitoso).
 
 ## Próximo paso
 
-Auditoría de código por el subagente reviewer.
+Auditoría por parte del reviewer y preparación para el cierre de la Feature #11.
+
+
 
 
 

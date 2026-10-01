@@ -222,3 +222,26 @@
     - ADR: [docs/decisions/010-google-books-search.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/decisions/010-google-books-search.md).
   - Reportes de ciclo de vida: [progress/report_google_books_search.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_google_books_search.md) y [progress/review_google_books_search.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_google_books_search.md).
 
+---
+
+## Sesión 2026-09-30 — Feature #11: ui_book_detail (Vista de detalle del libro y gestión de notas)
+
+- **Estado:** Completada (done)
+- **Logros:**
+  - Implementación de la pantalla completa `BookDetailPage` en React 18, TanStack Query y Tailwind CSS v4:
+    - Encabezado y metadatos del libro: Portada local optimizada (con protocolo `booklog-media://` y fallback a placeholder neutro con `BookOpen`), título, autores, cantidad de páginas, ISBN y fecha de creación/actualización.
+    - Edición reactiva del estado de lectura mediante selector desplegable sincronizado con `bookService.updateStatus`.
+    - Componente interactivo de calificación por estrellas (`1-5` estrellas con feedback visual hover, selección y reseteo opcional).
+    - Barra de progreso con edición en línea directa: controles numéricos de página actual y porcentaje sincronizados bidireccionalmente con validación de límites y botón explícito para persistir el avance (`bookService.updateProgress`).
+    - Sección de gestión de notas: listado cronológico de ideas y reflexiones textuales, botón individual de eliminación por nota (`noteService.delete`) y modal compacto "+ Nueva Idea" para agregar reflexiones con validación de contenido no vacío (`noteService.create`).
+    - Eliminación de libro: botón protegido con modal de confirmación advirtiendo eliminación de notas asociadas, invocando `bookService.delete` y retornando automáticamente a la biblioteca.
+    - Navegación bidireccional entre `LibraryPage` y `BookDetailPage` mediante estado de vista unificado en `App.tsx`.
+  - Pruebas automatizadas en Vitest:
+    - `tests/renderer/test_book_detail_page.test.ts` (25 pruebas cubriendo ciclo de vida, edición en línea, mutaciones y navegación).
+    - Total de la suite: 15 suites, 237 tests pasando al 100% en verde.
+  - Verificación rigurosa: `pnpm test`, `pnpm run typecheck`, `pnpm run lint` y `pnpm run build` limpios sin errores.
+  - Documentación técnica:
+    - Guía técnica: [docs/guides/react-book-detail-view.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/react-book-detail-view.md).
+    - ADR: [docs/decisions/011-ui-book-detail.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/decisions/011-ui-book-detail.md).
+  - Reportes de ciclo de vida: [progress/report_ui_book_detail.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_ui_book_detail.md) y [progress/review_ui_book_detail.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_ui_book_detail.md).
+
