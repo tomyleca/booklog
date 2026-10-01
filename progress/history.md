@@ -270,5 +270,24 @@
   - Documentación técnica:
     - Guía conceptual: [docs/guides/react-reusable-modals.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/react-reusable-modals.md).
     - ADR: [docs/decisions/012-ui-book-progress-and-notes-modals.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/decisions/012-ui-book-progress-and-notes-modals.md).
-  - Reportes de ciclo de vida: [progress/report_ui_book_progress_and_notes_modals.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_ui_book_progress_and_notes_modals.md) y [progress/review_ui_book_progress_and_notes_modals.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_ui_book_progress_and_notes_modals.md).
+---
+
+## Sesión 2026-10-01 — Feature #13: ui_dashboard_stats (Dashboard con estadísticas de lectura)
+
+- **Estado:** Completada (done)
+- **Logros:**
+  - Implementación de la vista completa del Dashboard (`DashboardPage`) en React 18, TanStack Query y Tailwind CSS v4:
+    - KPIs globales en tarjetas destacadas: Total de libros terminados (`FINISHED`), libros en lectura activa (`READING`), libros pausados (`PAUSED`), libros por leer (`TO_READ`), libros abandonados (`ABANDONED`) y total de libros.
+    - Algoritmo de cálculo de páginas totales leídas: suma precisa computando `currentPage`, porcentaje por `pageCount` o total de páginas en libros completados.
+    - Gráfico y desglose de estados: Barra de distribución visual segmentada por porcentajes y colores temáticos, junto con tarjetas detalladas de proporción.
+    - Sección de lecturas recientes: listado ordenado cronológicamente por `updatedAt DESC` mostrando miniatura, título, autores, estado y porcentaje, con navegación interactiva al hacer clic para abrir `BookDetailPage`.
+    - Barra de navegación superior accesible en `App.tsx` para alternar entre "Biblioteca" y "Dashboard", con soporte de navegación contextual e historial de retorno.
+  - Pruebas automatizadas en Vitest:
+    - `tests/renderer/test_dashboard_page.test.ts` (17 pruebas cubriendo KPIs, cálculo de páginas, desglose, lecturas recientes, estados vacío/error y navegación en App).
+    - Total de la suite: 17 suites, 275 tests pasando al 100% en verde.
+  - Verificación rigurosa: `pnpm test`, `pnpm run typecheck`, `pnpm run lint` y `pnpm run build` limpios sin errores ni advertencias.
+  - Documentación técnica:
+    - Guía conceptual: [docs/guides/dashboard-reading-analytics.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/dashboard-reading-analytics.md).
+    - ADR: [docs/decisions/013-ui-dashboard-stats.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/decisions/013-ui-dashboard-stats.md).
+  - Reportes de ciclo de vida: [progress/report_ui_dashboard_stats.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_ui_dashboard_stats.md) y [progress/review_ui_dashboard_stats.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_ui_dashboard_stats.md).
 
