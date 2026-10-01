@@ -195,7 +195,7 @@
         "Existe src/renderer/src/components/AddNoteModal.tsx para registrar notas como ideas/reflexiones",
         "Feedback visual y actualización reactiva en el detalle del libro"
       ],
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": 13,
@@ -209,7 +209,7 @@
         "Lista de libros recientes (últimos actualizados)",
         "El dashboard es accesible desde la navegación principal"
       ],
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "id": 14,

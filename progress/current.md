@@ -3,38 +3,45 @@
 > Este archivo se vacía al cerrar cada sesión y se mueve a `history.md`.
 > Mientras trabajas, **mantenlo actualizado en tiempo real**, no al final.
 
-- **Feature en curso:** #11 - `ui_book_detail` (Vista de detalle del libro y gestión de notas)
-- **Inicio:** 2026-09-30 22:54
+- **Feature en curso:** #12 - `ui_book_progress_and_notes_modals` (Modales de actualización de progreso y creación de notas)
+- **Inicio:** 2026-09-30 23:10
 - **Agente:** leader (coordinando implementer + reviewer)
 
 ## Plan
 
-1. **Alineación con el usuario y visión global**:
-   - Conexión con `LibraryPage`: Al hacer clic en cualquier tarjeta de libro (`BookCard`), la aplicación navega/transiciona a la vista de detalle `BookDetailPage`.
-   - Elementos visuales del libro: portada local (o placeholder neutro con `BookOpen`), título, autores, metadatos (ISBN, páginas), selector de estado reactivo, selector de calificación con estrellas interactivo, y barra de progreso de lectura.
-   - Gestión de notas: lista cronológica de reflexiones/ideas, con opción de eliminar nota y agregar nueva nota.
-   - Eliminación del libro: botón con diálogo de confirmación que invoca `bookService.delete(id)` y retorna a la biblioteca.
-   - Botón "Volver a la Biblioteca".
+1. **Visión global e integración**:
+   - Extraer y modularizar `UpdateProgressModal` y `AddNoteModal` como componentes dedicados en `src/renderer/src/components/`.
+   - `UpdateProgressModal`:
+     - Selector de modo: "Por número de página" vs "Por porcentaje directo".
+     - Cálculo en tiempo real del valor complementario cuando el libro cuenta con `pageCount`.
+     - Detección reactiva de finalización: si el progreso alcanza 100% o la última página, ofrece sugerencia destacada para cambiar estado a `FINISHED`.
+     - Invocación de `bookService.updateProgress` (y actualización opcional de estado) con invalidación reactiva de queries.
+   - `AddNoteModal`:
+     - Modal dedicado para ingresar ideas y reflexiones (área de texto requerida, contador de caracteres, atajo Ctrl+Enter para guardar).
+     - Invocación de `noteService.create` e invalidación reactiva de notas y libros.
+   - Integración fluida en `BookDetailPage` (y opcionalmente en biblioteca).
 2. **Implementación de Componentes**:
-   - `src/renderer/src/pages/BookDetailPage.tsx`: Vista de detalle conectada con TanStack Query (`bookService.getById(id)` y `noteService.getByBook(id)`).
-   - Integración de navegación en `App.tsx` (gestión de estado de vista activa: `'library'` vs `'detail'`, pasando `selectedBookId`).
+   - `src/renderer/src/components/UpdateProgressModal.tsx`.
+   - `src/renderer/src/components/AddNoteModal.tsx`.
+   - Exportar en `src/renderer/src/components/index.ts`.
+   - Actualizar `src/renderer/src/pages/BookDetailPage.tsx` para emplear los modales modulares.
 3. **Pruebas Automatizadas**:
-   - `tests/renderer/test_book_detail_page.test.ts`: Renderizado de datos del libro, edición de estado, cambio de calificación, visualización de notas, eliminación de notas y confirmación de borrado.
+   - `tests/renderer/test_progress_and_notes_modals.test.ts`: Validación de modales, cálculo dinámico, sugerencia de FINISHED y creación de notas.
 4. **Documentación**:
-   - Guía conceptual `docs/guides/react-book-detail-view.md`.
-   - ADR `docs/decisions/011-ui-book-detail.md`.
+   - Guía técnica `docs/guides/react-reusable-modals.md`.
+   - ADR `docs/decisions/012-ui-book-progress-and-notes-modals.md`.
 5. **Auditoría y Cierre**:
-   - Revisión con subagente `reviewer` y `git commit & push`.
+   - Revisión con subagente `reviewer`, validación de calidad y push a GitHub.
 
 ## Bitácora
 
-- 22:54: Feature #10 cerrada y cambios pusheados con éxito a `origin/main`. Iniciada Feature #11 (`ui_book_detail`).
-- 22:56: Decisiones de diseño acordadas con el usuario recibidas.
-- 23:04: Implementación completa de `BookDetailPage.tsx`, actualización de `LibraryPage.tsx`, `BookCard.tsx`, `App.tsx`, creación de 25 pruebas unitarias/integración en `tests/renderer/test_book_detail_page.test.ts`, ADR 011 y guía técnica `docs/guides/react-book-detail-view.md`. Todos los checks en verde (237 tests pasan, 0 errores de typecheck y lint, build de producción exitoso).
+- 23:10: Feature #11 cerrada y pusheada. Iniciada Feature #12 (`ui_book_progress_and_notes_modals`).
+- 23:19: Implementación completada de `UpdateProgressModal`, `AddNoteModal`, integración en `BookDetailPage`, 21 tests pasando en verde, ADR-012 y guía técnica redactados.
 
 ## Próximo paso
 
-Auditoría por parte del reviewer y preparación para el cierre de la Feature #11.
+Auditoría técnica del reviewer y cierre de la feature.
+
 
 
 

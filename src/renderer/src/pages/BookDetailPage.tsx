@@ -6,18 +6,20 @@ import {
   Star,
   Trash2,
   Plus,
-  X,
   AlertCircle,
   Check,
   Loader2,
   Sparkles,
-  Calendar
+  Calendar,
+  TrendingUp
 } from 'lucide-react'
 import { BookStatus } from '../../../shared/domain/entities/BookStatus.js'
 import type { BookPrimitives, NotePrimitives } from '../../../shared/infrastructure/ipc/contracts.js'
 import { bookService } from '../services/bookService.js'
 import { noteService } from '../services/noteService.js'
 import { resolveCoverUrl } from '../services/coverService.js'
+import { AddNoteModal, UpdateProgressModal } from '../components/index.js'
+
 
 export interface BookDetailPageProps {
   bookId: number
@@ -65,9 +67,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
 
   // Modals state
   const [isAddNoteModalOpen, setIsAddNoteModalOpen] = useState(false)
-  const [newNoteContent, setNewNoteContent] = useState('')
-  const [newNoteError, setNewNoteError] = useState<string | null>(null)
-
+  const [isUpdateProgressModalOpen, setIsUpdateProgressModalOpen] = useState(false)
   const [isDeleteBookModalOpen, setIsDeleteBookModalOpen] = useState(false)
 
   // Book Query
@@ -184,25 +184,6 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
     }
   })
 
-  // Mutation: Add Note
-  const addNoteMutation = useMutation({
-    mutationFn: async (content: string) => {
-      const res = await noteService.create({ bookId, content })
-      if (!res.success) {
-        throw new Error(res.error || 'Error al agregar la nota')
-      }
-      return res.data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes', bookId] })
-      setNewNoteContent('')
-      setNewNoteError(null)
-      setIsAddNoteModalOpen(false)
-    },
-    onError: (err: Error) => {
-      setNewNoteError(err.message)
-    }
-  })
 
   // Mutation: Delete Note
   const deleteNoteMutation = useMutation({
@@ -272,15 +253,6 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
     }
   }
 
-  // Handle Note Submission
-  const handleCreateNoteSubmit = (e: React.FormEvent): void => {
-    e.preventDefault()
-    if (!newNoteContent.trim()) {
-      setNewNoteError('El contenido de la nota no puede estar vacío.')
-      return
-    }
-    addNoteMutation.mutate(newNoteContent.trim())
-  }
 
   // Cover image resolution
   const coverUrl = resolveCoverUrl(book?.coverPath, book?.coverUrl ?? '')
@@ -528,9 +500,20 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                 Avance de Lectura
               </span>
-              <span className="text-xs font-mono font-medium text-indigo-400">
-                {progressPercentValue}% completado
-              </span>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsUpdateProgressModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors cursor-pointer"
+                  data-testid="open-update-progress-modal-button"
+                >
+                  <TrendingUp className="w-3.5 h-3.5" />
+                  <span>Actualizar progreso...</span>
+                </button>
+                <span className="text-xs font-mono font-medium text-indigo-400">
+                  {progressPercentValue}% completado
+                </span>
+              </div>
             </div>
 
             {/* Visual Progress Bar */}
@@ -660,11 +643,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
 
           <button
             type="button"
-            onClick={() => {
-              setNewNoteContent('')
-              setNewNoteError(null)
-              setIsAddNoteModalOpen(true)
-            }}
+            onClick={() => setIsAddNoteModalOpen(true)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm transition-colors"
             data-testid="add-note-button"
           >
@@ -773,88 +752,20 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
         )}
       </section>
 
-      {/* Modal: Agregar Nueva Nota / Idea */}
-      {isAddNoteModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs animate-fade-in"
-          role="dialog"
-          aria-modal="true"
-          data-testid="add-note-modal"
-        >
-          <div className="w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl p-6 flex flex-col gap-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-indigo-400" />
-                <h3 className="text-base font-semibold text-slate-100">
-                  Nueva Idea / Reflexión
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsAddNoteModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
-                data-testid="cancel-note-button"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      {/* Modal Reutilizable: Agregar Nueva Nota / Idea */}
+      <AddNoteModal
+        bookId={bookId}
+        bookTitle={book.title}
+        isOpen={isAddNoteModalOpen}
+        onClose={() => setIsAddNoteModalOpen(false)}
+      />
 
-            <form onSubmit={handleCreateNoteSubmit} className="flex flex-col gap-4">
-              <div>
-                <label
-                  htmlFor="new-note-textarea"
-                  className="block text-xs font-semibold text-slate-300 mb-1.5"
-                >
-                  Contenido de la nota <span className="text-rose-400">*</span>
-                </label>
-                <textarea
-                  id="new-note-textarea"
-                  rows={4}
-                  value={newNoteContent}
-                  onChange={(e) => {
-                    setNewNoteContent(e.target.value)
-                    if (newNoteError) setNewNoteError(null)
-                  }}
-                  autoFocus
-                  placeholder="Escribe tu reflexión, frase destacada o aprendizaje sobre esta lectura..."
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-y"
-                  data-testid="note-content-input"
-                />
-                {newNoteError && (
-                  <p
-                    className="text-xs text-rose-400 mt-1 flex items-center gap-1"
-                    data-testid="note-content-error"
-                  >
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    {newNoteError}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setIsAddNoteModalOpen(false)}
-                  className="px-3.5 py-1.5 text-xs font-medium rounded-lg text-slate-300 bg-slate-800 hover:bg-slate-750 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={addNoteMutation.isPending}
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm transition-colors disabled:opacity-50"
-                  data-testid="submit-note-button"
-                >
-                  {addNoteMutation.isPending && (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  )}
-                  <span>Guardar Nota</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Modal Reutilizable: Actualizar Progreso de Lectura */}
+      <UpdateProgressModal
+        book={book}
+        isOpen={isUpdateProgressModalOpen}
+        onClose={() => setIsUpdateProgressModalOpen(false)}
+      />
 
       {/* Modal: Confirmar Eliminación del Libro */}
       {isDeleteBookModalOpen && (

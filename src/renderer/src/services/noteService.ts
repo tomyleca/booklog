@@ -10,7 +10,14 @@ export const noteService = {
     return await window.api.notes.getByBook(bookId)
   },
 
-  async create(dto: AddNoteDTO): Promise<IpcResult<NotePrimitives>> {
+  async create(
+    dtoOrBookId: AddNoteDTO | number,
+    maybeContent?: string
+  ): Promise<IpcResult<NotePrimitives>> {
+    const dto: AddNoteDTO =
+      typeof dtoOrBookId === 'number'
+        ? { bookId: dtoOrBookId, content: maybeContent ?? '' }
+        : dtoOrBookId
     return await window.api.notes.create(dto)
   },
 
@@ -22,3 +29,4 @@ export const noteService = {
     return await window.api.notes.delete(id)
   }
 }
+

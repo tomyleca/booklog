@@ -245,3 +245,30 @@
     - ADR: [docs/decisions/011-ui-book-detail.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/decisions/011-ui-book-detail.md).
   - Reportes de ciclo de vida: [progress/report_ui_book_detail.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_ui_book_detail.md) y [progress/review_ui_book_detail.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_ui_book_detail.md).
 
+---
+
+## Sesión 2026-09-30 — Feature #12: ui_book_progress_and_notes_modals (Modales de actualización de progreso y creación de notas)
+
+- **Estado:** Completada (done)
+- **Logros:**
+  - Modularización e implementación de modales independientes y reutilizables en `src/renderer/src/components/`:
+    - `UpdateProgressModal`:
+      - Selector dual de modo ("Por número de página" vs "Por porcentaje directo").
+      - Validación estricta de límites (`currentPage <= pageCount` y `0 <= progressPercentage <= 100`).
+      - Cálculo reactivo bidireccional en tiempo real del valor equivalente cuando el libro dispone de `pageCount`.
+      - Sugerencia interactiva de finalización: al ingresar el 100% de lectura o la última página, despliega un banner destacado con checkbox para marcar el libro como `FINISHED` automáticamente al guardar.
+      - Accesibilidad ARIA completa (`role="dialog"`, `aria-modal="true"`, cierre por tecla Escape y clic en backdrop).
+    - `AddNoteModal`:
+      - Modal dedicado para registro de reflexiones e ideas textuales sin campo de página.
+      - Autoenfoque en el área de texto, validación de contenido no vacío y atajo de teclado ágil `Ctrl + Enter` (o `Cmd + Enter`) para guardar.
+      - Mutación con invalidación selectiva de queries (`['notes', bookId]`).
+    - Integración en `BookDetailPage.tsx` con botón complementario de acción rápida "Actualizar progreso..." y exportación pública en `src/renderer/src/components/index.ts`.
+  - Pruebas automatizadas en Vitest:
+    - `tests/renderer/test_progress_and_notes_modals.test.ts` (21 pruebas unitarias y de integración de modales).
+    - Total de la suite: 16 suites, 258 tests pasando al 100% en verde.
+  - Verificación rigurosa: `pnpm test`, `pnpm run typecheck`, `pnpm run lint` y `pnpm run build` limpios sin errores ni advertencias.
+  - Documentación técnica:
+    - Guía conceptual: [docs/guides/react-reusable-modals.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/react-reusable-modals.md).
+    - ADR: [docs/decisions/012-ui-book-progress-and-notes-modals.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/decisions/012-ui-book-progress-and-notes-modals.md).
+  - Reportes de ciclo de vida: [progress/report_ui_book_progress_and_notes_modals.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_ui_book_progress_and_notes_modals.md) y [progress/review_ui_book_progress_and_notes_modals.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_ui_book_progress_and_notes_modals.md).
+
