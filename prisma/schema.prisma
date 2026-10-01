@@ -1,0 +1,43 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum BookStatus {
+  TO_READ
+  READING
+  PAUSED
+  FINISHED
+  ABANDONED
+}
+
+model Book {
+  id                 Int        @id @default(autoincrement())
+  googleBooksId      String?    @unique
+  title              String
+  authors            String
+  coverUrl           String?
+  coverPath          String?
+  pageCount          Int?
+  currentPage        Int?
+  progressPercentage Int?
+  isbn               String?
+  status             BookStatus @default(TO_READ)
+  rating             Int?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  notes              Note[]
+}
+
+model Note {
+  id        Int      @id @default(autoincrement())
+  bookId    Int
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

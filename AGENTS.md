@@ -14,6 +14,8 @@
 3. Lee `feature_list.json` y elige **una** tarea con estado `pending`. No
    trabajes en más de una a la vez.
 
+4. **Revisa la visión global del sistema y features adyacentes** en `feature_list.json` y `docs/architecture.md`. Nunca aísles una feature de las tareas que la preceden o la suceden (por ejemplo, entender cómo la búsqueda externa y la persistencia local se integran con los formularios antes de preguntar o diseñar).
+
 ## 2. Mapa del repositorio
 
 | Archivo / carpeta            | Qué contiene                                              | Cuándo leerlo |
@@ -38,6 +40,8 @@
 - **Documenta lo que haces** en `progress/current.md` mientras trabajas, no al final.
 - **Deja el repositorio limpio** antes de cerrar la sesión (ver §5).
 - **Si no sabes algo, busca en `docs/`** antes de inventarlo.
+- **Visión global obligatoria antes de cada feature:** Antes de diseñar, consultar o implementar, revisa el panorama completo del sistema y las features relacionadas/futuras en `feature_list.json`. Queda estrictamente prohibido plantear preguntas o decisiones que ignoren integraciones ya planificadas en el roadmap.
+- **Consulta y alineación previa:** Antes de implementar una tarea, presenta el plan o diseño al usuario y haz preguntas sobre preferencias o dudas abiertas. No asumas soluciones o esquemas sin preguntar.
 - **Funcionalidad antes que estética.** El frontend debe ser funcional y usable,
   pero NO invertir tiempo en diseño visual elaborado. Estilizado premium se
   hará en una fase posterior. Tailwind con estilos básicos y limpios es suficiente.

@@ -34,33 +34,34 @@
     {
       "id": 2,
       "name": "database_schema",
-      "title": "Schema de base de datos con Prisma + SQLite",
-      "description": "Definición del schema de Prisma con los modelos Book y ReadingSession. Configuración de Prisma para SQLite con la ruta dinámica al userData de Electron.",
+      "title": "Schema de base de datos con Prisma + SQLite (Book, Note y progreso)",
+      "description": "Definición del schema de Prisma con los modelos Book y Note. Soporte para estados TO_READ, READING, PAUSED, FINISHED, ABANDONED, progreso (páginas o porcentaje directo), cover local y notas asociadas.",
       "acceptance": [
         "Existe prisma/schema.prisma con provider sqlite",
-        "Modelo Book con campos: id (autoincrement), googleBooksId (opcional, unique), title, authors (string serializado), coverUrl (opcional), pageCount (opcional), isbn (opcional), status (enum: TO_READ, READING, FINISHED, ABANDONED), rating (opcional, 1-5), notes (opcional), createdAt, updatedAt",
-        "Modelo ReadingSession con campos: id, bookId (FK a Book), startPage, endPage (opcional), minutesRead (opcional), date, createdAt",
+        "Modelo Book con campos: id (autoincrement), googleBooksId (opcional, unique), title, authors, coverUrl (opcional), coverPath (opcional), pageCount (opcional), currentPage (opcional), progressPercentage (opcional), isbn (opcional), status (enum: TO_READ, READING, PAUSED, FINISHED, ABANDONED), rating (opcional, 1-5), createdAt, updatedAt",
+        "Modelo Note con campos: id, bookId (FK a Book con onDelete: Cascade), content, page (opcional), createdAt, updatedAt",
+        "El modelo ReadingSession fue removido",
         "`pnpm prisma generate` ejecuta sin errores",
-        "`pnpm prisma migrate dev` crea la base SQLite y aplica la migración inicial",
-        "tests/infrastructure/test_prisma_connection.test.ts verifica que se puede conectar, crear y leer un Book"
+        "`pnpm prisma migrate dev` aplica la migración sin borrar la base de datos",
+        "tests/infrastructure/test_prisma_connection.test.ts verifica creación, relaciones y borrado en cascada de Book y Note"
       ],
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 3,
       "name": "domain_entities",
       "title": "Entidades y puertos del dominio",
-      "description": "Definición de entidades de dominio (Book, ReadingSession), value objects, y las interfaces de repositorio (ports) que la capa de infraestructura implementará.",
+      "description": "Definición de entidades de dominio (Book, Note), value objects y las interfaces de repositorio (ports) que la capa de infraestructura implementará.",
       "acceptance": [
-        "Existe src/shared/domain/entities/Book.ts con la entidad Book y sus validaciones (rating entre 1-5, status válido)",
-        "Existe src/shared/domain/entities/ReadingSession.ts con la entidad ReadingSession y validación (endPage >= startPage)",
+        "Existe src/shared/domain/entities/Book.ts con la entidad Book y sus validaciones (rating entre 1-5, status válidos incluyendo PAUSED, coherencia entre currentPage y progressPercentage)",
+        "Existe src/shared/domain/entities/Note.ts con la entidad Note y validaciones (content no vacío, page >= 1 si se indica)",
         "Existe src/shared/domain/ports/BookRepository.ts con la interfaz: findAll, findById, create, update, delete, findByStatus",
-        "Existe src/shared/domain/ports/ReadingSessionRepository.ts con la interfaz: findByBookId, create, delete, getStatsForBook",
+        "Existe src/shared/domain/ports/NoteRepository.ts con la interfaz: findByBookId, create, delete, update",
         "Existe src/shared/domain/ports/BookSearchService.ts con la interfaz: searchByQuery(query: string) => BookSearchResult[]",
         "Las entidades son independientes de Prisma (no importan nada de @prisma/client)",
-        "tests/domain/test_book_entity.test.ts y test_reading_session_entity.test.ts cubren validaciones y creación"
+        "tests/domain/test_book_entity.test.ts y test_note_entity.test.ts cubren validaciones y lógica de cálculo de avance"
       ],
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 4,
@@ -69,131 +70,130 @@
       "description": "Implementación concreta de los puertos de repositorio usando Prisma. Incluye mappers entre entidades de dominio y modelos de Prisma.",
       "acceptance": [
         "Existe src/shared/infrastructure/persistence/PrismaBookRepository.ts que implementa BookRepository",
-        "Existe src/shared/infrastructure/persistence/PrismaReadingSessionRepository.ts que implementa ReadingSessionRepository",
+        "Existe src/shared/infrastructure/persistence/PrismaNoteRepository.ts que implementa NoteRepository",
         "Existen mappers en src/shared/infrastructure/persistence/mappers/ para convertir entre modelos Prisma y entidades de dominio",
         "tests/infrastructure/test_book_repository.test.ts cubre CRUD completo con una DB SQLite temporal",
-        "tests/infrastructure/test_reading_session_repository.test.ts cubre creación, consulta por libro, y estadísticas"
+        "tests/infrastructure/test_note_repository.test.ts cubre creación, consulta por libro y eliminación en cascada"
       ],
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 5,
       "name": "use_cases_books",
-      "title": "Casos de uso de libros",
-      "description": "Capa de aplicación con los casos de uso para gestión de libros: agregar, listar, actualizar estado, calificar, eliminar.",
+      "title": "Casos de uso de libros y progreso de lectura",
+      "description": "Capa de aplicación con los casos de uso para gestión de libros: agregar, listar, actualizar estado, actualizar progreso (por página o porcentaje directo), calificar, eliminar.",
       "acceptance": [
         "Existe src/shared/application/use-cases/AddBook.ts",
         "Existe src/shared/application/use-cases/ListBooks.ts con filtro opcional por status",
         "Existe src/shared/application/use-cases/UpdateBookStatus.ts",
+        "Existe src/shared/application/use-cases/UpdateBookProgress.ts (permite actualizar avance por currentPage o progressPercentage directo)",
         "Existe src/shared/application/use-cases/RateBook.ts",
         "Existe src/shared/application/use-cases/DeleteBook.ts",
         "Cada use case recibe sus dependencias por constructor (inyección de dependencias)",
         "tests/application/test_book_use_cases.test.ts cubre cada caso de uso con repositorio mock"
       ],
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 6,
-      "name": "use_cases_reading_sessions",
-      "title": "Casos de uso de sesiones de lectura",
-      "description": "Casos de uso para registrar y consultar sesiones de lectura: registrar sesión, obtener historial de un libro, obtener estadísticas.",
+      "name": "use_cases_notes",
+      "title": "Casos de uso de notas por libro",
+      "description": "Casos de uso para registrar, listar y eliminar notas asociadas a un libro.",
       "acceptance": [
-        "Existe src/shared/application/use-cases/LogReadingSession.ts",
-        "Existe src/shared/application/use-cases/GetBookReadingHistory.ts",
-        "Existe src/shared/application/use-cases/GetReadingStats.ts (páginas totales, tiempo total, promedio por sesión)",
-        "tests/application/test_reading_session_use_cases.test.ts cubre cada caso de uso"
+        "Existe src/shared/application/use-cases/AddNote.ts",
+        "Existe src/shared/application/use-cases/GetBookNotes.ts",
+        "Existe src/shared/application/use-cases/DeleteNote.ts",
+        "tests/application/test_note_use_cases.test.ts cubre cada caso de uso con repositorio mock"
       ],
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 7,
       "name": "ipc_layer",
-      "title": "Capa IPC (Main ↔ Renderer)",
-      "description": "Definición de los canales IPC tipados, handlers en el proceso main, y el preload bridge. El renderer consume una API tipada sin saber que usa IPC.",
+      "title": "Capa IPC (Main ↔ Renderer) y descarga local de portadas",
+      "description": "Definición de canales IPC tipados, handlers en el proceso main (incluyendo servicio para descargar portadas localmente a userData/covers) y el preload bridge.",
       "acceptance": [
         "Existe src/shared/infrastructure/ipc/channels.ts con los nombres de canales como constantes tipadas",
-        "Existe src/main/ipc/bookHandlers.ts que registra handlers de IPC para las operaciones de libros",
-        "Existe src/main/ipc/readingSessionHandlers.ts para las operaciones de sesiones",
+        "Existe src/main/ipc/bookHandlers.ts que registra handlers de IPC para libros y progreso",
+        "Existe src/main/ipc/noteHandlers.ts para las operaciones de notas",
+        "Existe servicio en main para descargar y persistir portadas en app.getPath('userData')/covers",
         "Existe src/preload/index.ts que expone las APIs via contextBridge",
-        "Existe src/renderer/src/services/bookService.ts que consume el preload bridge (el renderer no sabe de IPC)",
-        "La API del preload está tipada end-to-end (los tipos se comparten desde src/shared/)",
-        "tests/ipc/test_ipc_contracts.test.ts verifica que los tipos de request/response son consistentes"
+        "Existe src/renderer/src/services/bookService.ts y noteService.ts que consumen el preload bridge",
+        "tests/ipc/test_ipc_contracts.test.ts verifica consistencia de tipos"
       ],
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 8,
       "name": "ui_library_view",
       "title": "Vista de biblioteca (listado de libros)",
-      "description": "Pantalla principal que muestra la biblioteca del usuario. Grid/lista de libros con portada, título, autor, estado y rating. Filtros por estado.",
+      "description": "Pantalla principal que muestra la biblioteca del usuario. Grid/lista de libros con portada local, título, autor, barra de progreso, estado y rating. Filtros por estado.",
       "acceptance": [
         "Existe src/renderer/src/pages/LibraryPage.tsx como vista principal",
-        "Muestra los libros en un grid responsive con tarjetas que incluyen: portada (o placeholder), título, autor(es), estado (badge con color), y rating (estrellas)",
-        "Hay filtros funcionales por estado: Todos, Por Leer, Leyendo, Terminados, Abandonados",
+        "Muestra los libros en un grid responsive con tarjetas: portada local (o placeholder), título, autor(es), estado (badge), barra de progreso (%) y rating",
+        "Filtros por estado: Todos, Por Leer (TO_READ), Leyendo (READING), Pausados (PAUSED), Terminados (FINISHED), Abandonados (ABANDONED)",
         "Estado vacío con mensaje e ícono cuando no hay libros",
         "Se usa TanStack Query para el fetching de datos desde el servicio",
-        "El diseño usa Tailwind CSS con una estética moderna y dark mode"
+        "El diseño usa Tailwind CSS con estética moderna y dark mode"
       ],
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 9,
       "name": "ui_add_book_manual",
       "title": "Formulario de agregar libro manualmente",
-      "description": "Modal o vista para agregar un libro con los datos ingresados manualmente por el usuario.",
+      "description": "Modal o vista para agregar un libro con datos manuales ingresados por el usuario y opción de asignar portada.",
       "acceptance": [
         "Existe src/renderer/src/components/AddBookModal.tsx",
-        "Formulario con campos: título (requerido), autor(es), cantidad de páginas, ISBN, notas",
-        "Validación de formulario del lado del cliente (título no vacío, páginas > 0 si se ingresa)",
+        "Formulario con campos: título (requerido), autor(es), cantidad de páginas, estado inicial, ISBN",
+        "Validación de formulario en cliente",
         "Al guardar, el libro se persiste y aparece en la biblioteca",
-        "Feedback visual de éxito/error (toast o notificación)",
+        "Feedback visual de éxito/error",
         "El modal se puede cerrar con Escape o click fuera"
       ],
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 10,
       "name": "google_books_search",
-      "title": "Búsqueda de libros vía Google Books API",
-      "description": "Integración con Google Books API para buscar libros por título/autor/ISBN y auto-completar los datos del libro.",
+      "title": "Búsqueda de libros vía Google Books API con descarga de portada",
+      "description": "Integración con Google Books API para buscar libros por título/autor/ISBN, autocompletar formulario y descargar la portada localmente a la app.",
       "acceptance": [
         "Existe src/shared/infrastructure/api/GoogleBooksService.ts que implementa BookSearchService",
         "La búsqueda se dispara desde el modal de agregar libro con un campo de búsqueda",
         "Los resultados se muestran en una lista seleccionable con portada, título, autor(es) y año",
-        "Al seleccionar un resultado, se pre-llenan los campos del formulario (título, autores, portada, páginas, ISBN)",
-        "La API key es configurable desde un settings de la app (no hardcodeada en código)",
-        "Si no hay API key configurada, la búsqueda se deshabilita con un mensaje indicando cómo configurarla",
+        "Al seleccionar un resultado, se pre-llenan los campos y al guardar se descarga la portada a almacenamiento local",
+        "La API key es configurable desde settings (no hardcodeada)",
         "tests/infrastructure/test_google_books_service.test.ts cubre parsing de respuesta con datos mockeados"
       ],
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 11,
       "name": "ui_book_detail",
-      "title": "Vista de detalle del libro",
-      "description": "Pantalla de detalle que muestra toda la información de un libro, permite editar estado/rating/notas, y muestra el historial de sesiones de lectura.",
+      "title": "Vista de detalle del libro y gestión de notas",
+      "description": "Pantalla de detalle que muestra la información completa del libro, permite editar estado/rating, actualizar el progreso de lectura y gestionar notas.",
       "acceptance": [
         "Existe src/renderer/src/pages/BookDetailPage.tsx",
-        "Muestra: portada (grande), título, autores, páginas, ISBN, estado (editable), rating (editable con estrellas clickeables), notas (editables)",
-        "Sección de sesiones de lectura con tabla/lista mostrando fecha, páginas leídas, tiempo",
-        "Botón para registrar nueva sesión de lectura (abre modal)",
-        "Estadísticas del libro: páginas leídas / total, porcentaje de avance, tiempo total de lectura",
+        "Muestra: portada, título, autores, páginas, ISBN, estado (editable), rating, barra de progreso actual",
+        "Controles para actualizar progreso de lectura (por página o porcentaje directo) para estados READING, PAUSED y ABANDONED",
+        "Sección de notas con listado cronológico de ideas/reflexiones y opción de agregar/eliminar nota",
         "Botón de eliminar libro con confirmación",
         "Navegación de vuelta a la biblioteca"
       ],
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "id": 12,
-      "name": "ui_reading_session_form",
-      "title": "Formulario de sesión de lectura",
-      "description": "Modal para registrar una sesión de lectura asociada a un libro.",
+      "name": "ui_book_progress_and_notes_modals",
+      "title": "Modales de actualización de progreso y creación de notas",
+      "description": "Modales dedicados para actualizar el avance de lectura (permitiendo ingresar páginas leídas o porcentaje directo) y agregar nuevas notas.",
       "acceptance": [
-        "Existe src/renderer/src/components/LogReadingSessionModal.tsx",
-        "Campos: fecha (default hoy), página inicio, página fin, minutos de lectura (opcional)",
-        "Validación: página fin >= página inicio, fecha no futura, minutos >= 0",
-        "Al guardar, la sesión se persiste y se actualiza la vista de detalle",
-        "Si la página fin == total de páginas del libro, sugerir cambiar estado a FINISHED"
+        "Existe src/renderer/src/components/UpdateProgressModal.tsx con selector de modo (página actual vs porcentaje directo)",
+        "Validación: si se ingresa página, currentPage <= pageCount; si se ingresa porcentaje, 0 <= progressPercentage <= 100",
+        "Si el progreso llega al 100% o última página, sugerir cambiar estado a FINISHED",
+        "Existe src/renderer/src/components/AddNoteModal.tsx para registrar notas como ideas/reflexiones",
+        "Feedback visual y actualización reactiva en el detalle del libro"
       ],
       "status": "pending"
     },
@@ -201,13 +201,13 @@
       "id": 13,
       "name": "ui_dashboard_stats",
       "title": "Dashboard con estadísticas de lectura",
-      "description": "Vista de dashboard con estadísticas globales de lectura del usuario.",
+      "description": "Vista de dashboard con estadísticas globales de libros y progreso del usuario.",
       "acceptance": [
         "Existe src/renderer/src/pages/DashboardPage.tsx",
-        "Muestra: total de libros leídos, libros en curso, páginas totales leídas, tiempo total de lectura",
-        "Gráfico o visualización de libros leídos por mes (últimos 12 meses)",
-        "Lista de libros recientes (últimos 5 actualizados)",
-        "El dashboard es la landing page de la app o es accesible desde el sidebar"
+        "Muestra: total de libros leídos (FINISHED), libros en lectura activa (READING), libros pausados (PAUSED), páginas totales leídas calculadas por progreso",
+        "Gráfico o desglose de libros por estado",
+        "Lista de libros recientes (últimos actualizados)",
+        "El dashboard es accesible desde la navegación principal"
       ],
       "status": "pending"
     },
@@ -233,8 +233,8 @@
       "description": "Vista de settings para configurar la API key de Google Books y otras preferencias de la app.",
       "acceptance": [
         "Existe src/renderer/src/pages/SettingsPage.tsx",
-        "Campo para ingresar/editar la API key de Google Books con botón de test (verifica que la key funciona)",
-        "La API key se persiste de forma segura en el main process (electron-store o similar, no en localStorage)",
+        "Campo para ingresar/editar la API key de Google Books con botón de test",
+        "La API key se persiste de forma segura en el main process",
         "Toggle para dark/light mode",
         "Info de la versión de la app",
         "Las preferencias persisten entre reinicios de la app"
