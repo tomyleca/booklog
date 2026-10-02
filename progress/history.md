@@ -291,3 +291,26 @@
     - ADR: [docs/decisions/013-ui-dashboard-stats.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/decisions/013-ui-dashboard-stats.md).
   - Reportes de ciclo de vida: [progress/report_ui_dashboard_stats.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_ui_dashboard_stats.md) y [progress/review_ui_dashboard_stats.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_ui_dashboard_stats.md).
 
+---
+
+## Sesión 2026-10-01 — Feature #14: app_navigation_layout (Layout principal y navegación)
+
+- **Estado:** Completada (done)
+- **Logros:**
+  - Implementación del shell de aplicación, titlebar nativa personalizada y menú hamburguesa en React 18 y Electron:
+    - Ventana frameless nativa (`frame: false`) en Electron Main con IPC channels para control de ventana (`window:minimize`, `window:maximize`, `window:close`, `window:isMaximized`).
+    - Handlers en `src/main/ipc/windowHandlers.ts`, exposición en `src/preload/index.ts` y servicio tipado `windowService.ts`.
+    - Componente `TitleBar.tsx` con soporte de región de arrastre (`-webkit-app-region: drag`), botones con `no-drag`, branding BookLog y controles de minimizar, maximizar/restaurar y cerrar con feedback visual.
+    - Componente `NavigationDrawer.tsx` accesible mediante menú hamburguesa, soporte de teclado (Escape), clic en backdrop semitransparente, e indicador de ruta activa para Dashboard, Biblioteca y Configuración.
+    - Routing funcional en `App.tsx` con preservación del historial para retorno contextual desde `BookDetailPage` hacia su origen.
+    - Página inicial de Configuración (`SettingsPage.tsx`) con placeholder y estructura base preparada para la Feature #15.
+  - Pruebas automatizadas en Vitest:
+    - `tests/renderer/test_app_navigation_layout.test.ts` (16 pruebas cubriendo renderizado de TitleBar, drawer, controles de ventana, routing y accesibilidad).
+    - `tests/ipc/test_ipc_contracts.test.ts` (6 pruebas añadidas para contratos IPC de ventana).
+    - Total de la suite: 18 suites, 297 tests pasando al 100% en verde.
+  - Verificación rigurosa: `pnpm test`, `pnpm run typecheck`, `pnpm run lint` y `pnpm run build` limpios sin errores.
+  - Documentación técnica:
+    - Guía conceptual: [docs/guides/electron-custom-titlebar-layout.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/electron-custom-titlebar-layout.md).
+    - ADR: [docs/decisions/014-app-navigation-layout.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/decisions/014-app-navigation-layout.md).
+  - Reportes de ciclo de vida: [progress/report_app_navigation_layout.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_app_navigation_layout.md) y [progress/review_app_navigation_layout.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_app_navigation_layout.md).
+

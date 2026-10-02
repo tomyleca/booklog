@@ -16,6 +16,10 @@ vi.mock('electron', () => {
     },
     app: {
       getPath: vi.fn(() => os.tmpdir())
+    },
+    BrowserWindow: {
+      fromWebContents: vi.fn(),
+      getFocusedWindow: vi.fn()
     }
   }
 })
@@ -46,6 +50,7 @@ import { registerBookHandlers } from '../../src/main/ipc/bookHandlers.js'
 import { registerNoteHandlers } from '../../src/main/ipc/noteHandlers.js'
 import { registerCoverHandlers } from '../../src/main/ipc/coverHandlers.js'
 import { registerSearchHandlers } from '../../src/main/ipc/searchHandlers.js'
+import { registerWindowHandlers } from '../../src/main/ipc/windowHandlers.js'
 import type { BookSearchService, BookSearchResult } from '../../src/shared/domain/ports/BookSearchService.js'
 import { CoverStorageService } from '../../src/main/services/CoverStorageService.js'
 import { resolveCoverUrl } from '../../src/renderer/src/services/coverService.js'
@@ -784,6 +789,93 @@ describe('IPC Search Handlers (SEARCH.BOOKS)', () => {
     if (!res.success) {
       expect(res.error).toBe('Network error')
       expect(res.code).toBe(IPC_ERROR_CODES.INTERNAL_ERROR)
+    }
+  })
+})
+
+describe('Window IPC Handlers (WINDOW.*)', () => {
+  let maximizedState = false
+  let mockWindow: {
+    minimize: ReturnType<typeof vi.fn>
+    maximize: ReturnType<typeof vi.fn>
+    unmaximize: ReturnType<typeof vi.fn>
+    close: ReturnType<typeof vi.fn>
+    isMaximized: ReturnType<typeof vi.fn>
+  }
+
+  beforeEach(() => {
+    registeredHandlers.clear()
+    maximizedState = false
+    mockWindow = {
+      minimize: vi.fn(),
+      maximize: vi.fn(() => {
+        maximizedState = true
+      }),
+      unmaximize: vi.fn(() => {
+        maximizedState = false
+      }),
+      close: vi.fn(),
+      isMaximized: vi.fn(() => maximizedState)
+    }
+    // @ts-expect-error test mock
+    registerWindowHandlers(() => mockWindow)
+  })
+
+  async function invoke<T>(channel: string, args?: unknown): Promise<IpcResult<T>> {
+    const handler = registeredHandlers.get(channel)
+    if (!handler) {
+      throw new Error(`Handler not registered for channel: ${channel}`)
+    }
+    return (await handler(null, args)) as IpcResult<T>
+  }
+
+  it('should minimize window and return success', async () => {
+    const res = await invoke<void>(IPC_CHANNELS.WINDOW.MINIMIZE)
+    expect(res).toEqual({ success: true, data: undefined })
+    expect(mockWindow.minimize).toHaveBeenCalledTimes(1)
+  })
+
+  it('should maximize window when not maximized, returning true', async () => {
+    maximizedState = false
+    const res = await invoke<boolean>(IPC_CHANNELS.WINDOW.MAXIMIZE)
+    expect(res).toEqual({ success: true, data: true })
+    expect(mockWindow.maximize).toHaveBeenCalledTimes(1)
+    expect(mockWindow.unmaximize).not.toHaveBeenCalled()
+  })
+
+  it('should unmaximize window when already maximized, returning false', async () => {
+    maximizedState = true
+    const res = await invoke<boolean>(IPC_CHANNELS.WINDOW.MAXIMIZE)
+    expect(res).toEqual({ success: true, data: false })
+    expect(mockWindow.unmaximize).toHaveBeenCalledTimes(1)
+    expect(mockWindow.maximize).not.toHaveBeenCalled()
+  })
+
+  it('should close window and return success', async () => {
+    const res = await invoke<void>(IPC_CHANNELS.WINDOW.CLOSE)
+    expect(res).toEqual({ success: true, data: undefined })
+    expect(mockWindow.close).toHaveBeenCalledTimes(1)
+  })
+
+  it('should return window maximized status with isMaximized', async () => {
+    mockWindow.isMaximized.mockReturnValue(true)
+    const resTrue = await invoke<boolean>(IPC_CHANNELS.WINDOW.IS_MAXIMIZED)
+    expect(resTrue).toEqual({ success: true, data: true })
+
+    mockWindow.isMaximized.mockReturnValue(false)
+    const resFalse = await invoke<boolean>(IPC_CHANNELS.WINDOW.IS_MAXIMIZED)
+    expect(resFalse).toEqual({ success: true, data: false })
+  })
+
+  it('should return INTERNAL_ERROR if no active window can be resolved', async () => {
+    registeredHandlers.clear()
+    registerWindowHandlers(() => null)
+
+    const res = await invoke<void>(IPC_CHANNELS.WINDOW.MINIMIZE)
+    expect(res.success).toBe(false)
+    if (!res.success) {
+      expect(res.code).toBe(IPC_ERROR_CODES.INTERNAL_ERROR)
+      expect(res.error).toContain('No hay ventana activa')
     }
   })
 })

@@ -12,12 +12,15 @@ import {
 // Register privileged custom scheme before app is ready
 registerMediaScheme()
 
+let mainWindow: BrowserWindow | null = null
+
 function createWindow(): void {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  // Create the browser window frameless for custom TitleBar
+  mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
     show: false,
+    frame: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
@@ -27,7 +30,7 @@ function createWindow(): void {
   })
 
   mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
+    mainWindow?.show()
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -53,7 +56,7 @@ app.whenReady().then(() => {
 
   // Initialize database and IPC handlers
   const prisma = getPrismaClient()
-  registerIpcHandlers(prisma)
+  registerIpcHandlers(prisma, undefined, undefined, () => mainWindow)
 
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')

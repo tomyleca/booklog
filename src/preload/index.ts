@@ -51,6 +51,16 @@ export const api = {
   search: {
     books: (query: string): Promise<IpcResult<BookSearchResult[]>> =>
       ipcRenderer.invoke(IPC_CHANNELS.SEARCH.BOOKS, { query })
+  },
+  window: {
+    minimize: (): Promise<IpcResult<void>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.WINDOW.MINIMIZE),
+    maximize: (): Promise<IpcResult<boolean>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.WINDOW.MAXIMIZE),
+    close: (): Promise<IpcResult<void>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.WINDOW.CLOSE),
+    isMaximized: (): Promise<IpcResult<boolean>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.WINDOW.IS_MAXIMIZED)
   }
 }
 

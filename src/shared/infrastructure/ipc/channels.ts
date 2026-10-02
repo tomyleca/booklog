@@ -20,6 +20,12 @@ export const IPC_CHANNELS = {
   },
   SEARCH: {
     BOOKS: 'search:books'
+  },
+  WINDOW: {
+    MINIMIZE: 'window:minimize',
+    MAXIMIZE: 'window:maximize',
+    CLOSE: 'window:close',
+    IS_MAXIMIZED: 'window:isMaximized'
   }
 } as const
 
@@ -28,3 +34,4 @@ export type IpcChannel =
   | (typeof IPC_CHANNELS.NOTES)[keyof typeof IPC_CHANNELS.NOTES]
   | (typeof IPC_CHANNELS.COVERS)[keyof typeof IPC_CHANNELS.COVERS]
   | (typeof IPC_CHANNELS.SEARCH)[keyof typeof IPC_CHANNELS.SEARCH]
+  | (typeof IPC_CHANNELS.WINDOW)[keyof typeof IPC_CHANNELS.WINDOW]
