@@ -227,15 +227,17 @@ describe('Feature #14 - App Navigation & Layout (TitleBar, Drawer, App Routing)'
   })
 
   describe('SettingsPage Component', () => {
-    it('renders heading, description and configuration sections', () => {
+    it('renders heading, description and configuration sections', async () => {
       render(h(SettingsPage, {}))
 
-      expect(screen.getByTestId('settings-page')).toBeDefined()
-      expect(screen.getByText('Configuración')).toBeDefined()
-      expect(screen.getByText(/Preferencias Generales/i)).toBeDefined()
-      expect(screen.getByText(/Almacenamiento Local/i)).toBeDefined()
-      expect(screen.getByText(/Privacidad y Datos/i)).toBeDefined()
-      expect(screen.getByText(/BookLog v0.1.0/i)).toBeDefined()
+      await waitFor(() => {
+        expect(screen.getByTestId('settings-page')).toBeDefined()
+        expect(screen.getByText('Configuración')).toBeDefined()
+        expect(screen.getByText(/Preferencias Generales/i)).toBeDefined()
+        expect(screen.getByText(/Almacenamiento Local/i)).toBeDefined()
+        expect(screen.getByText(/Privacidad y Datos/i)).toBeDefined()
+        expect(screen.getByText(/BookLog v0.1.0/i)).toBeDefined()
+      })
     })
   })
 

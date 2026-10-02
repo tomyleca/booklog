@@ -239,7 +239,7 @@
         "Info de la versión de la app",
         "Las preferencias persisten entre reinicios de la app"
       ],
-      "status": "pending"
+      "status": "done"
     }
   ]
 }

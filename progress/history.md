@@ -314,3 +314,26 @@
     - ADR: [docs/decisions/014-app-navigation-layout.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/decisions/014-app-navigation-layout.md).
   - Reportes de ciclo de vida: [progress/report_app_navigation_layout.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_app_navigation_layout.md) y [progress/review_app_navigation_layout.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_app_navigation_layout.md).
 
+---
+
+## Sesión 2026-10-01 — Feature #15: settings_page (Página de configuración y persistencia de preferencias)
+
+- **Estado:** Completada (done)
+- **Logros:**
+  - Implementación completa de la vista de configuración y almacenamiento persistente en Electron y React 18:
+    - Servicio nativo en Main `SettingsStorageService` persistiendo en `app.getPath('userData')/settings.json`, con soporte de cifrado opcional para la API key mediante Electron `safeStorage`.
+    - Handlers IPC (`settings:get`, `settings:save`, `settings:testApiKey`, `settings:getAppInfo`) con contratos tipados `IpcResult`.
+    - Integración dinámica de la API key configurada en `GoogleBooksService` para búsquedas en la aplicación.
+    - Test interactivo de API key en vivo con timeout y verificación directa contra el endpoint de Google Books API.
+    - Selector reactivo de temas con 3 opciones ("Oscuro", "Claro", "Sistema"), sincronizando inmediatamente la clase `dark` en `document.documentElement` y persistiendo la preferencia.
+    - Metadatos completos del entorno: Versión de BookLog, Electron, Node, Chromium, repositorio y licencia.
+  - Pruebas automatizadas en Vitest:
+    - `tests/renderer/test_settings_page.test.ts` (14 pruebas completas).
+    - `tests/ipc/test_ipc_contracts.test.ts` (8 pruebas añadidas para contratos de configuración).
+    - Total de la suite del proyecto: 20 suites, 319 tests pasando al 100% en verde.
+  - Verificación rigurosa: `pnpm test`, `pnpm run typecheck`, `pnpm run lint` y `pnpm run build` limpios sin errores.
+  - Documentación técnica:
+    - Guía conceptual: [docs/guides/app-settings-persistence.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/app-settings-persistence.md).
+    - ADR: [docs/decisions/015-settings-page.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/decisions/015-settings-page.md).
+  - Reportes de ciclo de vida: [progress/report_settings_page.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_settings_page.md) y [progress/review_settings_page.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_settings_page.md).
+

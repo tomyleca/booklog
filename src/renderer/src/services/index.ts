@@ -3,4 +3,6 @@ export * from './noteService.js'
 export * from './coverService.js'
 export * from './searchService.js'
 export * from './windowService.js'
+export * from './settingsService.js'
+export * from './themeService.js'
 

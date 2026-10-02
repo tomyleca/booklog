@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Library, LayoutDashboard, Settings } from 'lucide-react'
 import { LibraryPage } from './pages/LibraryPage.js'
@@ -7,6 +7,8 @@ import { DashboardPage } from './pages/DashboardPage.js'
 import { SettingsPage } from './pages/SettingsPage.js'
 import { TitleBar } from './components/TitleBar.js'
 import { NavigationDrawer } from './components/NavigationDrawer.js'
+import { settingsService } from './services/settingsService.js'
+import { themeService } from './services/themeService.js'
 
 export type NavViewType = 'library' | 'dashboard' | 'settings'
 
@@ -46,6 +48,29 @@ export function App({ queryClient, initialView }: AppProps): JSX.Element {
   )
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
 
+  // Initialize and apply saved theme on startup
+  useEffect(() => {
+    let cleanup: (() => void) | undefined
+
+    settingsService
+      .get()
+      .then((res) => {
+        if (res.success && res.data) {
+          themeService.applyTheme(res.data.theme)
+          cleanup = themeService.setupSystemThemeListener(res.data.theme)
+        } else {
+          themeService.applyTheme('dark')
+        }
+      })
+      .catch(() => {
+        themeService.applyTheme('dark')
+      })
+
+    return () => {
+      cleanup?.()
+    }
+  }, [])
+
   const handleSelectBook = (bookId: number): void => {
     if (view.type === 'library' || view.type === 'dashboard' || view.type === 'settings') {
       setPreviousView(view.type)
@@ -64,7 +89,7 @@ export function App({ queryClient, initialView }: AppProps): JSX.Element {
 
   return (
     <QueryClientProvider client={client}>
-      <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
+      <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 flex flex-col transition-colors">
         {/* Custom Frameless TitleBar */}
         <TitleBar onToggleMenu={() => setIsDrawerOpen((prev) => !prev)} />
 
@@ -78,7 +103,7 @@ export function App({ queryClient, initialView }: AppProps): JSX.Element {
 
         {/* Main Navigation Bar */}
         <header
-          className="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-9 z-20"
+          className="border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur sticky top-9 z-20"
           data-testid="app-navigation"
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-12 flex items-center justify-between">
@@ -88,8 +113,8 @@ export function App({ queryClient, initialView }: AppProps): JSX.Element {
                 onClick={() => handleNavigate('library')}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   view.type === 'library'
-                    ? 'bg-indigo-600/15 text-indigo-400 border border-indigo-500/30'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    ? 'bg-indigo-600/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60'
                 }`}
                 data-testid="nav-library-button"
               >
@@ -101,8 +126,8 @@ export function App({ queryClient, initialView }: AppProps): JSX.Element {
                 onClick={() => handleNavigate('dashboard')}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   view.type === 'dashboard'
-                    ? 'bg-indigo-600/15 text-indigo-400 border border-indigo-500/30'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    ? 'bg-indigo-600/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60'
                 }`}
                 data-testid="nav-dashboard-button"
               >
@@ -114,8 +139,8 @@ export function App({ queryClient, initialView }: AppProps): JSX.Element {
                 onClick={() => handleNavigate('settings')}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   view.type === 'settings'
-                    ? 'bg-indigo-600/15 text-indigo-400 border border-indigo-500/30'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    ? 'bg-indigo-600/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60'
                 }`}
                 data-testid="nav-settings-button"
               >

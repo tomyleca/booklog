@@ -12,7 +12,11 @@ import type {
   UpdateBookProgressDTO,
   UpdateBookStatusDTO,
   UpdateNoteDTO,
-  BookSearchResult
+  BookSearchResult,
+  AppSettingsDTO,
+  SaveSettingsDTO,
+  TestApiKeyResultDTO,
+  AppInfoDTO
 } from '../shared/infrastructure/ipc/contracts.js'
 
 export const api = {
@@ -61,6 +65,16 @@ export const api = {
       ipcRenderer.invoke(IPC_CHANNELS.WINDOW.CLOSE),
     isMaximized: (): Promise<IpcResult<boolean>> =>
       ipcRenderer.invoke(IPC_CHANNELS.WINDOW.IS_MAXIMIZED)
+  },
+  settings: {
+    get: (): Promise<IpcResult<AppSettingsDTO>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.SETTINGS.GET),
+    save: (dto: SaveSettingsDTO): Promise<IpcResult<AppSettingsDTO>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.SETTINGS.SAVE, dto),
+    testApiKey: (apiKey: string): Promise<IpcResult<TestApiKeyResultDTO>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.SETTINGS.TEST_API_KEY, { apiKey }),
+    getAppInfo: (): Promise<IpcResult<AppInfoDTO>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.SETTINGS.GET_APP_INFO)
   }
 }
 

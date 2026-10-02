@@ -218,7 +218,7 @@ describe('Feature #11 - UI Book Detail View & Notes Management', () => {
       renderWithClient(h(BookDetailPage, { bookId: 42, onBack: vi.fn() }))
 
       await waitFor(() => {
-        expect(screen.getByTestId('detail-progress-page-input')).toBeDefined()
+        expect((screen.getByTestId('detail-progress-page-input') as HTMLInputElement).value).toBe('330')
       })
 
       const pageInput = screen.getByTestId('detail-progress-page-input') as HTMLInputElement

@@ -26,6 +26,12 @@ export const IPC_CHANNELS = {
     MAXIMIZE: 'window:maximize',
     CLOSE: 'window:close',
     IS_MAXIMIZED: 'window:isMaximized'
+  },
+  SETTINGS: {
+    GET: 'settings:get',
+    SAVE: 'settings:save',
+    TEST_API_KEY: 'settings:testApiKey',
+    GET_APP_INFO: 'settings:getAppInfo'
   }
 } as const
 
@@ -35,3 +41,4 @@ export type IpcChannel =
   | (typeof IPC_CHANNELS.COVERS)[keyof typeof IPC_CHANNELS.COVERS]
   | (typeof IPC_CHANNELS.SEARCH)[keyof typeof IPC_CHANNELS.SEARCH]
   | (typeof IPC_CHANNELS.WINDOW)[keyof typeof IPC_CHANNELS.WINDOW]
+  | (typeof IPC_CHANNELS.SETTINGS)[keyof typeof IPC_CHANNELS.SETTINGS]

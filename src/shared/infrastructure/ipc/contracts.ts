@@ -39,6 +39,7 @@ export const IPC_ERROR_CODES = {
   NOTE_NOT_FOUND: 'NOTE_NOT_FOUND',
   VALIDATION_ERROR: 'VALIDATION_ERROR',
   COVER_STORAGE_ERROR: 'COVER_STORAGE_ERROR',
+  SETTINGS_ERROR: 'SETTINGS_ERROR',
   INTERNAL_ERROR: 'INTERNAL_ERROR'
 } as const
 
@@ -66,6 +67,36 @@ export interface SaveCoverFromUrlDTO {
 
 export interface SaveCoverFromLocalDTO {
   filePath: string
+}
+
+export type AppTheme = 'dark' | 'light' | 'system'
+
+export interface AppSettingsDTO {
+  googleBooksApiKey: string
+  theme: AppTheme
+}
+
+export interface SaveSettingsDTO {
+  googleBooksApiKey?: string
+  theme?: AppTheme
+}
+
+export interface TestApiKeyDTO {
+  apiKey: string
+}
+
+export interface TestApiKeyResultDTO {
+  valid: boolean
+}
+
+export interface AppInfoDTO {
+  name: string
+  version: string
+  electronVersion: string
+  nodeVersion: string
+  chromeVersion: string
+  repositoryUrl: string
+  license: string
 }
 
 export {

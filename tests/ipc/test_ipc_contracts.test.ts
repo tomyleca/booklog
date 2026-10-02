@@ -15,7 +15,14 @@ vi.mock('electron', () => {
       })
     },
     app: {
-      getPath: vi.fn(() => os.tmpdir())
+      getPath: vi.fn(() => os.tmpdir()),
+      getVersion: vi.fn(() => '1.0.0'),
+      getName: vi.fn(() => 'BookLog')
+    },
+    safeStorage: {
+      isEncryptionAvailable: vi.fn(() => false),
+      encryptString: vi.fn((val: string) => Buffer.from(val)),
+      decryptString: vi.fn((buf: Buffer) => buf.toString())
     },
     BrowserWindow: {
       fromWebContents: vi.fn(),
@@ -51,9 +58,17 @@ import { registerNoteHandlers } from '../../src/main/ipc/noteHandlers.js'
 import { registerCoverHandlers } from '../../src/main/ipc/coverHandlers.js'
 import { registerSearchHandlers } from '../../src/main/ipc/searchHandlers.js'
 import { registerWindowHandlers } from '../../src/main/ipc/windowHandlers.js'
+import { registerSettingsHandlers } from '../../src/main/ipc/settingsHandlers.js'
+import { SettingsStorageService } from '../../src/main/services/SettingsStorageService.js'
 import type { BookSearchService, BookSearchResult } from '../../src/shared/domain/ports/BookSearchService.js'
 import { CoverStorageService } from '../../src/main/services/CoverStorageService.js'
 import { resolveCoverUrl } from '../../src/renderer/src/services/coverService.js'
+import type {
+  AppSettingsDTO,
+  SaveSettingsDTO,
+  TestApiKeyResultDTO,
+  AppInfoDTO
+} from '../../src/shared/infrastructure/ipc/contracts.js'
 
 class MockBookRepository implements BookRepository {
   public books: Map<number, Book> = new Map()
@@ -876,6 +891,156 @@ describe('Window IPC Handlers (WINDOW.*)', () => {
     if (!res.success) {
       expect(res.code).toBe(IPC_ERROR_CODES.INTERNAL_ERROR)
       expect(res.error).toContain('No hay ventana activa')
+    }
+  })
+})
+
+describe('Settings IPC Handlers (Feature #15: settings_page)', () => {
+  let tempDir: string
+  let settingsFile: string
+  let settingsService: SettingsStorageService
+  let mockFetch: ReturnType<typeof vi.fn>
+
+  const invoke = async <T>(channel: string, ...args: unknown[]): Promise<IpcResult<T>> => {
+    const handler = registeredHandlers.get(channel)
+    if (!handler) {
+      throw new Error(`Handler not found for channel: ${channel}`)
+    }
+    return (await handler({}, ...args)) as IpcResult<T>
+  }
+
+  beforeEach(() => {
+    registeredHandlers.clear()
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'booklog-settings-test-'))
+    settingsFile = path.join(tempDir, 'settings.json')
+    settingsService = new SettingsStorageService(settingsFile)
+    mockFetch = vi.fn()
+    registerSettingsHandlers(settingsService, mockFetch as unknown as typeof fetch)
+  })
+
+  afterEach(() => {
+    try {
+      fs.rmSync(tempDir, { recursive: true, force: true })
+    } catch {
+      // ignore
+    }
+  })
+
+  it('settings:get returns default settings when file does not exist', async () => {
+    const res = await invoke<AppSettingsDTO>(IPC_CHANNELS.SETTINGS.GET)
+    expect(res).toEqual({
+      success: true,
+      data: {
+        googleBooksApiKey: '',
+        theme: 'dark'
+      }
+    })
+  })
+
+  it('settings:save persists settings and settings:get reads them back', async () => {
+    const saveDto: SaveSettingsDTO = {
+      googleBooksApiKey: 'AIzaSyTestApiKey123',
+      theme: 'light'
+    }
+
+    const saveRes = await invoke<AppSettingsDTO>(IPC_CHANNELS.SETTINGS.SAVE, saveDto)
+    expect(saveRes).toEqual({
+      success: true,
+      data: {
+        googleBooksApiKey: 'AIzaSyTestApiKey123',
+        theme: 'light'
+      }
+    })
+
+    // Retrieve again
+    const getRes = await invoke<AppSettingsDTO>(IPC_CHANNELS.SETTINGS.GET)
+    expect(getRes).toEqual({
+      success: true,
+      data: {
+        googleBooksApiKey: 'AIzaSyTestApiKey123',
+        theme: 'light'
+      }
+    })
+  })
+
+  it('settings:save allows partial updates (only theme)', async () => {
+    await invoke<AppSettingsDTO>(IPC_CHANNELS.SETTINGS.SAVE, {
+      googleBooksApiKey: 'InitialKey',
+      theme: 'dark'
+    })
+
+    const partialRes = await invoke<AppSettingsDTO>(IPC_CHANNELS.SETTINGS.SAVE, {
+      theme: 'system'
+    })
+
+    expect(partialRes).toEqual({
+      success: true,
+      data: {
+        googleBooksApiKey: 'InitialKey',
+        theme: 'system'
+      }
+    })
+  })
+
+  it('settings:testApiKey returns valid true when Google Books API responds 200 OK', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ kind: 'books#volumes', totalItems: 1 })
+    })
+
+    const res = await invoke<TestApiKeyResultDTO>(IPC_CHANNELS.SETTINGS.TEST_API_KEY, {
+      apiKey: 'ValidKey123'
+    })
+
+    expect(res).toEqual({
+      success: true,
+      data: { valid: true }
+    })
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    expect(mockFetch.mock.calls[0][0]).toContain('key=ValidKey123')
+  })
+
+  it('settings:testApiKey returns error when Google Books API responds with 400/403', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      statusText: 'Bad Request'
+    })
+
+    const res = await invoke<TestApiKeyResultDTO>(IPC_CHANNELS.SETTINGS.TEST_API_KEY, {
+      apiKey: 'InvalidKey'
+    })
+
+    expect(res.success).toBe(false)
+    if (!res.success) {
+      expect(res.error).toBe('Clave de API inválida o cuota superada')
+    }
+  })
+
+  it('settings:testApiKey fails if key is empty or whitespace', async () => {
+    const res = await invoke<TestApiKeyResultDTO>(IPC_CHANNELS.SETTINGS.TEST_API_KEY, {
+      apiKey: '   '
+    })
+
+    expect(res.success).toBe(false)
+    if (!res.success) {
+      expect(res.error).toBe('Clave de API inválida o cuota superada')
+    }
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('settings:getAppInfo returns application and runtime metadata', async () => {
+    const res = await invoke<AppInfoDTO>(IPC_CHANNELS.SETTINGS.GET_APP_INFO)
+    expect(res.success).toBe(true)
+    if (res.success) {
+      expect(res.data.name).toBe('BookLog')
+      expect(res.data.version).toBeDefined()
+      expect(res.data.electronVersion).toBeDefined()
+      expect(res.data.nodeVersion).toBeDefined()
+      expect(res.data.chromeVersion).toBeDefined()
+      expect(res.data.license).toBe('MIT')
+      expect(res.data.repositoryUrl).toContain('github.com')
     }
   })
 })
