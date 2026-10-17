@@ -79,6 +79,7 @@ export class BookMapper {
       isbn: raw.isbn,
       status: raw.status as BookStatus,
       rating: raw.rating,
+      finishedAt: raw.finishedAt,
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
       notes: raw.notes ? raw.notes.map((n) => NoteMapper.toDomain(n)) : []
@@ -102,6 +103,7 @@ export class BookMapper {
       isbn: book.isbn ?? null,
       status: book.status as unknown as PrismaBookStatus,
       rating: book.rating ?? null,
+      finishedAt: book.finishedAt,
       createdAt: book.createdAt,
       updatedAt: book.updatedAt
     }

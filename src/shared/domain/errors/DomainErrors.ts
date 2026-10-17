@@ -22,3 +22,15 @@ export class InvalidProgressError extends DomainError {
     super(message)
   }
 }
+
+export class InvalidFinishedDateError extends DomainError {
+  constructor(message: string) {
+    super(message)
+  }
+}
+
+export class FutureFinishedDateError extends DomainError {
+  constructor() {
+    super('La fecha de terminado no puede ser posterior a hoy.')
+  }
+}

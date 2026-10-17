@@ -131,3 +131,66 @@ Para garantizar el cumplimiento de la regla de no alterar ni borrar jamás los d
   ```bash
   pnpm prisma studio
   ```
+
+---
+
+## 6. Migraciones con backfill de datos (feature #20)
+
+`prisma migrate dev` genera SQL a partir de la **diferencia de esquema**: sabe agregar una
+columna, pero no sabe qué *valor* debería tener en las filas que ya existen. Si agregamos
+`finishedAt DateTime?` a `Book`, todas las filas quedan con `NULL`, también los libros que
+ya estaban terminados. Prisma **no hace backfill solo**: hay que escribirlo.
+
+El flujo para una migración con datos es:
+
+1. Cambiar `schema.prisma` (`finishedAt DateTime?`).
+2. Generar la migración **sin aplicarla**:
+   ```bash
+   pnpm prisma migrate dev --create-only --name add_book_finished_at
+   ```
+3. Editar a mano `prisma/migrations/<timestamp>_add_book_finished_at/migration.sql` y
+   agregar el `UPDATE` después del `ALTER TABLE`:
+   ```sql
+   ALTER TABLE "Book" ADD COLUMN "finishedAt" DATETIME;
+
+   UPDATE "Book" SET "finishedAt" = "updatedAt"
+   WHERE "status" = 'FINISHED' AND "finishedAt" IS NULL;
+   ```
+4. Aplicarla con el flujo normal (aplica las pendientes y regenera el cliente):
+   ```bash
+   pnpm prisma migrate dev
+   ```
+
+```mermaid
+sequenceDiagram
+    participant Dev as Desarrollador
+    participant CLI as prisma migrate dev
+    participant SQL as migration.sql
+    participant DB as SQLite (dev.db)
+    Dev->>CLI: --create-only --name add_book_finished_at
+    CLI->>SQL: ALTER TABLE "Book" ADD COLUMN "finishedAt"
+    Note over CLI,DB: Todavía no se tocó la base
+    Dev->>SQL: agrega UPDATE ... SET finishedAt = updatedAt
+    Dev->>CLI: prisma migrate dev
+    CLI->>DB: ALTER TABLE + UPDATE (una sola vez)
+    CLI->>DB: registra la migración en _prisma_migrations
+    CLI->>CLI: prisma generate (cliente con finishedAt)
+```
+
+Puntos a tener en cuenta:
+
+- **Editar antes de aplicar.** Prisma guarda un checksum de cada `migration.sql`
+  aplicado; si se edita después, `migrate dev` detecta el cambio y propone resetear la
+  base (borrando los datos). Por eso `--create-only`.
+- **Idempotencia.** El `AND "finishedAt" IS NULL` hace que el `UPDATE` no pise nada si
+  por algún motivo se ejecuta sobre datos que ya tienen fecha.
+- **Copiar columnas en SQLite.** `SET "finishedAt" = "updatedAt"` copia el valor tal
+  cual está guardado, en el mismo formato que Prisma usa para `DateTime`, así que el
+  cliente lo lee sin conversiones.
+- **Los tests ejecutan el mismo SQL.** Los tests de infraestructura aplican las
+  migraciones partiendo el archivo por `;`. Por eso los comentarios del SQL no deben
+  llevar `;`. El test `tests/infrastructure/test_finished_date_persistence.test.ts`
+  aplica las migraciones anteriores, inserta libros "viejos", aplica la nueva y verifica
+  que sólo los FINISHED quedaron con `finishedAt = updatedAt`.
+- **Backfill en la migración vs. en código.** Hacerlo en la migración garantiza que corre
+  una sola vez, en orden y versionado junto al cambio de esquema (ver ADR-020).

@@ -28,6 +28,7 @@ model Book {
   isbn               String?
   status             BookStatus @default(TO_READ)
   rating             Int?
+  finishedAt         DateTime?
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
   notes              Note[]

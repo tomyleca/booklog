@@ -6,6 +6,7 @@ export const IPC_CHANNELS = {
     UPDATE_STATUS: 'books:updateStatus',
     UPDATE_PROGRESS: 'books:updateProgress',
     RATE: 'books:rate',
+    SET_FINISHED_DATE: 'books:setFinishedDate',
     DELETE: 'books:delete'
   },
   NOTES: {

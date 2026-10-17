@@ -4,6 +4,7 @@ import type { BookPrimitives } from '../../../shared/infrastructure/ipc/contract
 import { BookStatus } from '../../../shared/domain/entities/BookStatus.js'
 import { useCoverSource } from '../hooks/useCoverSource.js'
 import { getStatusConfig } from './statusConfig.js'
+import { formatFinishedDate } from './finishedDate.js'
 
 export interface BookCardProps {
   book: BookPrimitives
@@ -47,6 +48,9 @@ export function BookCard({ book, onClick }: BookCardProps): JSX.Element {
       )
     }
   }
+
+  const finishedDateLabel =
+    book.status === BookStatus.FINISHED ? formatFinishedDate(book.finishedAt) : ''
 
   const rating = book.rating ?? 0
   const isInteractive = Boolean(onClick)
@@ -170,6 +174,13 @@ export function BookCard({ book, onClick }: BookCardProps): JSX.Element {
                 })}
               </div>
             </div>
+
+            {finishedDateLabel && (
+              <p className="text-[11px] text-ink-muted" data-testid="book-finished-date">
+                Terminado el{' '}
+                <span className="font-mono text-ink">{finishedDateLabel}</span>
+              </p>
+            )}
 
             {showProgress && (
               <div className="flex items-center gap-2" data-testid="book-progress">

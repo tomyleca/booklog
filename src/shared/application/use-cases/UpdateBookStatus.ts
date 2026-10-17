@@ -1,10 +1,12 @@
-import type { Book, BookStatus } from '../../domain/index.js'
+import { Book, type BookStatus } from '../../domain/index.js'
 import type { BookRepository } from '../../domain/ports/BookRepository.js'
 import { BookNotFoundError } from '../errors/BookNotFoundError.js'
 
 export interface UpdateBookStatusDTO {
   id: number
   status: BookStatus
+  /** Día en que se terminó (`YYYY-MM-DD`). Sólo con status FINISHED; si se omite, hoy. */
+  finishedAt?: string
 }
 
 export class UpdateBookStatus {
@@ -16,7 +18,9 @@ export class UpdateBookStatus {
       throw new BookNotFoundError(dto.id)
     }
 
-    book.updateStatus(dto.status)
+    const finishedAt =
+      dto.finishedAt !== undefined ? Book.parseFinishedDate(dto.finishedAt) : undefined
+    book.updateStatus(dto.status, finishedAt)
     return await this.bookRepository.update(book)
   }
 }

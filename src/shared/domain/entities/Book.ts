@@ -1,6 +1,12 @@
 import { BookStatus, isBookStatus } from './BookStatus.js'
 import { Note, NotePrimitives } from './Note.js'
-import { InvalidBookError, InvalidProgressError } from '../errors/DomainErrors.js'
+import { isAfterToday, isValidDate, parseIsoDate, toCalendarNoon } from './CalendarDate.js'
+import {
+  FutureFinishedDateError,
+  InvalidBookError,
+  InvalidFinishedDateError,
+  InvalidProgressError
+} from '../errors/DomainErrors.js'
 
 export interface BookProps {
   id?: number
@@ -15,6 +21,7 @@ export interface BookProps {
   isbn?: string | null
   status?: BookStatus
   rating?: number | null
+  finishedAt?: Date | null
   createdAt?: Date
   updatedAt?: Date
   notes?: Note[]
@@ -33,6 +40,7 @@ export interface BookPrimitives {
   isbn?: string | null
   status: BookStatus
   rating?: number | null
+  finishedAt?: Date | null
   createdAt?: Date
   updatedAt?: Date
   notes?: NotePrimitives[]
@@ -51,6 +59,7 @@ export class Book {
   private _isbn?: string | null
   private _status: BookStatus
   private _rating?: number | null
+  private _finishedAt: Date | null
   private _createdAt: Date
   private _updatedAt: Date
   private _notes: Note[]
@@ -67,6 +76,7 @@ export class Book {
 
     this.validateRating(props.rating)
     this.validatePageCount(props.pageCount)
+    this.validateFinishedAt(props.finishedAt)
 
     this._id = props.id
     this._googleBooksId = props.googleBooksId ?? null
@@ -78,6 +88,7 @@ export class Book {
     this._isbn = props.isbn ?? null
     this._status = status
     this._rating = props.rating ?? null
+    this._finishedAt = props.finishedAt ?? null
     this._createdAt = props.createdAt ?? new Date()
     this._updatedAt = props.updatedAt ?? new Date()
     this._notes = props.notes ? [...props.notes] : []
@@ -105,13 +116,34 @@ export class Book {
     isbn?: string | null
     status?: BookStatus
     rating?: number | null
+    finishedAt?: Date | null
     notes?: Note[]
   }): Book {
+    const now = new Date()
+    // Un libro sólo nace con fecha de terminado si nace terminado; si no se indica, es hoy.
+    const finishedAt =
+      props.status === BookStatus.FINISHED
+        ? toCalendarNoon(props.finishedAt ?? now)
+        : null
     return new Book({
       ...props,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      finishedAt,
+      createdAt: now,
+      updatedAt: now
     })
+  }
+
+  /**
+   * Convierte el texto `YYYY-MM-DD` que llega por IPC en la fecha de terminado del dominio.
+   */
+  public static parseFinishedDate(value: string): Date {
+    const parsed = parseIsoDate(value)
+    if (!parsed) {
+      throw new InvalidFinishedDateError(
+        `La fecha de terminado "${String(value)}" no es una fecha válida (formato AAAA-MM-DD).`
+      )
+    }
+    return parsed
   }
 
   public static fromPrimitives(primitives: BookPrimitives): Book {
@@ -128,6 +160,7 @@ export class Book {
       isbn: primitives.isbn,
       status: primitives.status,
       rating: primitives.rating,
+      finishedAt: primitives.finishedAt ? new Date(primitives.finishedAt) : null,
       createdAt: primitives.createdAt ? new Date(primitives.createdAt) : undefined,
       updatedAt: primitives.updatedAt ? new Date(primitives.updatedAt) : undefined,
       notes: primitives.notes?.map((n) => Note.fromPrimitives(n))
@@ -148,6 +181,7 @@ export class Book {
       isbn: this._isbn ?? null,
       status: this._status,
       rating: this._rating ?? null,
+      finishedAt: this._finishedAt,
       createdAt: this._createdAt,
       updatedAt: this._updatedAt,
       notes: this._notes.map((n) => n.toPrimitives())
@@ -190,11 +224,26 @@ export class Book {
     this._updatedAt = new Date()
   }
 
-  public updateStatus(status: BookStatus): void {
+  /**
+   * Cambia el estado. Al pasar a FINISHED se asigna la fecha de terminado: la indicada o,
+   * si no se indica, hoy. Si el libro ya estaba FINISHED y no se indica fecha, se conserva
+   * la que tenía. Al salir de FINISHED la fecha se conserva (se sobrescribe al volver a
+   * terminarlo).
+   */
+  public updateStatus(status: BookStatus, finishedAt?: Date): void {
     this.validateStatus(status)
-    this._status = status
+    if (finishedAt !== undefined && status !== BookStatus.FINISHED) {
+      throw new InvalidFinishedDateError(
+        'Sólo se puede indicar la fecha de terminado al marcar el libro como terminado.'
+      )
+    }
 
     if (status === BookStatus.FINISHED) {
+      if (finishedAt !== undefined) {
+        this.assignFinishedAt(finishedAt)
+      } else if (this._status !== BookStatus.FINISHED) {
+        this._finishedAt = toCalendarNoon(new Date())
+      }
       this._progressPercentage = 100
       if (this._pageCount !== null && this._pageCount !== undefined) {
         this._currentPage = this._pageCount
@@ -202,7 +251,24 @@ export class Book {
     }
     // Note: When transitioning to TO_READ or other statuses, existing progress is preserved.
 
+    this._status = status
     this._updatedAt = new Date()
+  }
+
+  /** Edita la fecha de terminado de un libro que ya está terminado. */
+  public setFinishedDate(finishedAt: Date): void {
+    if (this._status !== BookStatus.FINISHED) {
+      throw new InvalidFinishedDateError(
+        'Sólo se puede editar la fecha de terminado de un libro terminado.'
+      )
+    }
+    this.assignFinishedAt(finishedAt)
+    this._updatedAt = new Date()
+  }
+
+  private assignFinishedAt(finishedAt: Date): void {
+    this.validateFinishedAt(finishedAt)
+    this._finishedAt = toCalendarNoon(finishedAt)
   }
 
   public updateRating(rating: number | null | undefined): void {
@@ -244,6 +310,16 @@ export class Book {
       if (typeof rating !== 'number' || !Number.isInteger(rating) || rating < 1 || rating > 5) {
         throw new InvalidBookError('La calificación debe ser un número entero entre 1 y 5.')
       }
+    }
+  }
+
+  private validateFinishedAt(finishedAt?: Date | null): void {
+    if (finishedAt === undefined || finishedAt === null) return
+    if (!isValidDate(finishedAt)) {
+      throw new InvalidFinishedDateError('La fecha de terminado no es una fecha válida.')
+    }
+    if (isAfterToday(finishedAt)) {
+      throw new FutureFinishedDateError()
     }
   }
 
@@ -346,6 +422,10 @@ export class Book {
 
   get rating(): number | null | undefined {
     return this._rating
+  }
+
+  get finishedAt(): Date | null {
+    return this._finishedAt
   }
 
   get createdAt(): Date {

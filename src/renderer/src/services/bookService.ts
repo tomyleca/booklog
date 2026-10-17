@@ -4,6 +4,7 @@ import type {
   IpcResult,
   ListBooksDTO,
   RateBookDTO,
+  SetFinishedDateDTO,
   UpdateBookProgressDTO,
   UpdateBookStatusDTO
 } from '../../../shared/infrastructure/ipc/contracts.js'
@@ -25,10 +26,17 @@ export const bookService = {
 
   async updateStatus(
     dtoOrId: UpdateBookStatusDTO | number,
-    maybeStatus?: BookStatus
+    maybeStatus?: BookStatus,
+    maybeFinishedAt?: string
   ): Promise<IpcResult<BookPrimitives>> {
     const dto: UpdateBookStatusDTO =
-      typeof dtoOrId === 'number' ? { id: dtoOrId, status: maybeStatus! } : dtoOrId
+      typeof dtoOrId === 'number'
+        ? {
+            id: dtoOrId,
+            status: maybeStatus!,
+            ...(maybeFinishedAt !== undefined ? { finishedAt: maybeFinishedAt } : {})
+          }
+        : dtoOrId
     return await window.api.books.updateStatus(dto)
   },
 
@@ -46,6 +54,10 @@ export const bookService = {
 
   async rate(dto: RateBookDTO): Promise<IpcResult<BookPrimitives>> {
     return await window.api.books.rate(dto)
+  },
+
+  async setFinishedDate(dto: SetFinishedDateDTO): Promise<IpcResult<BookPrimitives>> {
+    return await window.api.books.setFinishedDate(dto)
   },
 
   async delete(id: number): Promise<IpcResult<void>> {

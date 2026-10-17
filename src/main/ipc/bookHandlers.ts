@@ -9,7 +9,8 @@ import {
   type ListBooksDTO,
   type UpdateBookStatusDTO,
   type UpdateBookProgressDTO,
-  type RateBookDTO
+  type RateBookDTO,
+  type SetFinishedDateDTO
 } from '../../shared/infrastructure/ipc/contracts.js'
 import type { BookRepository } from '../../shared/domain/ports/BookRepository.js'
 import { ListBooks } from '../../shared/application/use-cases/ListBooks.js'
@@ -18,6 +19,7 @@ import { AddBook } from '../../shared/application/use-cases/AddBook.js'
 import { UpdateBookStatus } from '../../shared/application/use-cases/UpdateBookStatus.js'
 import { UpdateBookProgress } from '../../shared/application/use-cases/UpdateBookProgress.js'
 import { RateBook } from '../../shared/application/use-cases/RateBook.js'
+import { SetFinishedDate } from '../../shared/application/use-cases/SetFinishedDate.js'
 import { DeleteBook } from '../../shared/application/use-cases/DeleteBook.js'
 
 export function registerBookHandlers(bookRepository: BookRepository): void {
@@ -78,6 +80,16 @@ export function registerBookHandlers(bookRepository: BookRepository): void {
   ipcMain.handle(IPC_CHANNELS.BOOKS.RATE, async (_, dto: RateBookDTO) => {
     try {
       const useCase = new RateBook(bookRepository)
+      const book = await useCase.execute(dto)
+      return ipcSuccess(book.toPrimitives())
+    } catch (error) {
+      return formatIpcError(error)
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.BOOKS.SET_FINISHED_DATE, async (_, dto: SetFinishedDateDTO) => {
+    try {
+      const useCase = new SetFinishedDate(bookRepository)
       const book = await useCase.execute(dto)
       return ipcSuccess(book.toPrimitives())
     } catch (error) {

@@ -442,3 +442,33 @@
     - ADR: [docs/decisions/019-fix-cover-display.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/decisions/019-fix-cover-display.md).
     - Guía actualizada: [docs/guides/electron-ipc-bridge.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/electron-ipc-bridge.md), con la sección "Relación con la CSP".
   - Reportes de ciclo de vida: [progress/report_fix_cover_display.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_fix_cover_display.md) y [progress/review_fix_cover_display.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_fix_cover_display.md). La review pidió quitar un comentario huérfano en BookDetailPage; ya se aplicó.
+
+## Sesión 2026-10-17 — Feature #20: finished_date (Fecha de terminado de un libro)
+
+- **Estado:** Completada (done)
+- **Logros:**
+  - Columna `finishedAt DateTime?` en `Book`.
+    - Migración `20261017212053_add_book_finished_at`, generada con `--create-only` y editada a mano para hacer backfill (`finishedAt = updatedAt` en los libros FINISHED).
+    - Aplicada a dev.db por el flujo normal, sin pérdida de datos.
+  - Formato de fecha:
+    - Se guarda el día calendario a las 12:00 hora local; en IPC e `<input type="date">` viaja como `YYYY-MM-DD`.
+    - "Hoy" se calcula con el reloj local (`CalendarDate.ts`).
+    - Las fechas futuras se rechazan con errores de dominio tipados (`FutureFinishedDateError`, `InvalidFinishedDateError`).
+  - Dominio: `Book.finishedAt`, `updateStatus(status, finishedAt?)` y `setFinishedDate`.
+    - Al pasar a FINISHED sin fecha se asigna hoy (cubre el autocompletado al 100%).
+    - La fecha se conserva al salir de FINISHED y se sobrescribe al volver a terminar el libro.
+  - Use case nuevo `SetFinishedDate` y canal IPC `books:setFinishedDate`. `AddBook` y `UpdateBookStatus` aceptan `finishedAt`.
+  - UI:
+    - Con el componente nuevo `FinishedDateField` (hoy precargado) se pide la fecha en AddBookModal, en UpdateProgressModal y al confirmar "Terminado" en el detalle.
+    - En el detalle la fecha se puede editar.
+    - La ficha del estante muestra la fecha si el libro está FINISHED.
+    - El dashboard muestra terminados en el año y en el mes, y terminados recientes ordenados por `finishedAt`.
+  - Pruebas automatizadas en Vitest:
+    - 5 suites nuevas (dominio, use cases, persistencia/backfill con DB temporal, IPC y renderer) y 3 tests ajustados.
+    - Total de la suite: 29 suites, 489 tests en verde.
+  - Verificación: `.\init.ps1`, `pnpm typecheck`, `pnpm lint:check` y `pnpm build` limpios.
+  - Documentación técnica:
+    - ADR: [docs/decisions/020-finished-date.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/decisions/020-finished-date.md).
+    - Guía actualizada: [docs/guides/prisma-sqlite-setup.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/prisma-sqlite-setup.md), §6 "Migraciones con backfill de datos".
+  - Reportes de ciclo de vida: [progress/report_finished_date.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_finished_date.md) y [progress/review_finished_date.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_finished_date.md) (APPROVED).
+  - Pendiente fuera de alcance: la base empaquetada (`userData/booklog.db`) no aplica migraciones al arrancar.

@@ -4,6 +4,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BookStatus } from '../../src/shared/domain/entities/BookStatus.js'
+import { todayIsoDate } from '../../src/shared/domain/entities/CalendarDate.js'
 import type { BookPrimitives } from '../../src/shared/infrastructure/ipc/contracts.js'
 import { UpdateProgressModal } from '../../src/renderer/src/components/UpdateProgressModal.js'
 import { AddNoteModal } from '../../src/renderer/src/components/AddNoteModal.js'
@@ -268,7 +269,8 @@ describe('Feature #12: ui_book_progress_and_notes_modals', () => {
       await waitFor(() => {
         expect(window.api.books.updateStatus).toHaveBeenCalledWith({
           id: 10,
-          status: BookStatus.FINISHED
+          status: BookStatus.FINISHED,
+          finishedAt: todayIsoDate()
         })
       })
 

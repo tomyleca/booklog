@@ -349,6 +349,7 @@ describe('Book Domain Entity', () => {
         isbn: '978-0321146533',
         status: BookStatus.READING,
         rating: 5,
+        finishedAt: null,
         createdAt,
         updatedAt,
         notes: [

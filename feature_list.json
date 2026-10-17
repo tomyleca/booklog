@@ -324,7 +324,7 @@
         "Dashboard: estadística de terminados en el año/mes actual basada en finishedAt y terminados recientes ordenados por finishedAt",
         "Tests por capa (dominio, use cases, repositorio, IPC, renderer); pnpm test, typecheck, lint:check y build en verde"
       ],
-      "status": "pending"
+      "status": "done"
     }
   ]
 }

@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BookDetailPage } from '../../src/renderer/src/pages/BookDetailPage.js'
 import { App } from '../../src/renderer/src/App.js'
 import { BookStatus } from '../../src/shared/domain/entities/BookStatus.js'
+import { todayIsoDate } from '../../src/shared/domain/entities/CalendarDate.js'
 import type { BookPrimitives, NotePrimitives } from '../../src/shared/infrastructure/ipc/contracts.js'
 
 const h = React.createElement
@@ -329,12 +330,40 @@ describe('Feature #11 - UI Book Detail View & Notes Management', () => {
       })
 
       const statusSelect = screen.getByTestId('detail-status-select')
-      fireEvent.change(statusSelect, { target: { value: BookStatus.FINISHED } })
+      fireEvent.change(statusSelect, { target: { value: BookStatus.PAUSED } })
 
       await waitFor(() => {
         expect(window.api.books.updateStatus).toHaveBeenCalledWith({
           id: 42,
-          status: BookStatus.FINISHED
+          status: BookStatus.PAUSED
+        })
+      })
+    })
+
+    it('asks for the finished date (today by default) before marking as FINISHED', async () => {
+      renderWithClient(h(BookDetailPage, { bookId: 42, onBack: vi.fn() }))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('detail-status-select')).toBeDefined()
+      })
+
+      fireEvent.change(screen.getByTestId('detail-status-select'), {
+        target: { value: BookStatus.FINISHED }
+      })
+
+      const dateInput = screen.getByTestId(
+        'detail-confirm-finished-date-input'
+      ) as HTMLInputElement
+      expect(dateInput.value).toBe(todayIsoDate())
+      expect(window.api.books.updateStatus).not.toHaveBeenCalled()
+
+      fireEvent.click(screen.getByTestId('detail-confirm-finish-button'))
+
+      await waitFor(() => {
+        expect(window.api.books.updateStatus).toHaveBeenCalledWith({
+          id: 42,
+          status: BookStatus.FINISHED,
+          finishedAt: todayIsoDate()
         })
       })
     })

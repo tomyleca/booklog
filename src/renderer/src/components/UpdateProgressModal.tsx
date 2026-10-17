@@ -12,6 +12,8 @@ import {
 import { BookStatus } from '../../../shared/domain/entities/BookStatus.js'
 import type { BookPrimitives } from '../../../shared/infrastructure/ipc/contracts.js'
 import { bookService } from '../services/bookService.js'
+import { FinishedDateField } from './FinishedDateField.js'
+import { defaultFinishedDateInput, validateFinishedDateInput } from './finishedDate.js'
 
 export type ProgressMode = 'page' | 'percentage'
 
@@ -35,6 +37,10 @@ export function UpdateProgressModal({
   const [pageInput, setPageInput] = useState<number | ''>(book.currentPage ?? 0)
   const [percentageInput, setPercentageInput] = useState<number | ''>(book.progressPercentage ?? 0)
   const [markAsFinished, setMarkAsFinished] = useState(true)
+  const [finishedDate, setFinishedDate] = useState(() =>
+    defaultFinishedDateInput(book.status === BookStatus.FINISHED ? book.finishedAt : null)
+  )
+  const [finishedDateError, setFinishedDateError] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   // Reset local state when modal opens
@@ -44,6 +50,11 @@ export function UpdateProgressModal({
       setPageInput(book.currentPage ?? 0)
       setPercentageInput(book.progressPercentage ?? 0)
       setMarkAsFinished(true)
+      // Un libro que ya estaba terminado conserva su fecha; si no, se propone hoy.
+      setFinishedDate(
+        defaultFinishedDateInput(book.status === BookStatus.FINISHED ? book.finishedAt : null)
+      )
+      setFinishedDateError(null)
       setErrorMessage(null)
     }
   }, [isOpen, book, hasPageCount])
@@ -152,6 +163,15 @@ export function UpdateProgressModal({
         throw new Error('Identificador de libro inválido')
       }
       const bookId = book.id
+      const shouldMarkFinished = isCompletionReached && markAsFinished
+
+      if (shouldMarkFinished) {
+        const dateError = validateFinishedDateInput(finishedDate)
+        if (dateError) {
+          setFinishedDateError(dateError)
+          throw new Error(dateError)
+        }
+      }
 
       if (mode === 'page') {
         if (pageInput === '' || isNaN(Number(pageInput))) {
@@ -170,8 +190,12 @@ export function UpdateProgressModal({
           throw new Error(res.error || 'Error al actualizar el progreso de lectura')
         }
 
-        if (isCompletionReached && markAsFinished) {
-          const statusRes = await bookService.updateStatus(bookId, BookStatus.FINISHED)
+        if (shouldMarkFinished) {
+          const statusRes = await bookService.updateStatus(
+            bookId,
+            BookStatus.FINISHED,
+            finishedDate
+          )
           if (!statusRes.success) {
             throw new Error(statusRes.error || 'Error al marcar el libro como terminado')
           }
@@ -194,8 +218,12 @@ export function UpdateProgressModal({
           throw new Error(res.error || 'Error al actualizar el progreso de lectura')
         }
 
-        if (isCompletionReached && markAsFinished) {
-          const statusRes = await bookService.updateStatus(bookId, BookStatus.FINISHED)
+        if (shouldMarkFinished) {
+          const statusRes = await bookService.updateStatus(
+            bookId,
+            BookStatus.FINISHED,
+            finishedDate
+          )
           if (!statusRes.success) {
             throw new Error(statusRes.error || 'Error al marcar el libro como terminado')
           }
@@ -325,7 +353,7 @@ export function UpdateProgressModal({
         </div>
 
         {/* Input Form */}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
           {mode === 'page' ? (
             <div className="flex flex-col gap-2">
               <label
@@ -416,6 +444,19 @@ export function UpdateProgressModal({
                   />
                   <span>¿Marcar libro como terminado (FINISHED)?</span>
                 </label>
+                {markAsFinished && (
+                  <FinishedDateField
+                    id="modal-finished-date-input"
+                    value={finishedDate}
+                    onChange={(value) => {
+                      setFinishedDate(value)
+                      setFinishedDateError(null)
+                      setErrorMessage(null)
+                    }}
+                    error={finishedDateError}
+                    testId="modal-finished-date-input"
+                  />
+                )}
               </div>
             </div>
           )}

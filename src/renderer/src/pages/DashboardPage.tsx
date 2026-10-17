@@ -10,11 +10,13 @@ import {
   PauseCircle,
   Bookmark,
   ChevronRight,
-  BookMarked
+  BookMarked,
+  CalendarCheck
 } from 'lucide-react'
 import { bookService } from '../services/bookService.js'
 import { useCoverSource } from '../hooks/useCoverSource.js'
 import { STATUS_CONFIG, getStatusConfig } from '../components/statusConfig.js'
+import { formatFinishedDate } from '../components/finishedDate.js'
 import { BookStatus } from '../../../shared/domain/entities/BookStatus.js'
 import type { BookPrimitives } from '../../../shared/infrastructure/ipc/contracts.js'
 
@@ -72,6 +74,87 @@ export function sortRecentBooks(books: BookPrimitives[]): BookPrimitives[] {
       return timeB - timeA
     })
     .slice(0, 5)
+}
+
+function finishedTime(book: BookPrimitives): number | null {
+  if (book.status !== BookStatus.FINISHED || !book.finishedAt) return null
+  const time = new Date(book.finishedAt).getTime()
+  return Number.isNaN(time) ? null : time
+}
+
+/**
+ * Cuenta los libros terminados (status FINISHED) cuya fecha de terminado cae en el año y en
+ * el mes actuales, según el calendario LOCAL de `now`.
+ */
+export function countFinishedInPeriod(
+  books: BookPrimitives[],
+  now: Date = new Date()
+): { year: number; month: number } {
+  let year = 0
+  let month = 0
+  for (const book of books) {
+    const time = finishedTime(book)
+    if (time === null) continue
+    const finished = new Date(time)
+    if (finished.getFullYear() !== now.getFullYear()) continue
+    year++
+    if (finished.getMonth() === now.getMonth()) month++
+  }
+  return { year, month }
+}
+
+/**
+ * Libros terminados ordenados por fecha de terminado (más reciente primero), hasta 5.
+ */
+export function sortRecentlyFinishedBooks(books: BookPrimitives[]): BookPrimitives[] {
+  return books
+    .filter((book) => finishedTime(book) !== null)
+    .sort((a, b) => (finishedTime(b) ?? 0) - (finishedTime(a) ?? 0))
+    .slice(0, 5)
+}
+
+function FinishedBookItem({
+  book,
+  onSelectBook
+}: {
+  book: BookPrimitives
+  onSelectBook?: (bookId: number) => void
+}): JSX.Element {
+  const select = (): void => {
+    if (book.id !== undefined && onSelectBook) {
+      onSelectBook(book.id)
+    }
+  }
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      data-testid="recent-finished-item"
+      data-book-id={book.id}
+      onClick={select}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          select()
+        }
+      }}
+      className="flex items-center justify-between gap-3 px-3 py-2 rounded-md bg-card/40 hover:bg-shelf/80 border border-rule/50 hover:border-rule-strong transition-all cursor-pointer group focus-visible:outline-2 focus-visible:outline-accent"
+    >
+      <div className="min-w-0">
+        <h4 className="text-sm font-semibold text-ink group-hover:text-accent truncate transition-colors">
+          {book.title}
+        </h4>
+        <p className="text-xs text-ink-muted truncate">{book.authors || 'Autor desconocido'}</p>
+      </div>
+      <span
+        className="shrink-0 text-xs font-mono text-status-finished"
+        data-testid="recent-finished-date"
+      >
+        {formatFinishedDate(book.finishedAt)}
+      </span>
+    </div>
+  )
 }
 
 function RecentBookItem({
@@ -190,7 +273,10 @@ export function DashboardPage({ onSelectBook }: DashboardPageProps = {}): JSX.El
         toReadCount: 0,
         abandonedCount: 0,
         totalPagesRead: 0,
-        recentBooks: []
+        recentBooks: [],
+        finishedThisYear: 0,
+        finishedThisMonth: 0,
+        recentlyFinished: []
       }
     }
 
@@ -224,6 +310,7 @@ export function DashboardPage({ onSelectBook }: DashboardPageProps = {}): JSX.El
     }
 
     const recent = sortRecentBooks(books)
+    const finishedInPeriod = countFinishedInPeriod(books)
 
     return {
       totalBooks: books.length,
@@ -233,9 +320,14 @@ export function DashboardPage({ onSelectBook }: DashboardPageProps = {}): JSX.El
       toReadCount: toRead,
       abandonedCount: abandoned,
       totalPagesRead: totalPages,
-      recentBooks: recent
+      recentBooks: recent,
+      finishedThisYear: finishedInPeriod.year,
+      finishedThisMonth: finishedInPeriod.month,
+      recentlyFinished: sortRecentlyFinishedBooks(books)
     }
   }, [books])
+
+  const currentYear = new Date().getFullYear()
 
   const orderedStatuses: BookStatus[] = [
     BookStatus.FINISHED,
@@ -435,6 +527,63 @@ export function DashboardPage({ onSelectBook }: DashboardPageProps = {}): JSX.El
                     </div>
                   </div>
                 </div>
+
+                {/* Finished Timeline (por fecha de terminado) */}
+                <section className="p-6 rounded-md ficha" data-testid="finished-timeline">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-base font-semibold text-ink">Libros terminados</h3>
+                      <p className="text-xs text-ink-muted mt-0.5">
+                        Según la fecha en que terminaste cada libro
+                      </p>
+                    </div>
+                    <CalendarCheck className="w-4 h-4 text-status-finished" />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-1 gap-3">
+                      <div className="p-3 rounded-md bg-card/60 border border-rule">
+                        <span className="text-xs font-medium text-ink-muted">
+                          En {currentYear}
+                        </span>
+                        <p
+                          className="text-2xl font-display font-bold text-status-finished mt-1"
+                          data-testid="stat-finished-this-year"
+                        >
+                          {stats.finishedThisYear}
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-md bg-card/60 border border-rule">
+                        <span className="text-xs font-medium text-ink-muted">Este mes</span>
+                        <p
+                          className="text-2xl font-display font-bold text-status-finished mt-1"
+                          data-testid="stat-finished-this-month"
+                        >
+                          {stats.finishedThisMonth}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-2 flex flex-col gap-2" data-testid="recent-finished-list">
+                      <span className="text-xs font-medium text-ink-muted">
+                        Terminados recientemente
+                      </span>
+                      {stats.recentlyFinished.length === 0 ? (
+                        <p className="text-xs text-ink-faint" data-testid="recent-finished-empty">
+                          Todavía no terminaste ningún libro.
+                        </p>
+                      ) : (
+                        stats.recentlyFinished.map((book) => (
+                          <FinishedBookItem
+                            key={book.id ?? book.title}
+                            book={book}
+                            onSelectBook={onSelectBook}
+                          />
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </section>
 
                 {/* Status Breakdown Section */}
                 <section

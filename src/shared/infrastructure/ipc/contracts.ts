@@ -10,6 +10,7 @@ import type { ListBooksDTO } from '../../application/use-cases/ListBooks.js'
 import type { UpdateBookStatusDTO } from '../../application/use-cases/UpdateBookStatus.js'
 import type { UpdateBookProgressDTO } from '../../application/use-cases/UpdateBookProgress.js'
 import type { RateBookDTO } from '../../application/use-cases/RateBook.js'
+import type { SetFinishedDateDTO } from '../../application/use-cases/SetFinishedDate.js'
 import type { DeleteBookDTO } from '../../application/use-cases/DeleteBook.js'
 import type { GetBookByIdDTO } from '../../application/use-cases/GetBookById.js'
 import type { AddNoteDTO } from '../../application/use-cases/AddNote.js'
@@ -108,6 +109,7 @@ export {
   UpdateBookStatusDTO,
   UpdateBookProgressDTO,
   RateBookDTO,
+  SetFinishedDateDTO,
   DeleteBookDTO,
   GetBookByIdDTO,
   AddNoteDTO,

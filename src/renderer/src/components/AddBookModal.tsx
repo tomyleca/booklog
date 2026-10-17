@@ -15,6 +15,8 @@ import { BookStatus } from '../../../shared/domain/entities/BookStatus.js'
 import { bookService } from '../services/bookService.js'
 import { searchService } from '../services/searchService.js'
 import type { BookSearchResult } from '../../../shared/domain/ports/BookSearchService.js'
+import { FinishedDateField } from './FinishedDateField.js'
+import { defaultFinishedDateInput, validateFinishedDateInput } from './finishedDate.js'
 
 export interface AddBookFormValues {
   title: string
@@ -59,6 +61,8 @@ export function AddBookModal({
   const [pageCount, setPageCount] = useState('')
   const [isbn, setIsbn] = useState('')
   const [status, setStatus] = useState<BookStatus>(BookStatus.TO_READ)
+  const [finishedDate, setFinishedDate] = useState(() => defaultFinishedDateInput())
+  const [finishedDateError, setFinishedDateError] = useState<string | null>(null)
   const [coverUrl, setCoverUrl] = useState('')
   const [googleBooksId, setGoogleBooksId] = useState<string | null>(null)
 
@@ -102,6 +106,8 @@ export function AddBookModal({
       )
       setIsbn(initialValues?.isbn ?? '')
       setStatus(initialValues?.status ?? BookStatus.TO_READ)
+      setFinishedDate(defaultFinishedDateInput())
+      setFinishedDateError(null)
       setCoverUrl(initialValues?.coverUrl ?? '')
       setGoogleBooksId(initialValues?.googleBooksId ?? null)
 
@@ -283,6 +289,7 @@ export function AddBookModal({
         pageCount: parsedPageCount,
         isbn: isbn.trim() || null,
         status,
+        ...(status === BookStatus.FINISHED ? { finishedAt: finishedDate } : {}),
         coverUrl: coverUrlToSave,
         coverPath,
         ...(googleBooksId ? { googleBooksId } : {})
@@ -329,6 +336,14 @@ export function AddBookModal({
       }
     } else {
       setPageCountError(null)
+    }
+
+    if (status === BookStatus.FINISHED) {
+      const dateError = validateFinishedDateInput(finishedDate)
+      setFinishedDateError(dateError)
+      if (dateError) hasErrors = true
+    } else {
+      setFinishedDateError(null)
     }
 
     if (hasErrors) {
@@ -753,6 +768,19 @@ export function AddBookModal({
                 <option value={BookStatus.ABANDONED}>Abandonado</option>
               </select>
             </div>
+
+            {status === BookStatus.FINISHED && (
+              <FinishedDateField
+                id="book-finished-date"
+                value={finishedDate}
+                onChange={(value) => {
+                  setFinishedDate(value)
+                  setFinishedDateError(null)
+                }}
+                error={finishedDateError}
+                testId="input-book-finished-date"
+              />
+            )}
 
             {/* Cover URL */}
             <div className="flex flex-col gap-1.5">

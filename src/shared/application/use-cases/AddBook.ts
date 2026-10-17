@@ -13,6 +13,8 @@ export interface AddBookDTO {
   status?: BookStatus
   rating?: number | null
   googleBooksId?: string | null
+  /** Día en que se terminó (`YYYY-MM-DD`). Sólo aplica si `status` es FINISHED; por defecto, hoy. */
+  finishedAt?: string | null
 }
 
 export class AddBook {
@@ -34,7 +36,8 @@ export class AddBook {
       isbn: dto.isbn,
       status: dto.status,
       rating: dto.rating,
-      googleBooksId: dto.googleBooksId
+      googleBooksId: dto.googleBooksId,
+      finishedAt: dto.finishedAt ? Book.parseFinishedDate(dto.finishedAt) : null
     })
 
     return await this.bookRepository.create(book)

@@ -20,6 +20,12 @@ import { noteService } from '../services/noteService.js'
 import { useCoverSource } from '../hooks/useCoverSource.js'
 import { AddNoteModal, UpdateProgressModal } from '../components/index.js'
 import { STATUS_CONFIG, STATUS_ORDER } from '../components/statusConfig.js'
+import { FinishedDateField } from '../components/FinishedDateField.js'
+import {
+  defaultFinishedDateInput,
+  formatFinishedDate,
+  validateFinishedDateInput
+} from '../components/finishedDate.js'
 
 
 export interface BookDetailPageProps {
@@ -44,6 +50,12 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
   const [isAddNoteModalOpen, setIsAddNoteModalOpen] = useState(false)
   const [isUpdateProgressModalOpen, setIsUpdateProgressModalOpen] = useState(false)
   const [isDeleteBookModalOpen, setIsDeleteBookModalOpen] = useState(false)
+
+  // Fecha de terminado: confirmación al pasar a FINISHED y edición de la fecha existente
+  const [isConfirmingFinish, setIsConfirmingFinish] = useState(false)
+  const [isEditingFinishedDate, setIsEditingFinishedDate] = useState(false)
+  const [finishedDateInput, setFinishedDateInput] = useState(() => defaultFinishedDateInput())
+  const [finishedDateError, setFinishedDateError] = useState<string | null>(null)
 
   // Book Query
   const {
@@ -91,16 +103,45 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
 
   // Mutation: Update Status
   const statusMutation = useMutation({
-    mutationFn: async (newStatus: BookStatus) => {
-      const res = await bookService.updateStatus({ id: bookId, status: newStatus })
+    mutationFn: async ({ status, finishedAt }: { status: BookStatus; finishedAt?: string }) => {
+      const res = await bookService.updateStatus({
+        id: bookId,
+        status,
+        ...(finishedAt !== undefined ? { finishedAt } : {})
+      })
       if (!res.success) {
         throw new Error(res.error || 'Error al actualizar el estado')
       }
       return res.data
     },
     onSuccess: () => {
+      setIsConfirmingFinish(false)
+      setFinishedDateError(null)
       queryClient.invalidateQueries({ queryKey: ['book', bookId] })
       queryClient.invalidateQueries({ queryKey: ['books'] })
+    },
+    onError: (err: Error) => {
+      setFinishedDateError(err.message)
+    }
+  })
+
+  // Mutation: Edit finished date
+  const finishedDateMutation = useMutation({
+    mutationFn: async (finishedAt: string) => {
+      const res = await bookService.setFinishedDate({ id: bookId, finishedAt })
+      if (!res.success) {
+        throw new Error(res.error || 'Error al actualizar la fecha de terminado')
+      }
+      return res.data
+    },
+    onSuccess: () => {
+      setIsEditingFinishedDate(false)
+      setFinishedDateError(null)
+      queryClient.invalidateQueries({ queryKey: ['book', bookId] })
+      queryClient.invalidateQueries({ queryKey: ['books'] })
+    },
+    onError: (err: Error) => {
+      setFinishedDateError(err.message)
     }
   })
 
@@ -217,6 +258,43 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
       setCurrentPageInput(computedPage)
     }
     setIsProgressDirty(true)
+  }
+
+  const handleStatusChange = (newStatus: BookStatus): void => {
+    setFinishedDateError(null)
+    setIsEditingFinishedDate(false)
+    if (newStatus === BookStatus.FINISHED && book?.status !== BookStatus.FINISHED) {
+      // Pasar a terminado pide la fecha (hoy precargado) antes de guardar.
+      setFinishedDateInput(defaultFinishedDateInput())
+      setIsConfirmingFinish(true)
+      return
+    }
+    setIsConfirmingFinish(false)
+    statusMutation.mutate({ status: newStatus })
+  }
+
+  const handleConfirmFinish = (): void => {
+    const dateError = validateFinishedDateInput(finishedDateInput)
+    if (dateError) {
+      setFinishedDateError(dateError)
+      return
+    }
+    statusMutation.mutate({ status: BookStatus.FINISHED, finishedAt: finishedDateInput })
+  }
+
+  const handleStartEditFinishedDate = (): void => {
+    setFinishedDateInput(defaultFinishedDateInput(book?.finishedAt))
+    setFinishedDateError(null)
+    setIsEditingFinishedDate(true)
+  }
+
+  const handleSaveFinishedDate = (): void => {
+    const dateError = validateFinishedDateInput(finishedDateInput)
+    if (dateError) {
+      setFinishedDateError(dateError)
+      return
+    }
+    finishedDateMutation.mutate(finishedDateInput)
   }
 
   const handleSaveProgress = (): void => {
@@ -392,8 +470,8 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
               <div className="flex items-center gap-2">
                 <select
                   id="book-status-select"
-                  value={book.status}
-                  onChange={(e) => statusMutation.mutate(e.target.value as BookStatus)}
+                  value={isConfirmingFinish ? BookStatus.FINISHED : book.status}
+                  onChange={(e) => handleStatusChange(e.target.value as BookStatus)}
                   disabled={statusMutation.isPending}
                   className="w-full bg-well border border-rule rounded-md px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent/50 transition-colors cursor-pointer"
                   data-testid="detail-status-select"
@@ -408,6 +486,121 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
                   <Loader2 className="w-4 h-4 animate-spin text-accent shrink-0" />
                 )}
               </div>
+
+              {isConfirmingFinish && (
+                <div
+                  className="mt-2 p-3 rounded-md bg-well/60 border border-rule flex flex-col gap-2.5"
+                  data-testid="detail-confirm-finish"
+                >
+                  <FinishedDateField
+                    id="detail-confirm-finished-date"
+                    value={finishedDateInput}
+                    onChange={(value) => {
+                      setFinishedDateInput(value)
+                      setFinishedDateError(null)
+                    }}
+                    error={finishedDateError}
+                    label="¿Cuándo lo terminaste?"
+                    testId="detail-confirm-finished-date-input"
+                  />
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsConfirmingFinish(false)
+                        setFinishedDateError(null)
+                      }}
+                      className="px-3 py-1 text-xs font-medium rounded-md text-ink bg-shelf hover:bg-rule/60 transition-colors"
+                      data-testid="detail-cancel-finish-button"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleConfirmFinish}
+                      disabled={statusMutation.isPending}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-md text-accent-ink bg-accent hover:bg-accent-strong transition-colors disabled:opacity-50"
+                      data-testid="detail-confirm-finish-button"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Marcar como terminado</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {!isConfirmingFinish && book.status === BookStatus.FINISHED && (
+                <div className="mt-2 flex flex-col gap-2" data-testid="detail-finished-date">
+                  {isEditingFinishedDate ? (
+                    <div className="p-3 rounded-md bg-well/60 border border-rule flex flex-col gap-2.5">
+                      <FinishedDateField
+                        id="detail-edit-finished-date"
+                        value={finishedDateInput}
+                        onChange={(value) => {
+                          setFinishedDateInput(value)
+                          setFinishedDateError(null)
+                        }}
+                        error={finishedDateError}
+                        testId="detail-edit-finished-date-input"
+                      />
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsEditingFinishedDate(false)
+                            setFinishedDateError(null)
+                          }}
+                          className="px-3 py-1 text-xs font-medium rounded-md text-ink bg-shelf hover:bg-rule/60 transition-colors"
+                          data-testid="detail-cancel-finished-date-button"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSaveFinishedDate}
+                          disabled={finishedDateMutation.isPending}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-md text-accent-ink bg-accent hover:bg-accent-strong transition-colors disabled:opacity-50"
+                          data-testid="detail-save-finished-date-button"
+                        >
+                          {finishedDateMutation.isPending ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Check className="w-3.5 h-3.5" />
+                          )}
+                          <span>Guardar fecha</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-xs text-ink-muted">
+                      <Calendar className="w-3.5 h-3.5 text-status-finished shrink-0" />
+                      <span>
+                        Terminado el{' '}
+                        <span
+                          className="font-mono font-semibold text-ink"
+                          data-testid="detail-finished-date-value"
+                        >
+                          {book.finishedAt ? formatFinishedDate(book.finishedAt) : 'sin fecha'}
+                        </span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleStartEditFinishedDate}
+                        className="ml-auto text-xs font-medium text-accent hover:text-accent-strong transition-colors"
+                        data-testid="detail-edit-finished-date-button"
+                      >
+                        Editar fecha
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {!isConfirmingFinish && !isEditingFinishedDate && finishedDateError && (
+                <p className="text-xs text-danger mt-1" data-testid="detail-status-error">
+                  {finishedDateError}
+                </p>
+              )}
             </div>
 
             {/* Interactive Rating */}
