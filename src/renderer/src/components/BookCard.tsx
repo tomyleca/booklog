@@ -1,35 +1,14 @@
 import { useState } from 'react'
+import type { KeyboardEvent } from 'react'
 import { BookOpen, Star } from 'lucide-react'
 import type { BookPrimitives } from '../../../shared/infrastructure/ipc/contracts.js'
 import { BookStatus } from '../../../shared/domain/entities/BookStatus.js'
 import { resolveCoverUrl } from '../services/coverService.js'
+import { getStatusConfig } from './statusConfig.js'
 
 export interface BookCardProps {
   book: BookPrimitives
   onClick?: ((book: BookPrimitives) => void) | (() => void)
-}
-
-const STATUS_CONFIG: Record<BookStatus, { label: string; badgeClass: string }> = {
-  [BookStatus.TO_READ]: {
-    label: 'Por leer',
-    badgeClass: 'text-status-to-read border-status-to-read/50'
-  },
-  [BookStatus.READING]: {
-    label: 'Leyendo',
-    badgeClass: 'text-status-reading border-status-reading/50'
-  },
-  [BookStatus.PAUSED]: {
-    label: 'Pausado',
-    badgeClass: 'text-status-paused border-status-paused/50'
-  },
-  [BookStatus.FINISHED]: {
-    label: 'Terminado',
-    badgeClass: 'text-status-finished border-status-finished/50'
-  },
-  [BookStatus.ABANDONED]: {
-    label: 'Abandonado',
-    badgeClass: 'text-status-abandoned border-status-abandoned/50'
-  }
 }
 
 const STATUSES_WITH_PROGRESS: readonly BookStatus[] = [
@@ -58,10 +37,7 @@ export function BookCard({ book, onClick }: BookCardProps): JSX.Element {
   const hasCover = Boolean(coverUrl && !imageError)
   const tone = placeholderTone(book.id)
 
-  const statusConfig = STATUS_CONFIG[book.status] ?? {
-    label: book.status,
-    badgeClass: 'text-ink-muted border-rule-strong'
-  }
+  const statusConfig = getStatusConfig(book.status)
 
   const showProgress = STATUSES_WITH_PROGRESS.includes(book.status)
   let percentage = 0
@@ -77,17 +53,38 @@ export function BookCard({ book, onClick }: BookCardProps): JSX.Element {
   }
 
   const rating = book.rating ?? 0
+  const isInteractive = Boolean(onClick)
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
+    if (event.target !== event.currentTarget) return
+    if (event.key === 'Enter' || event.key === ' ') {
+      // Evita que Espacio haga scroll de la página, como en un <button> nativo.
+      event.preventDefault()
+      onClick?.(book)
+    }
+  }
+
+  // Un <button> no puede contener el <h3> ni los <div> de la ficha (HTML inválido), así que
+  // la tarjeta es un div con role="button". El anillo de foco es un outline hacia ADENTRO
+  // (offset negativo): la estantería tiene overflow: hidden y recortaría uno exterior.
   return (
-    <article
-      onClick={() => onClick?.(book)}
-      className={`group flex flex-col ${onClick ? 'cursor-pointer' : ''}`}
+    <div
+      onClick={isInteractive ? () => onClick?.(book) : undefined}
+      onKeyDown={isInteractive ? handleKeyDown : undefined}
+      role={isInteractive ? 'button' : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
+      aria-label={isInteractive ? `${book.title}, de ${book.authors}` : undefined}
+      className={`group flex flex-col rounded-sm ${
+        isInteractive
+          ? 'cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-accent'
+          : ''
+      }`}
       data-testid="book-card"
     >
       {/* El libro, parado sobre el estante */}
       <div className="flex items-end justify-center px-3 pt-2">
         <div
-          className="relative w-4/5 aspect-[2/3] overflow-hidden rounded-r-sm rounded-l-[2px] shadow-md transition-transform duration-200 group-hover:-translate-y-1"
+          className="relative w-4/5 aspect-[2/3] overflow-hidden rounded-r-sm rounded-l-[2px] shadow-md transition-transform duration-200 group-hover:-translate-y-1 group-focus-visible:-translate-y-1"
           data-testid="book-cover"
         >
           {hasCover ? (
@@ -129,12 +126,12 @@ export function BookCard({ book, onClick }: BookCardProps): JSX.Element {
       {/* Ficha de catálogo debajo del estante */}
       <div className="flex flex-1 px-3 pt-3">
         <div
-          className="ficha flex flex-1 flex-col gap-2 rounded-sm p-3 transition-colors duration-200 group-hover:border-rule-strong"
+          className="ficha flex flex-1 flex-col gap-2 rounded-sm p-3 transition-colors duration-200 group-hover:border-rule-strong group-focus-visible:border-rule-strong"
           data-testid="book-ficha"
         >
           <div>
             <h3
-              className="font-semibold text-ink text-sm line-clamp-2 leading-tight group-hover:text-accent transition-colors"
+              className="font-semibold text-ink text-sm line-clamp-2 leading-tight group-hover:text-accent group-focus-visible:text-accent transition-colors"
               title={book.title}
               data-testid="book-title"
             >
@@ -152,7 +149,7 @@ export function BookCard({ book, onClick }: BookCardProps): JSX.Element {
           <div className="mt-auto flex flex-col gap-2 pt-2 border-t border-dashed border-rule">
             <div className="flex flex-wrap items-center justify-between gap-1.5">
               <span
-                className={`inline-flex items-center px-1.5 py-0.5 rounded-sm text-[11px] font-semibold tracking-wide bg-card border ${statusConfig.badgeClass}`}
+                className={`inline-flex items-center px-1.5 py-0.5 rounded-sm text-[11px] font-semibold tracking-wide bg-card border ${statusConfig.shelfBadgeClass}`}
                 data-testid="book-status-badge"
               >
                 {statusConfig.label}
@@ -192,6 +189,6 @@ export function BookCard({ book, onClick }: BookCardProps): JSX.Element {
           </div>
         </div>
       </div>
-    </article>
+    </div>
   )
 }

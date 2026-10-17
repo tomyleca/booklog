@@ -932,7 +932,7 @@ describe('Settings IPC Handlers (Feature #15: settings_page)', () => {
       success: true,
       data: {
         googleBooksApiKey: '',
-        theme: 'dark'
+        theme: 'light'
       }
     })
   })

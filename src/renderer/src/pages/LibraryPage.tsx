@@ -74,8 +74,8 @@ export function LibraryPage({ onSelectBook }: LibraryPageProps = {}): JSX.Elemen
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md text-accent-ink bg-accent hover:bg-accent-strong shadow-sm transition-colors"
               data-testid="add-book-button"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>+ Agregar Libro</span>
+              <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Agregar Libro</span>
             </button>
 
             <button

@@ -473,7 +473,7 @@ describe('Feature #9 - UI Add Book Manual (AddBookModal)', () => {
   })
 
   describe('LibraryPage Integration with AddBookModal', () => {
-    it('renders "+ Agregar Libro" button in LibraryPage header', async () => {
+    it('renders "Agregar Libro" button (with a single "+" icon) in LibraryPage header', async () => {
       vi.spyOn(bookService, 'list').mockResolvedValueOnce({
         success: true,
         data: []
@@ -483,10 +483,11 @@ describe('Feature #9 - UI Add Book Manual (AddBookModal)', () => {
 
       const addButton = screen.getByTestId('add-book-button')
       expect(addButton).toBeDefined()
-      expect(addButton.textContent).toContain('+ Agregar Libro')
+      expect(addButton.textContent?.trim()).toBe('Agregar Libro')
+      expect(addButton.querySelectorAll('svg')).toHaveLength(1)
     })
 
-    it('opens AddBookModal when "+ Agregar Libro" is clicked in LibraryPage', async () => {
+    it('opens AddBookModal when "Agregar Libro" is clicked in LibraryPage', async () => {
       vi.spyOn(bookService, 'list').mockResolvedValueOnce({
         success: true,
         data: []

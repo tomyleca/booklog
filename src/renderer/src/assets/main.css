@@ -228,6 +228,8 @@
  * La última fila puede quedar incompleta: el tramo del último libro se prolonga
  * hacia la derecha con un pseudo-elemento que hereda la madera, y el contenedor
  * (overflow: hidden, sin padding lateral) lo recorta justo en el borde del estante.
+ * Ese recorte también se comería un anillo de foco exterior: por eso BookCard dibuja
+ * su foco como outline con offset negativo, hacia adentro (feature #18).
  */
 @utility bookshelf {
   overflow: hidden;

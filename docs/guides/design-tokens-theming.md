@@ -148,6 +148,40 @@ queden colores crudos de la paleta de Tailwind en `src/renderer`.
 `@custom-variant dark` sigue declarado por si algún caso puntual necesitara una
 variante (p. ej. invertir una imagen), pero la regla es preferir un token.
 
+### Tema por defecto: claro (feature #18)
+
+Sin preferencia guardada, BookLog arranca en el tema **claro** (pergamino). Eso
+depende de tres lugares que tienen que coincidir:
+
+1. `DEFAULT_SETTINGS.theme = 'light'` en `SettingsStorageService` (main): es lo que
+   devuelve `settings:get` cuando no hay `settings.json` o el tema guardado es inválido.
+2. Los *fallbacks* del renderer: `App.tsx` aplica `'light'` si `settings:get` falla, y
+   `SettingsPage` arranca su estado en `'light'`.
+3. El **primer pintado**: `index.html` no trae la clase `dark` y los valores de
+   `@theme` (`:root`) ya son los claros, así que antes de que llegue la respuesta IPC
+   la página ya es papel claro. La ventana además se muestra recién en
+   `ready-to-show`. Resultado: no hay "flash" oscuro.
+
+```mermaid
+sequenceDiagram
+    participant W as BrowserWindow
+    participant H as html (sin .dark)
+    participant A as App.tsx
+    participant M as main (SettingsStorageService)
+    W->>H: Primer pintado con tokens claros de @theme
+    A->>M: settings:get
+    alt sin settings.json
+        M-->>A: theme 'light' (DEFAULT_SETTINGS)
+    else preferencia guardada
+        M-->>A: theme guardado ('dark' / 'system' / 'light')
+    end
+    A->>H: themeService.applyTheme(theme)
+```
+
+Una preferencia ya guardada se respeta. Contracara conocida: quien eligió "Oscuro"
+ve el papel claro durante el instante que tarda la respuesta IPC (se aceptó a favor
+de que el caso por defecto no parpadee).
+
 ## 5. Mapa de tokens
 
 ```mermaid

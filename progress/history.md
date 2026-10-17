@@ -389,3 +389,35 @@
     - ADR: [docs/decisions/017-library-bookshelf-view.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/decisions/017-library-bookshelf-view.md).
     - Actualizados: [docs/guides/design-tokens-theming.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/design-tokens-theming.md) (tabla de utilidades), [docs/guides/README.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/README.md) y [docs/conventions.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/conventions.md).
   - Reportes de ciclo de vida: [progress/report_library_bookshelf_view.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_library_bookshelf_view.md) y [progress/review_library_bookshelf_view.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_library_bookshelf_view.md).
+
+---
+
+## Sesión 2026-10-17 — Feature #18: ui_polish_fixes (Tema claro por defecto y arreglos menores de UI)
+
+- **Estado:** Completada (done)
+- **Logros:**
+  - Tema claro (pergamino) por defecto:
+    - `DEFAULT_SETTINGS.theme = 'light'` en `SettingsStorageService`.
+    - Los fallbacks de `App.tsx` y `SettingsPage` también pasan a `'light'`.
+    - No hay flash oscuro: `<html>` no trae `.dark` y `@theme` ya define los valores claros.
+    - Una preferencia guardada se respeta.
+  - El botón "Agregar Libro" muestra un solo "+" (el ícono `Plus`, con `aria-hidden`).
+  - La configuración de estados está unificada en `src/renderer/src/components/statusConfig.ts` (`STATUS_CONFIG`, `STATUS_ORDER`, `getStatusConfig`):
+    - `shelfBadgeClass` para la ficha y `badgeClass` (`status/10`) para el detalle y el dashboard.
+    - La usan BookCard, BookDetailPage y DashboardPage, sin cambio visual.
+  - `BookCard` es accesible por teclado:
+    - Es un `div role="button"` con `tabIndex=0` y `aria-label` "título, de autor".
+    - Enter y Espacio abren el detalle.
+    - El foco es un outline hacia adentro (`focus-visible:outline-accent`, offset -3px), así que el `overflow: hidden` de `bookshelf` no lo recorta.
+    - Se conservan todos los `data-testid`.
+  - Nuevo script `pnpm lint:check` (eslint sin `--fix`).
+  - Pruebas automatizadas en Vitest:
+    - Nuevo `tests/renderer/test_ui_polish_fixes.test.ts`.
+    - Ajustes en `test_settings_storage_service`, `test_ipc_contracts` y `test_add_book_modal`.
+    - Total de la suite: 23 suites, 403 tests pasando al 100% en verde.
+  - Verificación: `.\init.ps1`, `pnpm lint:check` y `pnpm build` (con typecheck) limpios.
+  - Documentación técnica:
+    - ADR: [docs/decisions/018-ui-polish-fixes.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/decisions/018-ui-polish-fixes.md).
+    - Guías actualizadas: [docs/guides/design-tokens-theming.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/design-tokens-theming.md) (tema por defecto) y [docs/guides/css-grid-bookshelf-layout.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/css-grid-bookshelf-layout.md) (accesibilidad por teclado).
+    - También se actualizaron `docs/conventions.md` y `docs/verification.md`.
+  - Reportes de ciclo de vida: [progress/report_ui_polish_fixes.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_ui_polish_fixes.md) y [progress/review_ui_polish_fixes.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_ui_polish_fixes.md).

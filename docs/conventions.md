@@ -9,6 +9,8 @@
 - **Target:** ES2022 (para Electron, que usa Chromium reciente).
 - **Formato:** Prettier con defaults. Líneas máximo 100 caracteres.
 - **Linter:** ESLint con config recomendada para TypeScript.
+  `pnpm lint` corrige (`--fix`); `pnpm lint:check` sólo verifica, sin tocar archivos
+  (es el que se usa para validar una feature).
 
 ## Imports
 
@@ -136,4 +138,9 @@ y `docs/decisions/016-retro-library-theme.md`.
   `rule-double`, `shelf-plank`, `bookshelf`, `book-hinge` (definidas con `@utility`).
 - Tipografía: Lora (texto) y Libre Baskerville (títulos `h1–h4` / `font-display`),
   empaquetadas con @fontsource. Nada de CDNs.
+- Label, ícono y clases de cada `BookStatus` viven sólo en
+  `src/renderer/src/components/statusConfig.ts` (`STATUS_CONFIG`, `STATUS_ORDER`,
+  `getStatusConfig`). No redeclararlos en componentes.
+- Elementos clickeables que no son `<button>` llevan `role`, `tabIndex`, manejo de
+  Enter/Espacio y foco visible con tokens (`focus-visible:outline-accent`).
 - No CSS modules ni styled-components. Solo Tailwind utilities.

@@ -28,7 +28,7 @@ interface TestStatus {
 export function SettingsPage(): JSX.Element {
   const [apiKey, setApiKey] = useState('')
   const [showApiKey, setShowApiKey] = useState(false)
-  const [theme, setTheme] = useState<AppTheme>('dark')
+  const [theme, setTheme] = useState<AppTheme>('light')
   const [isSavingKey, setIsSavingKey] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [testStatus, setTestStatus] = useState<TestStatus>({ status: 'idle' })
@@ -49,8 +49,8 @@ export function SettingsPage(): JSX.Element {
         if (isMounted) {
           if (settingsRes.success && settingsRes.data) {
             setApiKey(settingsRes.data.googleBooksApiKey || '')
-            setTheme(settingsRes.data.theme || 'dark')
-            themeService.applyTheme(settingsRes.data.theme || 'dark')
+            setTheme(settingsRes.data.theme || 'light')
+            themeService.applyTheme(settingsRes.data.theme || 'light')
           }
           if (infoRes.success && infoRes.data) {
             setAppInfo(infoRes.data)

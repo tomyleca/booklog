@@ -9,58 +9,17 @@ import {
   Clock,
   PauseCircle,
   Bookmark,
-  XCircle,
   ChevronRight,
   BookMarked
 } from 'lucide-react'
 import { bookService } from '../services/bookService.js'
 import { resolveCoverUrl } from '../services/coverService.js'
+import { STATUS_CONFIG, getStatusConfig } from '../components/statusConfig.js'
 import { BookStatus } from '../../../shared/domain/entities/BookStatus.js'
 import type { BookPrimitives } from '../../../shared/infrastructure/ipc/contracts.js'
 
 export interface DashboardPageProps {
   onSelectBook?: (bookId: number) => void
-}
-
-export const STATUS_CONFIG: Record<
-  BookStatus,
-  { label: string; badgeClass: string; barClass: string; textClass: string; icon: typeof CheckCircle2 }
-> = {
-  [BookStatus.FINISHED]: {
-    label: 'Terminado',
-    badgeClass: 'bg-status-finished/10 text-status-finished border-status-finished/40',
-    barClass: 'bg-status-finished',
-    textClass: 'text-status-finished',
-    icon: CheckCircle2
-  },
-  [BookStatus.READING]: {
-    label: 'Leyendo',
-    badgeClass: 'bg-status-reading/10 text-status-reading border-status-reading/40',
-    barClass: 'bg-status-reading',
-    textClass: 'text-status-reading',
-    icon: Clock
-  },
-  [BookStatus.PAUSED]: {
-    label: 'Pausado',
-    badgeClass: 'bg-status-paused/10 text-status-paused border-status-paused/40',
-    barClass: 'bg-status-paused',
-    textClass: 'text-status-paused',
-    icon: PauseCircle
-  },
-  [BookStatus.TO_READ]: {
-    label: 'Por leer',
-    badgeClass: 'bg-status-to-read/10 text-status-to-read border-status-to-read/40',
-    barClass: 'bg-status-to-read',
-    textClass: 'text-status-to-read',
-    icon: Bookmark
-  },
-  [BookStatus.ABANDONED]: {
-    label: 'Abandonado',
-    badgeClass: 'bg-status-abandoned/10 text-status-abandoned border-status-abandoned/40',
-    barClass: 'bg-status-abandoned',
-    textClass: 'text-status-abandoned',
-    icon: XCircle
-  }
 }
 
 /**
@@ -125,13 +84,7 @@ function RecentBookItem({
   const [imageError, setImageError] = useState(false)
   const coverUrl = resolveCoverUrl(book.coverPath, book.coverUrl ?? '')
   const hasCover = Boolean(coverUrl && !imageError)
-  const statusCfg = STATUS_CONFIG[book.status] ?? {
-    label: book.status,
-    badgeClass: 'bg-shelf text-ink-muted border-rule-strong',
-    barClass: 'bg-ink-faint',
-    textClass: 'text-ink',
-    icon: BookOpen
-  }
+  const statusCfg = getStatusConfig(book.status)
 
   const progress =
     book.status === BookStatus.FINISHED

@@ -156,4 +156,30 @@ describe('SettingsStorageService', () => {
       theme: 'light'
     })
   })
+
+  describe('Feature #18 - light theme by default', () => {
+    it('should default to the light theme when no preference is saved', async () => {
+      const service = new SettingsStorageService(settingsFile)
+
+      expect(DEFAULT_SETTINGS.theme).toBe('light')
+      expect((await service.getSettings()).theme).toBe('light')
+      expect(service.getCachedSettings().theme).toBe('light')
+    })
+
+    it('should fall back to light when the saved theme is missing or invalid', async () => {
+      await fs.promises.writeFile(settingsFile, JSON.stringify({ theme: 'sepia' }))
+
+      const service = new SettingsStorageService(settingsFile)
+
+      expect((await service.getSettings()).theme).toBe('light')
+    })
+
+    it('should respect an already saved dark preference', async () => {
+      await fs.promises.writeFile(settingsFile, JSON.stringify({ theme: 'dark' }))
+
+      const service = new SettingsStorageService(settingsFile)
+
+      expect((await service.getSettings()).theme).toBe('dark')
+    })
+  })
 })

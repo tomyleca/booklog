@@ -68,6 +68,7 @@ pnpm build
 
 ```bash
 pnpm test          # Todos los tests pasan
+pnpm lint:check    # ESLint sin --fix: sólo reporta, no modifica archivos
 pnpm build         # Build sin errores de TypeScript
 .\init.ps1         # Validación del harness
 ```

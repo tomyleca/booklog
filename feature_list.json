@@ -278,6 +278,21 @@
         "pnpm test, typecheck, lint y build en verde"
       ],
       "status": "done"
+    },
+    {
+      "id": 18,
+      "name": "ui_polish_fixes",
+      "title": "Tema claro por defecto y arreglos menores de UI",
+      "description": "Pedido del usuario tras #16/#17: el tema claro (pergamino) pasa a ser el predeterminado, y se resuelven los arreglos menores detectados en las reviews de #16 y #17.",
+      "acceptance": [
+        "Sin preferencia guardada, la app arranca en tema claro (default de SettingsStorageService, fallbacks de App.tsx y SettingsPage, y sin flash oscuro al cargar); una preferencia ya guardada se respeta",
+        "El botón de agregar libro muestra un solo \"+\" (ícono o texto, no ambos)",
+        "La configuración de estados (label y clases de badge/barra por BookStatus) vive en un único módulo compartido del renderer, usado por BookCard, BookDetailPage y DashboardPage",
+        "Las tarjetas de libro de la estantería son accesibles por teclado (foco con Tab, Enter/Espacio abren el detalle, rol y nombre accesible, anillo de foco visible no recortado por overflow)",
+        "Existe un script pnpm lint:check que corre eslint sin --fix",
+        "pnpm test, typecheck, lint:check y build en verde"
+      ],
+      "status": "done"
     }
   ]
 }

@@ -19,34 +19,12 @@ import { bookService } from '../services/bookService.js'
 import { noteService } from '../services/noteService.js'
 import { resolveCoverUrl } from '../services/coverService.js'
 import { AddNoteModal, UpdateProgressModal } from '../components/index.js'
+import { STATUS_CONFIG, STATUS_ORDER } from '../components/statusConfig.js'
 
 
 export interface BookDetailPageProps {
   bookId: number
   onBack: () => void
-}
-
-const STATUS_CONFIG: Record<BookStatus, { label: string; badgeClass: string }> = {
-  [BookStatus.TO_READ]: {
-    label: 'Por leer',
-    badgeClass: 'bg-status-to-read/10 text-status-to-read border-status-to-read/40'
-  },
-  [BookStatus.READING]: {
-    label: 'Leyendo',
-    badgeClass: 'bg-status-reading/10 text-status-reading border-status-reading/40'
-  },
-  [BookStatus.PAUSED]: {
-    label: 'Pausado',
-    badgeClass: 'bg-status-paused/10 text-status-paused border-status-paused/40'
-  },
-  [BookStatus.FINISHED]: {
-    label: 'Terminado',
-    badgeClass: 'bg-status-finished/10 text-status-finished border-status-finished/40'
-  },
-  [BookStatus.ABANDONED]: {
-    label: 'Abandonado',
-    badgeClass: 'bg-status-abandoned/10 text-status-abandoned border-status-abandoned/40'
-  }
 }
 
 export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Element {
@@ -425,9 +403,9 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
                   className="w-full bg-well border border-rule rounded-md px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent/50 transition-colors cursor-pointer"
                   data-testid="detail-status-select"
                 >
-                  {Object.entries(STATUS_CONFIG).map(([value, conf]) => (
+                  {STATUS_ORDER.map((value) => (
                     <option key={value} value={value}>
-                      {conf.label}
+                      {STATUS_CONFIG[value].label}
                     </option>
                   ))}
                 </select>

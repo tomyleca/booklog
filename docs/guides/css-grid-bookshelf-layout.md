@@ -37,7 +37,7 @@ responsive no sabemos de antemano qué libros caen en cada fila: con 1200 px ent
 
 ```mermaid
 flowchart TB
-    subgraph CELL["article data-testid=book-card (celda del grid)"]
+    subgraph CELL["div role=button data-testid=book-card (celda del grid)"]
         direction TB
         COVER["Tapa: aspect 2/3, 80% del ancho<br/>(imagen o placeholder de cuero)<br/>data-testid=book-cover"]
         PLANK["Tramo de estante: .shelf-plank<br/>data-shelf-plank / data-testid=shelf-plank"]
@@ -118,6 +118,33 @@ Cuando no hay tapa (o la imagen falla), el libro es un tomo encuadernado:
   `text-brass` (detalles en latón).
 - `book-hinge`: degradado sobre el borde izquierdo que simula el pliegue del lomo. Se
   aplica también a las portadas reales para que parezcan libros y no imágenes planas.
+
+## 6b. Accesibilidad por teclado (feature #18)
+
+Cada libro de la estantería es operable sin mouse:
+
+- **Elemento**: un `<button>` no puede contener el `<h3>` ni los `<div>` de la ficha
+  (sólo admite contenido *phrasing*), así que la celda es un
+  `<div role="button" tabIndex={0}>` cuando recibe `onClick`. Sin `onClick` no se
+  anuncia como botón ni entra en el orden de Tab.
+- **Nombre accesible**: `aria-label="<título>, de <autor>"`. Con `role="button"` los
+  hijos son presentacionales, así que el nombre se da explícito.
+- **Teclado**: `Enter` y `Espacio` abren el detalle; en `Espacio` se hace
+  `preventDefault()` para que no haga scroll (como un `<button>` nativo).
+- **Foco visible sin recorte**: `bookshelf` tiene `overflow: hidden` (lo necesita la
+  prolongación del último estante, §4) y recortaría cualquier anillo dibujado *fuera*
+  de la celda. Por eso el foco es un `outline` hacia **adentro**:
+  `focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-3px]`.
+  El outline se pinta por encima del contenido de la celda (incluido el tramo de
+  estante), así que se ve entero. Al enfocar, la tapa se eleva igual que en hover
+  (`group-focus-visible:`).
+
+```mermaid
+flowchart LR
+    T["Tab"] --> F["div role=button<br/>focus-visible: outline-accent (inset)"]
+    F -- "Enter / Espacio" --> D["onClick(book) → BookDetailPage"]
+    S["bookshelf<br/>overflow: hidden"] -. "recortaría un anillo exterior" .-> F
+```
 
 ## 7. Cómo se testea
 

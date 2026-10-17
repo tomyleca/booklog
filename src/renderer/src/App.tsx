@@ -59,11 +59,11 @@ export function App({ queryClient, initialView }: AppProps): JSX.Element {
           themeService.applyTheme(res.data.theme)
           cleanup = themeService.setupSystemThemeListener(res.data.theme)
         } else {
-          themeService.applyTheme('dark')
+          themeService.applyTheme('light')
         }
       })
       .catch(() => {
-        themeService.applyTheme('dark')
+        themeService.applyTheme('light')
       })
 
     return () => {

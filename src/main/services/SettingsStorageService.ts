@@ -7,7 +7,7 @@ export type { AppSettings, AppTheme }
 
 export const DEFAULT_SETTINGS: AppSettings = {
   googleBooksApiKey: '',
-  theme: 'dark'
+  theme: 'light'
 }
 
 interface StoredSettingsData {
