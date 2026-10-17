@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   BarChart3,
@@ -13,7 +13,7 @@ import {
   BookMarked
 } from 'lucide-react'
 import { bookService } from '../services/bookService.js'
-import { resolveCoverUrl } from '../services/coverService.js'
+import { useCoverSource } from '../hooks/useCoverSource.js'
 import { STATUS_CONFIG, getStatusConfig } from '../components/statusConfig.js'
 import { BookStatus } from '../../../shared/domain/entities/BookStatus.js'
 import type { BookPrimitives } from '../../../shared/infrastructure/ipc/contracts.js'
@@ -81,9 +81,7 @@ function RecentBookItem({
   book: BookPrimitives
   onSelectBook?: (bookId: number) => void
 }): JSX.Element {
-  const [imageError, setImageError] = useState(false)
-  const coverUrl = resolveCoverUrl(book.coverPath, book.coverUrl ?? '')
-  const hasCover = Boolean(coverUrl && !imageError)
+  const cover = useCoverSource(book.coverPath, book.coverUrl)
   const statusCfg = getStatusConfig(book.status)
 
   const progress =
@@ -116,11 +114,11 @@ function RecentBookItem({
     >
       <div className="flex items-center gap-3.5 min-w-0">
         <div className="w-10 h-14 shrink-0 rounded bg-shelf border border-rule/60 overflow-hidden flex items-center justify-center">
-          {hasCover ? (
+          {cover.src ? (
             <img
-              src={coverUrl}
+              src={cover.src}
               alt={book.title}
-              onError={() => setImageError(true)}
+              onError={cover.onError}
               className="w-full h-full object-cover"
             />
           ) : (

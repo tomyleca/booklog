@@ -37,6 +37,19 @@ export function resolveCoverUrl(
   return `booklog-media://covers/${normalized}`
 }
 
+/**
+ * Ordered list of image URLs to try for a stored book cover: the local copy first
+ * (booklog-media://), then the remote coverUrl. Empty and duplicate entries are dropped.
+ * An empty list means "show the placeholder".
+ */
+export function buildCoverCandidates(
+  coverPath?: string | null,
+  coverUrl?: string | null
+): string[] {
+  const candidates = [resolveCoverUrl(coverPath), resolveCoverUrl(coverUrl)]
+  return candidates.filter((url, index) => url !== '' && candidates.indexOf(url) === index)
+}
+
 export const coverService = {
   resolveUrl: resolveCoverUrl,
 

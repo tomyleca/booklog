@@ -293,6 +293,38 @@
         "pnpm test, typecheck, lint:check y build en verde"
       ],
       "status": "done"
+    },
+    {
+      "id": 19,
+      "name": "fix_cover_display",
+      "title": "Fix: las portadas descargadas no se muestran",
+      "description": "Bug: las portadas de Google Books se descargan bien a userData/covers, pero el renderer las pide por booklog-media:// y la CSP de index.html (img-src self data: https:) no incluye ese esquema, así que la imagen se bloquea y se muestra el placeholder.",
+      "acceptance": [
+        "La CSP de src/renderer/index.html permite img-src booklog-media: (sin abrir otros orígenes)",
+        "Las portadas guardadas localmente (coverPath) se ven en la estantería, el detalle y el dashboard",
+        "Si la imagen local falla, los componentes que muestran tapas intentan coverUrl antes de caer al placeholder",
+        "Test que valida la CSP y el fallback local→remoto→placeholder",
+        "pnpm test, typecheck, lint:check y build en verde"
+      ],
+      "status": "done"
+    },
+    {
+      "id": 20,
+      "name": "finished_date",
+      "title": "Fecha de terminado de un libro",
+      "description": "Al marcar un libro como terminado se le asigna una fecha de cuándo se terminó (hoy por defecto). Decisiones del usuario: al autocompletar por llegar al 100% se usa hoy sin preguntar; los libros ya terminados se migran con updatedAt; si el libro sale de FINISHED la fecha se conserva; la fecha se muestra en el detalle (editable), en la ficha del estante y se usa en el dashboard.",
+      "acceptance": [
+        "Campo finishedAt (DateTime?) en el modelo Book con migración Prisma; los libros ya FINISHED quedan con finishedAt = updatedAt",
+        "Entidad de dominio, mappers, use cases y contratos IPC soportan finishedAt; no se aceptan fechas futuras (error de dominio tipado)",
+        "Al marcar como terminado manualmente (crear como Terminado en AddBookModal, checkbox de UpdateProgressModal, cambio de estado) se pide la fecha con hoy precargado",
+        "Al autocompletar por llegar al 100% (UpdateBookProgress) se asigna hoy sin preguntar",
+        "Si el libro sale de FINISHED, finishedAt se conserva; al volver a terminarlo se pide de nuevo (hoy precargado) y se sobrescribe",
+        "Detalle: muestra la fecha y permite editarla",
+        "Ficha del estante: muestra la fecha de terminado cuando el libro está FINISHED",
+        "Dashboard: estadística de terminados en el año/mes actual basada en finishedAt y terminados recientes ordenados por finishedAt",
+        "Tests por capa (dominio, use cases, repositorio, IPC, renderer); pnpm test, typecheck, lint:check y build en verde"
+      ],
+      "status": "pending"
     }
   ]
 }

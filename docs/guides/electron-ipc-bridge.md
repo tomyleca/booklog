@@ -161,6 +161,39 @@ El helper `resolveCoverUrl` asegura que la etiqueta `<img />` reciba siempre una
 - Si es una ruta relativa local (`covers/abc.jpg` o `abc.jpg`): se transforma en `booklog-media://covers/abc.jpg`.
 - Si es nulo o vacío: devuelve la imagen de respaldo por defecto (fallback placeholder).
 
+### Relación con la CSP (feature #19)
+
+Registrar el esquema como `privileged`/`secure` **no alcanza** para que una `<img>` lo
+cargue. La página del renderer declara su propia Content-Security-Policy en
+`src/renderer/index.html`, y Chromium la aplica *antes* de que la petición llegue a
+`protocol.handle`. Si el esquema no figura en `img-src`, la imagen se bloquea, la `<img>`
+dispara `onError` y el usuario ve el placeholder aunque el archivo exista en `userData`.
+
+Por eso la CSP incluye explícitamente el esquema (solo en `img-src`, sin abrir otros
+orígenes):
+
+```
+img-src 'self' data: https: booklog-media:
+```
+
+```mermaid
+sequenceDiagram
+    participant Img as <img src="booklog-media://covers/x.jpg">
+    participant CSP as CSP de index.html
+    participant Handler as protocol.handle (main)
+    Img->>CSP: ¿img-src permite booklog-media:?
+    alt no figura (bug previo a #19)
+        CSP-->>Img: bloqueada -> onError -> placeholder
+    else figura
+        CSP->>Handler: petición
+        Handler-->>Img: bytes del archivo en userData/covers
+    end
+```
+
+Además, los componentes que muestran tapas guardadas usan el hook `useCoverSource`
+(`src/renderer/src/hooks/useCoverSource.ts`), que prueba en orden: copia local
+(`coverPath`) → URL remota (`coverUrl`) → placeholder, avanzando en cada `onError`.
+
 ---
 
 ## 5. Diagramas de Secuencia

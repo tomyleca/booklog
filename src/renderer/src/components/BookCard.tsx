@@ -1,9 +1,8 @@
-import { useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { BookOpen, Star } from 'lucide-react'
 import type { BookPrimitives } from '../../../shared/infrastructure/ipc/contracts.js'
 import { BookStatus } from '../../../shared/domain/entities/BookStatus.js'
-import { resolveCoverUrl } from '../services/coverService.js'
+import { useCoverSource } from '../hooks/useCoverSource.js'
 import { getStatusConfig } from './statusConfig.js'
 
 export interface BookCardProps {
@@ -31,10 +30,7 @@ function placeholderTone(bookId: number | undefined): PlaceholderTone {
 }
 
 export function BookCard({ book, onClick }: BookCardProps): JSX.Element {
-  const [imageError, setImageError] = useState(false)
-
-  const coverUrl = resolveCoverUrl(book.coverPath, book.coverUrl ?? '')
-  const hasCover = Boolean(coverUrl && !imageError)
+  const cover = useCoverSource(book.coverPath, book.coverUrl)
   const tone = placeholderTone(book.id)
 
   const statusConfig = getStatusConfig(book.status)
@@ -87,11 +83,11 @@ export function BookCard({ book, onClick }: BookCardProps): JSX.Element {
           className="relative w-4/5 aspect-[2/3] overflow-hidden rounded-r-sm rounded-l-[2px] shadow-md transition-transform duration-200 group-hover:-translate-y-1 group-focus-visible:-translate-y-1"
           data-testid="book-cover"
         >
-          {hasCover ? (
+          {cover.src ? (
             <img
-              src={coverUrl}
+              src={cover.src}
               alt={book.title}
-              onError={() => setImageError(true)}
+              onError={cover.onError}
               className="w-full h-full object-cover"
               data-testid="book-cover-image"
             />

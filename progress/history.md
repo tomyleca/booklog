@@ -421,3 +421,24 @@
     - Guías actualizadas: [docs/guides/design-tokens-theming.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/design-tokens-theming.md) (tema por defecto) y [docs/guides/css-grid-bookshelf-layout.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/css-grid-bookshelf-layout.md) (accesibilidad por teclado).
     - También se actualizaron `docs/conventions.md` y `docs/verification.md`.
   - Reportes de ciclo de vida: [progress/report_ui_polish_fixes.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_ui_polish_fixes.md) y [progress/review_ui_polish_fixes.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_ui_polish_fixes.md).
+
+## Sesión 2026-10-17 — Feature #19: fix_cover_display (Las portadas descargadas no se muestran)
+
+- **Estado:** Completada (done)
+- **Logros:**
+  - Causa: la CSP de `src/renderer/index.html` (`img-src 'self' data: https:`) no incluía `booklog-media:`. Chromium bloqueaba las tapas locales antes de llegar a `protocol.handle`, así que se mostraba el placeholder.
+  - CSP: `img-src 'self' data: https: booklog-media:`. Solo se agregó el esquema a img-src, sin abrir otros orígenes.
+  - Fallback local → remoto → placeholder:
+    - `buildCoverCandidates` en `coverService.ts` y el hook nuevo `src/renderer/src/hooks/useCoverSource.ts`.
+    - Lo usan BookCard, BookDetailPage y DashboardPage, sin cambio visual y con los mismos `data-testid`.
+    - La cadena se reinicia cuando cambian los datos del libro.
+  - Pruebas automatizadas en Vitest:
+    - Nuevo `tests/renderer/test_fix_cover_display.test.ts`, con 12 tests (CSP, helper, hook y fallback en los tres componentes).
+    - Total de la suite: 24 suites, 415 tests en verde.
+  - Verificación:
+    - `.\init.ps1`, `pnpm lint:check`, `pnpm typecheck` y `pnpm build` limpios.
+    - En Electron real (harness con userData temporal), la imagen booklog-media carga con la CSP nueva y falla con la anterior.
+  - Documentación técnica:
+    - ADR: [docs/decisions/019-fix-cover-display.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/decisions/019-fix-cover-display.md).
+    - Guía actualizada: [docs/guides/electron-ipc-bridge.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/electron-ipc-bridge.md), con la sección "Relación con la CSP".
+  - Reportes de ciclo de vida: [progress/report_fix_cover_display.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_fix_cover_display.md) y [progress/review_fix_cover_display.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_fix_cover_display.md). La review pidió quitar un comentario huérfano en BookDetailPage; ya se aplicó.

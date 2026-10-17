@@ -17,7 +17,7 @@ import { BookStatus } from '../../../shared/domain/entities/BookStatus.js'
 import type { BookPrimitives, NotePrimitives } from '../../../shared/infrastructure/ipc/contracts.js'
 import { bookService } from '../services/bookService.js'
 import { noteService } from '../services/noteService.js'
-import { resolveCoverUrl } from '../services/coverService.js'
+import { useCoverSource } from '../hooks/useCoverSource.js'
 import { AddNoteModal, UpdateProgressModal } from '../components/index.js'
 import { STATUS_CONFIG, STATUS_ORDER } from '../components/statusConfig.js'
 
@@ -29,9 +29,6 @@ export interface BookDetailPageProps {
 
 export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Element {
   const queryClient = useQueryClient()
-
-  // Local state for image error handling
-  const [imageError, setImageError] = useState(false)
 
   // Local state for progress editing
   const [currentPageInput, setCurrentPageInput] = useState<number | ''>(0)
@@ -89,7 +86,6 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
       setCurrentPageInput(book.currentPage ?? 0)
       setPercentageInput(book.progressPercentage ?? 0)
       setIsProgressDirty(false)
-      setImageError(false)
     }
   }, [book])
 
@@ -233,8 +229,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
 
 
   // Cover image resolution
-  const coverUrl = resolveCoverUrl(book?.coverPath, book?.coverUrl ?? '')
-  const hasCover = Boolean(coverUrl && !imageError)
+  const cover = useCoverSource(book?.coverPath, book?.coverUrl)
 
   const currentRating = book?.rating ?? 0
   const activeRatingDisplay = hoveredRating !== null ? hoveredRating : currentRating
@@ -327,11 +322,11 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
         {/* Cover Column */}
         <div className="lg:col-span-4 xl:col-span-3 flex flex-col items-center">
           <div className="w-full max-w-[260px] aspect-[2/3] rounded-md overflow-hidden bg-shelf border border-rule-strong shadow-md flex items-center justify-center relative">
-            {hasCover ? (
+            {cover.src ? (
               <img
-                src={coverUrl}
+                src={cover.src}
                 alt={book.title}
-                onError={() => setImageError(true)}
+                onError={cover.onError}
                 className="w-full h-full object-cover"
                 data-testid="detail-cover-image"
               />
