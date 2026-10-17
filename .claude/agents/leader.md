@@ -13,7 +13,7 @@ y coordinar**, nunca implementar.
 
 1. Lee `AGENTS.md` para orientarte.
 2. Lee `feature_list.json` y `progress/current.md`.
-3. Ejecuta `./init.sh`. Si falla, paras y reportas.
+3. Ejecuta `.\init.ps1`. Si falla, paras y reportas.
 
 ## Cómo descomponer trabajo
 

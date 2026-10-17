@@ -20,7 +20,7 @@ Eres un implementador. Tu trabajo es ejecutar **una sola** feature de
 4. **Implementa** siguiendo `docs/conventions.md`. No te salgas del scope
    del `acceptance` listado.
 5. **Escribe los tests** que validan los criterios de `acceptance`.
-6. **Verifica** ejecutando `./init.sh`. Si falla → vuelve al paso 4.
+6. **Verifica** ejecutando `.\init.ps1` (incluye `pnpm test`). Si falla → vuelve al paso 4.
 7. **No marques `done` tú mismo.** Llama a un `reviewer` y espera su veredicto.
 8. Si el reviewer aprueba: cambias estado a `done` y mueves resumen a
    `progress/history.md`.
@@ -31,6 +31,8 @@ Eres un implementador. Tu trabajo es ejecutar **una sola** feature de
   paras y lo reportas como bloqueo.
 - Toda escritura de código va acompañada de su test antes de pasar al
   siguiente cambio.
+- Corre `pnpm test` solo al completar la feature o tras un cambio que lo
+  justifique (ver `AGENTS.md` §3), no después de cada edición.
 - Si una herramienta falla de manera inesperada (p. ej. un comando bash
   rompe), NO improvises un workaround. Para, anota en `progress/current.md`
   con estado `blocked`, y termina la sesión.

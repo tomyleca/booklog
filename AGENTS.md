@@ -37,6 +37,10 @@
 - **Una sola feature a la vez.** No mezcles cambios de varias tareas en la misma sesión.
 - **No declares una tarea `done` sin pruebas verdes.** Ejecuta `pnpm test` y
   asegúrate de que todos los tests pasan.
+- **Cuándo correr `pnpm test`:** al completar una feature, o tras un cambio
+  que lo justifique (esquema Prisma, contratos IPC, use cases, repositorios,
+  refactors que crucen capas). No lo corras después de cada edición ni por
+  cambios solo en `docs/` o `progress/`.
 - **Documenta lo que haces** en `progress/current.md` mientras trabajas, no al final.
 - **Deja el repositorio limpio** antes de cerrar la sesión (ver §5).
 - **Si no sabes algo, busca en `docs/`** antes de inventarlo.

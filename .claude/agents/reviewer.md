@@ -18,7 +18,7 @@ cambios. No editas código.
    - ¿Respeta `docs/architecture.md`? (capas, dependencias, estructura)
    - ¿Respeta `docs/conventions.md`? (estilo, nombres, errores)
    - ¿Tiene su test correspondiente?
-4. Ejecuta `./init.sh`. Tiene que terminar verde.
+4. Ejecuta `.\init.ps1`. Tiene que terminar verde.
 5. Recorre `CHECKPOINTS.md`. Marca `[x]` los que se cumplen, `[ ]` los que no.
 6. Emite veredicto.
 
@@ -56,7 +56,7 @@ CHANGES_REQUESTED -> ver progress/review.md
 ## Reglas duras
 
 - ❌ Nunca apruebes con tests rojos.
-- ❌ Nunca apruebes con `./init.sh` en rojo.
+- ❌ Nunca apruebes con `.\init.ps1` en rojo.
 - ❌ Nunca edites el código del implementador. Tu trabajo es decir qué falla,
   no arreglarlo.
 - ✅ Sé concreto: cita líneas y archivos. Nada de feedback genérico.
