@@ -89,7 +89,7 @@ export function App({ queryClient, initialView }: AppProps): JSX.Element {
 
   return (
     <QueryClientProvider client={client}>
-      <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 flex flex-col transition-colors">
+      <div className="min-h-screen bg-paper texture-paper text-ink flex flex-col transition-colors">
         {/* Custom Frameless TitleBar */}
         <TitleBar onToggleMenu={() => setIsDrawerOpen((prev) => !prev)} />
 
@@ -103,7 +103,7 @@ export function App({ queryClient, initialView }: AppProps): JSX.Element {
 
         {/* Main Navigation Bar */}
         <header
-          className="border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur sticky top-9 z-20"
+          className="rule-double bg-paper/90 backdrop-blur sticky top-9 z-20"
           data-testid="app-navigation"
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-12 flex items-center justify-between">
@@ -111,10 +111,10 @@ export function App({ queryClient, initialView }: AppProps): JSX.Element {
               <button
                 type="button"
                 onClick={() => handleNavigate('library')}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   view.type === 'library'
-                    ? 'bg-indigo-600/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                    ? 'bg-accent/10 text-accent border border-accent/40 shadow-sm'
+                    : 'text-ink-muted border border-transparent hover:text-ink hover:bg-shelf/60'
                 }`}
                 data-testid="nav-library-button"
               >
@@ -124,10 +124,10 @@ export function App({ queryClient, initialView }: AppProps): JSX.Element {
               <button
                 type="button"
                 onClick={() => handleNavigate('dashboard')}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   view.type === 'dashboard'
-                    ? 'bg-indigo-600/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                    ? 'bg-accent/10 text-accent border border-accent/40 shadow-sm'
+                    : 'text-ink-muted border border-transparent hover:text-ink hover:bg-shelf/60'
                 }`}
                 data-testid="nav-dashboard-button"
               >
@@ -137,10 +137,10 @@ export function App({ queryClient, initialView }: AppProps): JSX.Element {
               <button
                 type="button"
                 onClick={() => handleNavigate('settings')}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   view.type === 'settings'
-                    ? 'bg-indigo-600/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                    ? 'bg-accent/10 text-accent border border-accent/40 shadow-sm'
+                    : 'text-ink-muted border border-transparent hover:text-ink hover:bg-shelf/60'
                 }`}
                 data-testid="nav-settings-button"
               >

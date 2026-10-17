@@ -74,25 +74,25 @@ export function NavigationDrawer({
       <div
         data-testid="drawer-backdrop"
         onClick={onClose}
-        className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 bg-backdrop/70 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
       />
 
       {/* Slide-out drawer panel */}
       <aside
         data-testid="drawer-panel"
-        className="relative w-72 max-w-[85vw] bg-slate-900 border-r border-slate-800 flex flex-col h-full shadow-2xl z-10 transition-transform animate-in slide-in-from-left duration-200"
+        className="relative w-72 max-w-[85vw] bg-paper texture-paper border-r-[3px] border-double border-rule-strong flex flex-col h-full shadow-2xl z-10 transition-transform animate-in slide-in-from-left duration-200"
       >
         {/* Drawer Header */}
-        <div className="p-4 border-b border-slate-800/80 flex items-center justify-between">
+        <div className="p-4 rule-double bg-chrome texture-wood flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-lg bg-indigo-600/20 text-indigo-400">
+            <div className="p-1.5 rounded-md bg-chrome-ink/10 text-brass border border-brass/30">
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="font-bold text-slate-100 text-sm tracking-tight leading-tight">
+              <h2 className="font-bold text-chrome-ink text-sm tracking-wide leading-tight">
                 BookLog
               </h2>
-              <p className="text-[11px] text-slate-400 leading-tight">
+              <p className="text-[11px] text-chrome-muted italic leading-tight">
                 Gestor personal de lectura
               </p>
             </div>
@@ -102,7 +102,7 @@ export function NavigationDrawer({
             onClick={onClose}
             aria-label="Cerrar menú"
             data-testid="drawer-close-button"
-            className="p-1.5 rounded-md text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="p-1.5 rounded-md text-chrome-muted hover:text-chrome-ink hover:bg-chrome-ink/10 transition-colors focus:outline-none focus:ring-1 focus:ring-brass"
           >
             <X className="w-4 h-4" />
           </button>
@@ -120,17 +120,17 @@ export function NavigationDrawer({
                 type="button"
                 data-testid={item.testId}
                 onClick={() => handleSelectNav(item.id)}
-                className={`w-full flex items-start gap-3 p-2.5 rounded-lg text-left transition-all ${
+                className={`w-full flex items-start gap-3 p-2.5 rounded-md text-left transition-all ${
                   isActive
-                    ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 shadow-sm'
-                    : 'text-slate-300 hover:bg-slate-800/70 hover:text-slate-100 border border-transparent'
+                    ? 'bg-card text-accent border border-rule-strong border-l-4 border-l-leather shadow-sm'
+                    : 'text-ink hover:bg-shelf/70 hover:text-ink border border-transparent border-l-4'
                 }`}
               >
                 <div
                   className={`mt-0.5 p-1 rounded-md ${
                     isActive
-                      ? 'bg-indigo-600/30 text-indigo-300'
-                      : 'text-slate-400 group-hover:text-slate-200'
+                      ? 'bg-accent/10 text-accent'
+                      : 'text-ink-muted group-hover:text-ink'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -138,12 +138,12 @@ export function NavigationDrawer({
                 <div className="flex-1 min-w-0">
                   <span
                     className={`block text-xs font-semibold ${
-                      isActive ? 'text-indigo-200' : 'text-slate-200'
+                      isActive ? 'text-accent' : 'text-ink'
                     }`}
                   >
                     {item.label}
                   </span>
-                  <span className="block text-[11px] text-slate-400 truncate">
+                  <span className="block text-[11px] text-ink-muted truncate">
                     {item.description}
                   </span>
                 </div>
@@ -153,10 +153,10 @@ export function NavigationDrawer({
         </nav>
 
         {/* Drawer Footer */}
-        <div className="p-4 border-t border-slate-800/80 bg-slate-900/60">
-          <div className="flex items-center justify-between text-[11px] text-slate-400">
+        <div className="p-4 border-t-[3px] border-double border-rule-strong bg-shelf/40">
+          <div className="flex items-center justify-between text-[11px] text-ink-muted">
             <span>BookLog</span>
-            <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono text-[10px]">
+            <span className="px-2 py-0.5 rounded-sm bg-card border border-rule text-ink-muted font-mono text-[10px]">
               v0.1.0
             </span>
           </div>

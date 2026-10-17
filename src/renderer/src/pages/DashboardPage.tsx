@@ -28,37 +28,37 @@ export const STATUS_CONFIG: Record<
 > = {
   [BookStatus.FINISHED]: {
     label: 'Terminado',
-    badgeClass: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
-    barClass: 'bg-indigo-500',
-    textClass: 'text-indigo-400',
+    badgeClass: 'bg-status-finished/10 text-status-finished border-status-finished/40',
+    barClass: 'bg-status-finished',
+    textClass: 'text-status-finished',
     icon: CheckCircle2
   },
   [BookStatus.READING]: {
     label: 'Leyendo',
-    badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-    barClass: 'bg-emerald-500',
-    textClass: 'text-emerald-400',
+    badgeClass: 'bg-status-reading/10 text-status-reading border-status-reading/40',
+    barClass: 'bg-status-reading',
+    textClass: 'text-status-reading',
     icon: Clock
   },
   [BookStatus.PAUSED]: {
     label: 'Pausado',
-    badgeClass: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-    barClass: 'bg-amber-500',
-    textClass: 'text-amber-400',
+    badgeClass: 'bg-status-paused/10 text-status-paused border-status-paused/40',
+    barClass: 'bg-status-paused',
+    textClass: 'text-status-paused',
     icon: PauseCircle
   },
   [BookStatus.TO_READ]: {
     label: 'Por leer',
-    badgeClass: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
-    barClass: 'bg-sky-500',
-    textClass: 'text-sky-400',
+    badgeClass: 'bg-status-to-read/10 text-status-to-read border-status-to-read/40',
+    barClass: 'bg-status-to-read',
+    textClass: 'text-status-to-read',
     icon: Bookmark
   },
   [BookStatus.ABANDONED]: {
     label: 'Abandonado',
-    badgeClass: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
-    barClass: 'bg-rose-500',
-    textClass: 'text-rose-400',
+    badgeClass: 'bg-status-abandoned/10 text-status-abandoned border-status-abandoned/40',
+    barClass: 'bg-status-abandoned',
+    textClass: 'text-status-abandoned',
     icon: XCircle
   }
 }
@@ -127,9 +127,9 @@ function RecentBookItem({
   const hasCover = Boolean(coverUrl && !imageError)
   const statusCfg = STATUS_CONFIG[book.status] ?? {
     label: book.status,
-    badgeClass: 'bg-slate-700 text-slate-300 border-slate-600',
-    barClass: 'bg-slate-500',
-    textClass: 'text-slate-300',
+    badgeClass: 'bg-shelf text-ink-muted border-rule-strong',
+    barClass: 'bg-ink-faint',
+    textClass: 'text-ink',
     icon: BookOpen
   }
 
@@ -159,10 +159,10 @@ function RecentBookItem({
           onSelectBook(book.id)
         }
       }}
-      className="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/40 hover:bg-slate-800/80 border border-slate-700/50 hover:border-slate-600 transition-all cursor-pointer group"
+      className="flex items-center justify-between p-3.5 rounded-md bg-card/40 hover:bg-shelf/80 border border-rule/50 hover:border-rule-strong transition-all cursor-pointer group"
     >
       <div className="flex items-center gap-3.5 min-w-0">
-        <div className="w-10 h-14 shrink-0 rounded bg-slate-800 border border-slate-700/60 overflow-hidden flex items-center justify-center">
+        <div className="w-10 h-14 shrink-0 rounded bg-shelf border border-rule/60 overflow-hidden flex items-center justify-center">
           {hasCover ? (
             <img
               src={coverUrl}
@@ -171,17 +171,17 @@ function RecentBookItem({
               className="w-full h-full object-cover"
             />
           ) : (
-            <BookOpen className="w-4 h-4 text-slate-500" />
+            <BookOpen className="w-4 h-4 text-ink-faint" />
           )}
         </div>
         <div className="min-w-0">
           <h4
-            className="text-sm font-semibold text-slate-200 group-hover:text-indigo-300 truncate transition-colors"
+            className="text-sm font-semibold text-ink group-hover:text-accent truncate transition-colors"
             data-testid="recent-book-title"
           >
             {book.title}
           </h4>
-          <p className="text-xs text-slate-400 truncate mt-0.5" data-testid="recent-book-author">
+          <p className="text-xs text-ink-muted truncate mt-0.5" data-testid="recent-book-author">
             {book.authors || 'Autor desconocido'}
           </p>
         </div>
@@ -195,15 +195,15 @@ function RecentBookItem({
           {statusCfg.label}
         </span>
         <div className="hidden sm:flex flex-col items-end w-24" data-testid="recent-book-progress">
-          <span className="text-xs font-medium text-slate-300">{progress}%</span>
-          <div className="w-full h-1.5 bg-slate-700/60 rounded-full overflow-hidden mt-1">
+          <span className="text-xs font-medium text-ink">{progress}%</span>
+          <div className="w-full h-1.5 bg-well border border-rule/60 rounded-full overflow-hidden mt-1">
             <div
               className={`h-full ${statusCfg.barClass} rounded-full transition-all`}
               style={{ width: `${progress}%` }}
             />
           </div>
         </div>
-        <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors" />
+        <ChevronRight className="w-4 h-4 text-ink-faint group-hover:text-ink transition-colors" />
       </div>
     </div>
   )
@@ -306,16 +306,16 @@ export function DashboardPage({ onSelectBook }: DashboardPageProps = {}): JSX.El
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-testid="dashboard-page">
       {/* Header */}
       <header className="mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 rule-double">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 shadow-xs">
+            <div className="p-2.5 rounded-md bg-leather texture-wood text-brass border border-backdrop/30 shadow-sm">
               <BarChart3 className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-100" data-testid="dashboard-title">
+              <h1 className="text-2xl font-bold tracking-tight text-ink" data-testid="dashboard-title">
                 Dashboard de Lectura
               </h1>
-              <p className="text-sm text-slate-400 mt-0.5">
+              <p className="text-sm text-ink-muted mt-0.5">
                 Métricas analíticas y resumen de tus hábitos de lectura
               </p>
             </div>
@@ -326,7 +326,7 @@ export function DashboardPage({ onSelectBook }: DashboardPageProps = {}): JSX.El
               type="button"
               onClick={() => refetch()}
               disabled={isFetching}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-slate-300 bg-slate-800 hover:bg-slate-700/80 border border-slate-700/60 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-ink bg-shelf hover:bg-rule/80 border border-rule/60 transition-colors disabled:opacity-50"
               title="Actualizar estadísticas"
               data-testid="refresh-button"
             >
@@ -341,30 +341,30 @@ export function DashboardPage({ onSelectBook }: DashboardPageProps = {}): JSX.El
       <main>
         {isLoading && (
           <div
-            className="flex flex-col items-center justify-center py-24 text-slate-400 gap-3"
+            className="flex flex-col items-center justify-center py-24 text-ink-muted gap-3"
             data-testid="loading-state"
           >
-            <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
             <p className="text-sm font-medium">Cargando estadísticas...</p>
           </div>
         )}
 
         {isError && (
           <div
-            className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-rose-900/30 bg-rose-950/10 p-8 my-6"
+            className="flex flex-col items-center justify-center py-16 text-center rounded-md border border-danger/30 bg-danger/10 p-8 my-6"
             data-testid="error-state"
           >
-            <div className="w-12 h-12 rounded-full bg-rose-950/50 text-rose-400 flex items-center justify-center mb-3 border border-rose-800/40">
+            <div className="w-12 h-12 rounded-full bg-danger/10 text-danger flex items-center justify-center mb-3 border border-danger/30">
               <AlertCircle className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-semibold text-slate-200">Error al cargar las estadísticas</h3>
-            <p className="text-sm text-slate-400 max-w-md mt-1 mb-4" data-testid="error-message">
+            <h3 className="text-base font-semibold text-ink">Error al cargar las estadísticas</h3>
+            <p className="text-sm text-ink-muted max-w-md mt-1 mb-4" data-testid="error-message">
               {error?.message || 'Error desconocido'}
             </p>
             <button
               type="button"
               onClick={() => refetch()}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors shadow-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-accent hover:bg-accent-strong text-accent-ink text-xs font-medium transition-colors shadow-sm"
               data-testid="retry-button"
             >
               <RefreshCw className="w-3.5 h-3.5" />
@@ -377,14 +377,14 @@ export function DashboardPage({ onSelectBook }: DashboardPageProps = {}): JSX.El
           <>
             {books.length === 0 ? (
               <div
-                className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/40"
+                className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-md border border-2 border-dashed border-rule-strong/70 bg-card/50 texture-paper"
                 data-testid="empty-dashboard-state"
               >
-                <div className="w-14 h-14 rounded-2xl bg-slate-800/70 border border-slate-700/50 flex items-center justify-center text-slate-400 mb-4">
+                <div className="w-14 h-14 rounded-md bg-card/70 border border-rule/50 flex items-center justify-center text-ink-muted mb-4">
                   <BookOpen className="w-7 h-7" />
                 </div>
-                <h2 className="text-lg font-semibold text-slate-200">Aún no hay estadísticas disponibles</h2>
-                <p className="text-sm text-slate-400 max-w-md mt-1">
+                <h2 className="text-lg font-semibold text-ink">Aún no hay estadísticas disponibles</h2>
+                <p className="text-sm text-ink-muted max-w-md mt-1">
                   Agrega libros a tu biblioteca para comenzar a ver métricas, páginas leídas y desglose de estados.
                 </p>
               </div>
@@ -394,39 +394,39 @@ export function DashboardPage({ onSelectBook }: DashboardPageProps = {}): JSX.El
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4" data-testid="kpis-grid">
                   {/* Total Pages Read */}
                   <div
-                    className="col-span-2 sm:col-span-3 lg:col-span-2 p-5 rounded-2xl bg-slate-850/80 border border-slate-800/90 shadow-sm relative overflow-hidden"
+                    className="col-span-2 sm:col-span-3 lg:col-span-2 p-5 rounded-md ficha relative overflow-hidden"
                     data-testid="kpi-total-pages"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                      <span className="text-xs font-medium text-ink-muted uppercase tracking-wider">
                         Páginas Totales Leídas
                       </span>
-                      <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
+                      <div className="p-2 rounded-md bg-accent/10 text-accent">
                         <BookMarked className="w-4 h-4" />
                       </div>
                     </div>
                     <div className="mt-3 flex items-baseline gap-2">
-                      <span className="text-3xl font-bold tracking-tight text-white" data-testid="stat-total-pages">
+                      <span className="text-3xl font-display font-bold tracking-tight text-ink" data-testid="stat-total-pages">
                         {stats.totalPagesRead.toLocaleString()}
                       </span>
-                      <span className="text-xs text-slate-400">páginas</span>
+                      <span className="text-xs text-ink-muted">páginas</span>
                     </div>
-                    <p className="text-[11px] text-slate-500 mt-2">
+                    <p className="text-[11px] text-ink-faint mt-2">
                       Calculado sobre el progreso de {stats.totalBooks} {stats.totalBooks === 1 ? 'libro' : 'libros'}
                     </p>
                   </div>
 
                   {/* Finished Books */}
                   <div
-                    className="p-5 rounded-2xl bg-slate-850/80 border border-slate-800/90 shadow-sm flex flex-col justify-between"
+                    className="p-5 rounded-md ficha flex flex-col justify-between"
                     data-testid="kpi-finished"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-400">Terminados</span>
-                      <CheckCircle2 className="w-4 h-4 text-indigo-400" />
+                      <span className="text-xs font-medium text-ink-muted">Terminados</span>
+                      <CheckCircle2 className="w-4 h-4 text-status-finished" />
                     </div>
                     <div className="mt-3">
-                      <span className="text-2xl font-bold text-indigo-400" data-testid="stat-finished-count">
+                      <span className="text-2xl font-display font-bold text-status-finished" data-testid="stat-finished-count">
                         {stats.finishedCount}
                       </span>
                     </div>
@@ -434,15 +434,15 @@ export function DashboardPage({ onSelectBook }: DashboardPageProps = {}): JSX.El
 
                   {/* Reading Books */}
                   <div
-                    className="p-5 rounded-2xl bg-slate-850/80 border border-slate-800/90 shadow-sm flex flex-col justify-between"
+                    className="p-5 rounded-md ficha flex flex-col justify-between"
                     data-testid="kpi-reading"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-400">Leyendo</span>
-                      <Clock className="w-4 h-4 text-emerald-400" />
+                      <span className="text-xs font-medium text-ink-muted">Leyendo</span>
+                      <Clock className="w-4 h-4 text-status-reading" />
                     </div>
                     <div className="mt-3">
-                      <span className="text-2xl font-bold text-emerald-400" data-testid="stat-reading-count">
+                      <span className="text-2xl font-display font-bold text-status-reading" data-testid="stat-reading-count">
                         {stats.readingCount}
                       </span>
                     </div>
@@ -450,15 +450,15 @@ export function DashboardPage({ onSelectBook }: DashboardPageProps = {}): JSX.El
 
                   {/* Paused Books */}
                   <div
-                    className="p-5 rounded-2xl bg-slate-850/80 border border-slate-800/90 shadow-sm flex flex-col justify-between"
+                    className="p-5 rounded-md ficha flex flex-col justify-between"
                     data-testid="kpi-paused"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-400">Pausados</span>
-                      <PauseCircle className="w-4 h-4 text-amber-400" />
+                      <span className="text-xs font-medium text-ink-muted">Pausados</span>
+                      <PauseCircle className="w-4 h-4 text-status-paused" />
                     </div>
                     <div className="mt-3">
-                      <span className="text-2xl font-bold text-amber-400" data-testid="stat-paused-count">
+                      <span className="text-2xl font-display font-bold text-status-paused" data-testid="stat-paused-count">
                         {stats.pausedCount}
                       </span>
                     </div>
@@ -466,19 +466,19 @@ export function DashboardPage({ onSelectBook }: DashboardPageProps = {}): JSX.El
 
                   {/* To Read & Abandoned Books */}
                   <div
-                    className="p-5 rounded-2xl bg-slate-850/80 border border-slate-800/90 shadow-sm flex flex-col justify-between"
+                    className="p-5 rounded-md ficha flex flex-col justify-between"
                     data-testid="kpi-to-read"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-400">Por leer / Abandonados</span>
-                      <Bookmark className="w-4 h-4 text-sky-400" />
+                      <span className="text-xs font-medium text-ink-muted">Por leer / Abandonados</span>
+                      <Bookmark className="w-4 h-4 text-status-to-read" />
                     </div>
                     <div className="mt-3 flex items-baseline gap-2">
-                      <span className="text-2xl font-bold text-sky-400" data-testid="stat-to-read-count">
+                      <span className="text-2xl font-display font-bold text-status-to-read" data-testid="stat-to-read-count">
                         {stats.toReadCount}
                       </span>
-                      <span className="text-xs text-slate-500">/</span>
-                      <span className="text-base font-semibold text-rose-400" data-testid="stat-abandoned-count">
+                      <span className="text-xs text-ink-faint">/</span>
+                      <span className="text-base font-display font-semibold text-status-abandoned" data-testid="stat-abandoned-count">
                         {stats.abandonedCount}
                       </span>
                     </div>
@@ -487,24 +487,24 @@ export function DashboardPage({ onSelectBook }: DashboardPageProps = {}): JSX.El
 
                 {/* Status Breakdown Section */}
                 <section
-                  className="p-6 rounded-2xl bg-slate-850/80 border border-slate-800/90 shadow-sm"
+                  className="p-6 rounded-md ficha"
                   data-testid="status-breakdown"
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h3 className="text-base font-semibold text-slate-200">Desglose de libros por estado</h3>
-                      <p className="text-xs text-slate-400 mt-0.5">
+                      <h3 className="text-base font-semibold text-ink">Desglose de libros por estado</h3>
+                      <p className="text-xs text-ink-muted mt-0.5">
                         Proporción y distribución de {stats.totalBooks} {stats.totalBooks === 1 ? 'libro registrado' : 'libros registrados'}
                       </p>
                     </div>
-                    <span className="text-xs font-medium text-slate-400" data-testid="stat-total-books">
+                    <span className="text-xs font-medium text-ink-muted" data-testid="stat-total-books">
                       Total: {stats.totalBooks}
                     </span>
                   </div>
 
                   {/* Visual Distribution Bar */}
                   <div
-                    className="h-3 w-full bg-slate-800 rounded-full overflow-hidden flex shadow-inner mb-6"
+                    className="h-3 w-full bg-shelf rounded-full overflow-hidden flex shadow-inner mb-6"
                     data-testid="distribution-bar"
                   >
                     {orderedStatuses.map((st) => {
@@ -535,16 +535,16 @@ export function DashboardPage({ onSelectBook }: DashboardPageProps = {}): JSX.El
                       return (
                         <div
                           key={st}
-                          className="p-3 rounded-xl bg-slate-800/40 border border-slate-700/40 flex flex-col justify-between"
+                          className="p-3 rounded-md bg-card/60 border border-rule flex flex-col justify-between"
                           data-testid={`status-card-${st}`}
                         >
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-medium text-slate-300">{cfg.label}</span>
+                            <span className="text-xs font-medium text-ink">{cfg.label}</span>
                             <IconComponent className={`w-3.5 h-3.5 ${cfg.textClass}`} />
                           </div>
                           <div className="flex items-baseline justify-between mt-1">
-                            <span className="text-lg font-bold text-slate-100">{count}</span>
-                            <span className="text-xs text-slate-400">{pct}%</span>
+                            <span className="text-lg font-bold text-ink">{count}</span>
+                            <span className="text-xs text-ink-muted">{pct}%</span>
                           </div>
                         </div>
                       )
@@ -554,12 +554,12 @@ export function DashboardPage({ onSelectBook }: DashboardPageProps = {}): JSX.El
 
                 {/* Recent Books Section */}
                 <section
-                  className="p-6 rounded-2xl bg-slate-850/80 border border-slate-800/90 shadow-sm"
+                  className="p-6 rounded-md ficha"
                   data-testid="recent-books-section"
                 >
                   <div className="mb-4">
-                    <h3 className="text-base font-semibold text-slate-200">Libros recientes</h3>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <h3 className="text-base font-semibold text-ink">Libros recientes</h3>
+                    <p className="text-xs text-ink-muted mt-0.5">
                       Últimos libros leídos o actualizados en tu biblioteca
                     </p>
                   </div>

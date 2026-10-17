@@ -29,23 +29,23 @@ export interface BookDetailPageProps {
 const STATUS_CONFIG: Record<BookStatus, { label: string; badgeClass: string }> = {
   [BookStatus.TO_READ]: {
     label: 'Por leer',
-    badgeClass: 'bg-sky-500/10 text-sky-400 border-sky-500/30'
+    badgeClass: 'bg-status-to-read/10 text-status-to-read border-status-to-read/40'
   },
   [BookStatus.READING]: {
     label: 'Leyendo',
-    badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+    badgeClass: 'bg-status-reading/10 text-status-reading border-status-reading/40'
   },
   [BookStatus.PAUSED]: {
     label: 'Pausado',
-    badgeClass: 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+    badgeClass: 'bg-status-paused/10 text-status-paused border-status-paused/40'
   },
   [BookStatus.FINISHED]: {
     label: 'Terminado',
-    badgeClass: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30'
+    badgeClass: 'bg-status-finished/10 text-status-finished border-status-finished/40'
   },
   [BookStatus.ABANDONED]: {
     label: 'Abandonado',
-    badgeClass: 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+    badgeClass: 'bg-status-abandoned/10 text-status-abandoned border-status-abandoned/40'
   }
 }
 
@@ -274,10 +274,10 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
   if (isBookLoading) {
     return (
       <div
-        className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col items-center justify-center min-h-[50vh] text-slate-400 gap-3"
+        className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col items-center justify-center min-h-[50vh] text-ink-muted gap-3"
         data-testid="detail-loading"
       >
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-accent" />
         <p className="text-sm font-medium">Cargando información del libro...</p>
       </div>
     )
@@ -289,26 +289,26 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
         className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12"
         data-testid="detail-error"
       >
-        <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-rose-900/30 bg-rose-950/10 p-8">
-          <div className="w-12 h-12 rounded-full bg-rose-950/50 text-rose-400 flex items-center justify-center mb-3 border border-rose-800/40">
+        <div className="flex flex-col items-center justify-center py-16 text-center rounded-md border border-danger/30 bg-danger/10 p-8">
+          <div className="w-12 h-12 rounded-full bg-danger/10 text-danger flex items-center justify-center mb-3 border border-danger/30">
             <AlertCircle className="w-6 h-6" />
           </div>
-          <h2 className="text-lg font-bold text-slate-200">No se pudo cargar el libro</h2>
-          <p className="text-sm text-slate-400 max-w-md mt-1 mb-6">
+          <h2 className="text-lg font-bold text-ink">No se pudo cargar el libro</h2>
+          <p className="text-sm text-ink-muted max-w-md mt-1 mb-6">
             {bookError?.message || 'El libro solicitado no existe o fue eliminado.'}
           </p>
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => refetchBook()}
-              className="px-4 py-2 text-xs font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-500 transition-colors shadow-sm"
+              className="px-4 py-2 text-xs font-semibold rounded-md text-accent-ink bg-accent hover:bg-accent-strong transition-colors shadow-sm"
             >
               Reintentar
             </button>
             <button
               type="button"
               onClick={onBack}
-              className="px-4 py-2 text-xs font-medium rounded-lg text-slate-300 bg-slate-800 hover:bg-slate-700/80 border border-slate-700/60 transition-colors"
+              className="px-4 py-2 text-xs font-medium rounded-md text-ink bg-shelf hover:bg-rule/80 border border-rule/60 transition-colors"
               data-testid="back-button"
             >
               Volver a la Biblioteca
@@ -322,11 +322,11 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-testid="book-detail-page">
       {/* Top Navigation & Action Bar */}
-      <nav className="flex items-center justify-between gap-4 pb-6 mb-8 border-b border-slate-800">
+      <nav className="flex items-center justify-between gap-4 pb-6 mb-8 rule-double">
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 rounded-lg transition-colors shadow-xs"
+          className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-ink hover:text-ink bg-shelf/80 hover:bg-shelf border border-rule/60 rounded-md transition-colors shadow-xs"
           data-testid="back-button"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -336,7 +336,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
         <button
           type="button"
           onClick={() => setIsDeleteBookModalOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-rose-400 hover:text-rose-300 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-800/30 rounded-lg transition-colors shadow-xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-danger hover:text-danger bg-danger/10 hover:bg-danger/15 border border-danger/30 rounded-md transition-colors shadow-xs"
           data-testid="delete-book-button"
         >
           <Trash2 className="w-3.5 h-3.5" />
@@ -348,7 +348,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
         {/* Cover Column */}
         <div className="lg:col-span-4 xl:col-span-3 flex flex-col items-center">
-          <div className="w-full max-w-[260px] aspect-[2/3] rounded-2xl overflow-hidden bg-slate-800/80 border border-slate-700/80 shadow-xl flex items-center justify-center relative">
+          <div className="w-full max-w-[260px] aspect-[2/3] rounded-md overflow-hidden bg-shelf border border-rule-strong shadow-md flex items-center justify-center relative">
             {hasCover ? (
               <img
                 src={coverUrl}
@@ -359,11 +359,11 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
               />
             ) : (
               <div
-                className="w-full h-full flex flex-col items-center justify-center text-slate-500 bg-slate-850 p-6 text-center"
+                className="w-full h-full flex flex-col items-center justify-center text-ink-faint bg-card texture-paper p-6 text-center"
                 data-testid="detail-cover-placeholder"
               >
                 <BookOpen className="w-16 h-16 stroke-[1.25] mb-2" />
-                <span className="text-xs text-slate-400">Sin portada disponible</span>
+                <span className="text-xs text-ink-muted">Sin portada disponible</span>
               </div>
             )}
           </div>
@@ -373,23 +373,23 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
         <div className="lg:col-span-8 xl:col-span-9 flex flex-col gap-6">
           <div>
             <h1
-              className="text-3xl sm:text-4xl font-extrabold text-slate-100 tracking-tight leading-tight"
+              className="text-3xl sm:text-4xl font-extrabold text-ink tracking-tight leading-tight"
               data-testid="detail-title"
             >
               {book.title}
             </h1>
             <p
-              className="text-lg sm:text-xl text-slate-300 font-medium mt-2"
+              className="text-lg sm:text-xl text-ink-muted italic font-medium mt-2"
               data-testid="detail-authors"
             >
               {book.authors}
             </p>
 
             {/* Badges / Metadata */}
-            <div className="flex flex-wrap items-center gap-3 mt-4 text-xs text-slate-400">
+            <div className="flex flex-wrap items-center gap-3 mt-4 text-xs text-ink-muted">
               {book.pageCount !== null && book.pageCount !== undefined && (
                 <div
-                  className="px-3 py-1 rounded-full bg-slate-800/90 border border-slate-700/60 font-mono text-slate-300"
+                  className="px-3 py-1 rounded-full bg-shelf/90 border border-rule/60 font-mono text-ink"
                   data-testid="detail-page-count"
                 >
                   {book.pageCount} páginas
@@ -397,7 +397,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
               )}
               {book.isbn && (
                 <div
-                  className="px-3 py-1 rounded-full bg-slate-800/90 border border-slate-700/60 font-mono text-slate-300"
+                  className="px-3 py-1 rounded-full bg-shelf/90 border border-rule/60 font-mono text-ink"
                   data-testid="detail-isbn"
                 >
                   ISBN: {book.isbn}
@@ -407,12 +407,12 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
           </div>
 
           {/* Status & Rating Bar */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 rounded-xl bg-slate-800/60 border border-slate-700/60 backdrop-blur-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 rounded-md ficha">
             {/* Status Selector */}
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="book-status-select"
-                className="text-xs font-semibold uppercase tracking-wider text-slate-400"
+                className="text-xs font-semibold uppercase tracking-wider text-ink-muted"
               >
                 Estado de lectura
               </label>
@@ -422,7 +422,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
                   value={book.status}
                   onChange={(e) => statusMutation.mutate(e.target.value as BookStatus)}
                   disabled={statusMutation.isPending}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-colors cursor-pointer"
+                  className="w-full bg-well border border-rule rounded-md px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent/50 transition-colors cursor-pointer"
                   data-testid="detail-status-select"
                 >
                   {Object.entries(STATUS_CONFIG).map(([value, conf]) => (
@@ -432,7 +432,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
                   ))}
                 </select>
                 {statusMutation.isPending && (
-                  <Loader2 className="w-4 h-4 animate-spin text-indigo-400 shrink-0" />
+                  <Loader2 className="w-4 h-4 animate-spin text-accent shrink-0" />
                 )}
               </div>
             </div>
@@ -440,7 +440,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
             {/* Interactive Rating */}
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <label className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
                   Calificación
                 </label>
                 {currentRating > 0 && (
@@ -448,7 +448,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
                     type="button"
                     onClick={() => rateMutation.mutate(null)}
                     disabled={rateMutation.isPending}
-                    className="text-[11px] text-slate-400 hover:text-rose-400 transition-colors"
+                    className="text-[11px] text-ink-muted hover:text-danger transition-colors"
                     data-testid="detail-clear-rating-button"
                   >
                     Quitar
@@ -472,15 +472,15 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
                       }}
                       onMouseEnter={() => setHoveredRating(starValue)}
                       disabled={rateMutation.isPending}
-                      className="p-1 rounded hover:bg-slate-700/50 transition-colors text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                      className="p-1 rounded hover:bg-rule/50 transition-colors text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/40"
                       aria-label={`Calificar con ${starValue} estrella${starValue > 1 ? 's' : ''}`}
                       data-testid={`star-button-${starValue}`}
                     >
                       <Star
                         className={`w-6 h-6 transition-transform hover:scale-110 ${
                           isFilled
-                            ? 'text-amber-400 fill-amber-400'
-                            : 'text-slate-600 fill-transparent'
+                            ? 'text-star fill-star'
+                            : 'text-ink-faint fill-transparent'
                         }`}
                         data-testid={`star-${starValue}${isFilled ? '-filled' : ''}`}
                       />
@@ -488,29 +488,29 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
                   )
                 })}
                 {rateMutation.isPending && (
-                  <Loader2 className="w-4 h-4 animate-spin text-amber-400 shrink-0 ml-2" />
+                  <Loader2 className="w-4 h-4 animate-spin text-star shrink-0 ml-2" />
                 )}
               </div>
             </div>
           </div>
 
           {/* Reading Progress Section (Direct Inline Editing) */}
-          <div className="p-5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex flex-col gap-4">
+          <div className="p-5 rounded-md ficha flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
                 Avance de Lectura
               </span>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => setIsUpdateProgressModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs text-accent hover:text-accent-strong font-medium transition-colors cursor-pointer"
                   data-testid="open-update-progress-modal-button"
                 >
                   <TrendingUp className="w-3.5 h-3.5" />
                   <span>Actualizar progreso...</span>
                 </button>
-                <span className="text-xs font-mono font-medium text-indigo-400">
+                <span className="text-xs font-mono font-medium text-accent">
                   {progressPercentValue}% completado
                 </span>
               </div>
@@ -518,11 +518,11 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
 
             {/* Visual Progress Bar */}
             <div
-              className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-700/50"
+              className="w-full bg-well rounded-full h-3 overflow-hidden border border-rule/50"
               data-testid="detail-progress-bar-container"
             >
               <div
-                className="bg-indigo-500 h-full rounded-full transition-all duration-300"
+                className="bg-accent h-full rounded-full transition-all duration-300"
                 style={{ width: `${progressPercentValue}%` }}
                 data-testid="detail-progress-bar"
               />
@@ -533,7 +533,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
               <div className="flex items-center gap-2">
                 <label
                   htmlFor="progress-page-input"
-                  className="text-xs text-slate-400 font-medium"
+                  className="text-xs text-ink-muted font-medium"
                 >
                   Página:
                 </label>
@@ -545,11 +545,11 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
                     max={book.pageCount ?? undefined}
                     value={currentPageInput}
                     onChange={handlePageInputChange}
-                    className="w-20 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-sm text-slate-100 font-mono text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                    className="w-20 bg-well border border-rule rounded-md px-2.5 py-1 text-sm text-ink font-mono text-center focus:outline-none focus:ring-2 focus:ring-accent/50"
                     data-testid="detail-progress-page-input"
                   />
                   {book.pageCount !== null && book.pageCount !== undefined && (
-                    <span className="text-xs text-slate-400 font-mono">
+                    <span className="text-xs text-ink-muted font-mono">
                       / {book.pageCount}
                     </span>
                   )}
@@ -559,7 +559,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
               <div className="flex items-center gap-2">
                 <label
                   htmlFor="progress-percentage-input"
-                  className="text-xs text-slate-400 font-medium"
+                  className="text-xs text-ink-muted font-medium"
                 >
                   Porcentaje:
                 </label>
@@ -571,10 +571,10 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
                     max="100"
                     value={percentageInput}
                     onChange={handlePercentageInputChange}
-                    className="w-18 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-sm text-slate-100 font-mono text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                    className="w-18 bg-well border border-rule rounded-md px-2.5 py-1 text-sm text-ink font-mono text-center focus:outline-none focus:ring-2 focus:ring-accent/50"
                     data-testid="detail-progress-percentage-input"
                   />
-                  <span className="text-xs text-slate-400 font-mono">%</span>
+                  <span className="text-xs text-ink-muted font-mono">%</span>
                 </div>
               </div>
 
@@ -583,10 +583,10 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
                   type="button"
                   onClick={handleSaveProgress}
                   disabled={progressMutation.isPending || !isProgressDirty}
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold rounded-lg transition-all shadow-xs ${
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold rounded-md transition-all shadow-xs ${
                     isProgressDirty
-                      ? 'text-white bg-indigo-600 hover:bg-indigo-500 cursor-pointer ring-1 ring-indigo-400/40'
-                      : 'text-slate-400 bg-slate-800/80 border border-slate-700/60 cursor-not-allowed opacity-60'
+                      ? 'text-accent-ink bg-accent hover:bg-accent-strong cursor-pointer ring-1 ring-accent/40'
+                      : 'text-ink-muted bg-shelf/80 border border-rule/60 cursor-not-allowed opacity-60'
                   }`}
                   data-testid="detail-save-progress-button"
                 >
@@ -600,7 +600,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
 
                 {progressSuccessNotice && (
                   <span
-                    className="text-xs font-medium text-emerald-400 flex items-center gap-1 animate-fade-in"
+                    className="text-xs font-medium text-success flex items-center gap-1 animate-fade-in"
                     data-testid="progress-success-notice"
                   >
                     <Check className="w-3.5 h-3.5" />
@@ -612,7 +612,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
 
             {progressErrorMessage && (
               <p
-                className="text-xs text-rose-400 flex items-center gap-1"
+                className="text-xs text-danger flex items-center gap-1"
                 data-testid="progress-error-message"
               >
                 <AlertCircle className="w-3.5 h-3.5" />
@@ -624,16 +624,16 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
       </div>
 
       {/* Notes and Ideas Section */}
-      <section className="mt-8 pt-8 border-t border-slate-800">
+      <section className="mt-8 pt-8 border-t-[3px] border-double border-rule-strong">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2.5">
-            <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-indigo-400" />
+            <h2 className="text-xl font-bold text-ink flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-accent" />
               <span>Notas e Ideas</span>
             </h2>
             {notes && !isNotesLoading && (
               <span
-                className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700/60"
+                className="text-xs font-medium px-2 py-0.5 rounded-full bg-shelf text-ink-muted border border-rule/60"
                 data-testid="notes-count-badge"
               >
                 {notes.length}
@@ -644,7 +644,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
           <button
             type="button"
             onClick={() => setIsAddNoteModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md text-accent-ink bg-accent hover:bg-accent-strong shadow-sm transition-colors"
             data-testid="add-note-button"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -654,14 +654,14 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
 
         {/* Notes Content */}
         {isNotesLoading && (
-          <div className="flex items-center justify-center py-12 text-slate-400 gap-2">
-            <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
+          <div className="flex items-center justify-center py-12 text-ink-muted gap-2">
+            <Loader2 className="w-5 h-5 animate-spin text-accent" />
             <span className="text-xs">Cargando notas...</span>
           </div>
         )}
 
         {isNotesError && (
-          <div className="p-4 rounded-xl border border-rose-900/40 bg-rose-950/10 text-rose-400 text-xs">
+          <div className="p-4 rounded-md border border-danger/30 bg-danger/10 text-danger text-xs">
             {notesError?.message || 'Error al cargar las notas'}
           </div>
         )}
@@ -670,22 +670,22 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
           <>
             {sortedNotes.length === 0 ? (
               <div
-                className="flex flex-col items-center justify-center py-14 px-4 text-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/40 text-slate-400"
+                className="flex flex-col items-center justify-center py-14 px-4 text-center rounded-md border border-2 border-dashed border-rule-strong/70 bg-card/50 texture-paper text-ink-muted"
                 data-testid="no-notes-message"
               >
-                <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3 text-slate-500">
+                <div className="w-10 h-10 rounded-full bg-shelf flex items-center justify-center mb-3 text-ink-faint">
                   <Sparkles className="w-5 h-5" />
                 </div>
-                <h3 className="text-sm font-semibold text-slate-300">
+                <h3 className="text-sm font-semibold text-ink">
                   Aún no tienes notas para este libro
                 </h3>
-                <p className="text-xs text-slate-500 mt-1 max-w-sm">
+                <p className="text-xs text-ink-faint mt-1 max-w-sm">
                   Captura citas memorables, reflexiones, aprendizajes o ideas clave mientras lees.
                 </p>
                 <button
                   type="button"
                   onClick={() => setIsAddNoteModalOpen(true)}
-                  className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-indigo-400 bg-indigo-950/30 hover:bg-indigo-950/60 border border-indigo-800/40 transition-colors"
+                  className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md text-accent bg-accent/10 hover:bg-accent/15 border border-accent/40 transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Crear primera nota</span>
@@ -711,19 +711,19 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
                   return (
                     <article
                       key={noteId ?? Math.random()}
-                      className="group flex flex-col justify-between p-4 rounded-xl bg-slate-800/70 hover:bg-slate-800 border border-slate-700/60 hover:border-slate-600 transition-all shadow-sm"
+                      className="group flex flex-col justify-between p-4 rounded-md ficha hover:border-rule-strong transition-all"
                       data-testid="note-item"
                     >
                       <p
-                        className="text-sm text-slate-200 whitespace-pre-wrap leading-relaxed break-words"
+                        className="text-sm text-ink whitespace-pre-wrap leading-relaxed break-words"
                         data-testid="note-content"
                       >
                         {note.content}
                       </p>
 
-                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-700/40 text-xs text-slate-400">
+                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-dashed border-rule text-xs text-ink-muted">
                         <span
-                          className="flex items-center gap-1 text-[11px] text-slate-400"
+                          className="flex items-center gap-1 text-[11px] text-ink-muted"
                           data-testid="note-date"
                         >
                           <Calendar className="w-3 h-3" />
@@ -735,7 +735,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
                             type="button"
                             onClick={() => deleteNoteMutation.mutate(noteId)}
                             disabled={deleteNoteMutation.isPending}
-                            className="p-1 text-slate-400 hover:text-rose-400 rounded hover:bg-rose-950/30 transition-colors opacity-80 group-hover:opacity-100"
+                            className="p-1 text-ink-muted hover:text-danger rounded hover:bg-danger/10 transition-colors opacity-80 group-hover:opacity-100"
                             title="Eliminar nota"
                             data-testid={`delete-note-button-${noteId}`}
                           >
@@ -770,32 +770,32 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
       {/* Modal: Confirmar Eliminación del Libro */}
       {isDeleteBookModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-backdrop/70 backdrop-blur-xs animate-fade-in"
           role="dialog"
           aria-modal="true"
           data-testid="delete-book-modal"
         >
-          <div className="w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl p-6 flex flex-col gap-4">
+          <div className="w-full max-w-md ficha ficha-float rounded-md p-6 flex flex-col gap-4">
             <div className="flex items-start gap-3">
-              <div className="p-2.5 rounded-xl bg-rose-950/40 text-rose-400 border border-rose-800/40 shrink-0">
+              <div className="p-2.5 rounded-md bg-danger/10 text-danger border border-danger/30 shrink-0">
                 <AlertCircle className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-100">
+                <h3 className="text-base font-bold text-ink">
                   ¿Eliminar este libro?
                 </h3>
-                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                <p className="text-xs text-ink-muted mt-1 leading-relaxed">
                   ¿Estás seguro de que deseas eliminar este libro? Se eliminarán también todas sus notas.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800 mt-2">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-rule mt-2">
               <button
                 type="button"
                 onClick={() => setIsDeleteBookModalOpen(false)}
                 disabled={deleteBookMutation.isPending}
-                className="px-3.5 py-1.5 text-xs font-medium rounded-lg text-slate-300 bg-slate-800 hover:bg-slate-750 transition-colors"
+                className="px-3.5 py-1.5 text-xs font-medium rounded-md text-ink bg-shelf hover:bg-rule/60 transition-colors"
                 data-testid="cancel-delete-book-button"
               >
                 Cancelar
@@ -804,7 +804,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
                 type="button"
                 onClick={() => deleteBookMutation.mutate()}
                 disabled={deleteBookMutation.isPending}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-lg text-white bg-rose-600 hover:bg-rose-500 shadow-sm transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-md text-accent-ink bg-danger hover:bg-danger/90 shadow-sm transition-colors disabled:opacity-50"
                 data-testid="confirm-delete-book-button"
               >
                 {deleteBookMutation.isPending && (

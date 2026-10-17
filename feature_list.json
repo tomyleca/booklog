@@ -13,7 +13,12 @@
   "rules": {
     "one_feature_at_a_time": true,
     "require_tests_to_close": true,
-    "valid_status": ["pending", "in_progress", "done", "blocked"]
+    "valid_status": [
+      "pending",
+      "in_progress",
+      "done",
+      "blocked"
+    ]
   },
   "features": [
     {
@@ -238,6 +243,39 @@
         "Toggle para dark/light mode",
         "Info de la versión de la app",
         "Las preferencias persisten entre reinicios de la app"
+      ],
+      "status": "done"
+    },
+    {
+      "id": 16,
+      "name": "retro_library_theme",
+      "title": "Rediseño visual: tema retro de biblioteca",
+      "description": "Fase de estilizado (posterior a la regla funcionalidad-antes-que-estética). Reemplaza la paleta slate/indigo por un sistema de tokens de diseño inspirado en una biblioteca: marrones oscuros y claros, cozy, con estética retro moderada de la década pasada (texturas sutiles de papel/madera, sombras suaves con relieve, serif, tarjetas tipo ficha de catálogo, bordes de doble línea) sin verse recargado ni genérico. Solo piel: no cambia layouts ni comportamiento.",
+      "acceptance": [
+        "Existe un sistema de tokens semánticos (p. ej. paper, ink, leather, spine, accent) definido con @theme de Tailwind v4 en main.css mediante variables CSS",
+        "Dos temas sobre el selector existente de la feature #15: oscuro = biblioteca de noche (nogal, cuero, luz cálida) y claro = papel/pergamino con tinta marrón; \"Sistema\" sigue funcionando",
+        "Ningún componente ni página de src/renderer usa clases de color crudas slate-*/indigo-*/sky-*/etc.; todo usa los tokens (los badges de estado y estrellas usan variantes cálidas armónicas con la paleta)",
+        "Todas las vistas (TitleBar, NavigationDrawer, Biblioteca, Detalle, Dashboard, Settings y modales) se ven correctas en ambos temas",
+        "Tipografía serif empaquetada localmente vía @fontsource (funciona offline, sin CDN) para títulos y texto",
+        "Texturas sutiles implementadas sin imágenes externas (CSS/SVG inline) y con contraste legible (WCAG AA en texto principal)",
+        "Los layouts, data-testid y comportamiento existentes no cambian; los tests que dependían de clases de color se actualizan a los tokens",
+        "pnpm test, typecheck, lint y build en verde"
+      ],
+      "status": "done"
+    },
+    {
+      "id": 17,
+      "name": "library_bookshelf_view",
+      "title": "Biblioteca como estantería",
+      "description": "Depende de #16. La vista Biblioteca muestra los libros parados sobre estantes de madera (estilo retro moderado, coherente con los tokens de #16), con una ficha debajo de cada libro que conserva toda la información actual de BookCard.",
+      "acceptance": [
+        "La grilla de LibraryPage/BookGrid se presenta como filas de estantes: los libros (tapas) se apoyan visualmente sobre un estante de madera hecho con CSS y tokens de #16",
+        "Debajo de cada libro hay una ficha con título, autor, badge de estado, progreso (cuando aplica) y estrellas: no se pierde información respecto de BookCard",
+        "Placeholder de tapa coherente con la estética (lomo/tapa de cuero) cuando no hay imagen",
+        "Responsive: la cantidad de libros por estante se adapta al ancho de la ventana",
+        "Se conservan filtros por estado, estado vacío, click para abrir detalle y los data-testid existentes; se actualizan los tests de layout de la grilla",
+        "Funciona y se ve bien en tema claro y oscuro",
+        "pnpm test, typecheck, lint y build en verde"
       ],
       "status": "done"
     }

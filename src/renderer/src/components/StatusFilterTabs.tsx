@@ -45,10 +45,10 @@ export function StatusFilterTabs({
             role="tab"
             aria-selected={isSelected}
             onClick={() => onSelectStatus(option.key)}
-            className={`inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
+            className={`inline-flex items-center px-3.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-accent/50 ${
               isSelected
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 bg-slate-800/40 border border-slate-700/40'
+                ? 'bg-accent text-accent-ink border border-accent-strong shadow-sm'
+                : 'text-ink-muted hover:text-ink hover:bg-shelf/80 bg-card/60 border border-rule'
             }`}
             data-testid={`tab-${option.key.toLowerCase()}`}
           >
@@ -57,8 +57,8 @@ export function StatusFilterTabs({
               <span
                 className={`ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] ${
                   isSelected
-                    ? 'bg-indigo-700/80 text-white'
-                    : 'bg-slate-700/80 text-slate-300'
+                    ? 'bg-accent-ink/20 text-accent-ink'
+                    : 'bg-shelf text-ink-muted'
                 }`}
               >
                 {count}

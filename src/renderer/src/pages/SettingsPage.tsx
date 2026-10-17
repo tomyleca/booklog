@@ -146,14 +146,14 @@ export function SettingsPage(): JSX.Element {
     >
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
-        <div className="p-2.5 rounded-xl bg-indigo-600/20 text-indigo-500 dark:text-indigo-400 border border-indigo-500/30">
+        <div className="p-2.5 rounded-md bg-leather texture-wood text-brass border border-backdrop/30 shadow-sm">
           <Settings className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+          <h1 className="text-2xl font-bold text-ink tracking-tight">
             Configuración
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-ink-muted">
             Personaliza tus preferencias de lectura, visualización y gestión local de BookLog.
           </p>
         </div>
@@ -163,13 +163,13 @@ export function SettingsPage(): JSX.Element {
         {/* Section 1: Google Books API */}
         <section
           data-testid="google-books-settings-section"
-          className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-xs"
+          className="ficha rounded-md p-6"
         >
-          <div className="flex items-center gap-2.5 mb-2 text-slate-900 dark:text-slate-200 font-semibold text-base">
-            <Key className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+          <div className="flex items-center gap-2.5 mb-2 text-ink font-semibold text-base">
+            <Key className="w-5 h-5 text-accent" />
             <h2>Google Books API</h2>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-5 leading-relaxed">
+          <p className="text-xs text-ink-muted mb-5 leading-relaxed">
             Configura tu propia clave de API de Google Books para realizar búsquedas sin restricciones
             de cuota compartida. Si no tienes una, puedes consultar la API pública sin clave con límites estándar.
           </p>
@@ -178,7 +178,7 @@ export function SettingsPage(): JSX.Element {
             <div>
               <label
                 htmlFor="googleBooksApiKey"
-                className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+                className="block text-xs font-medium text-ink mb-1.5"
               >
                 Clave de API (Google Books API Key)
               </label>
@@ -196,7 +196,7 @@ export function SettingsPage(): JSX.Element {
                   }}
                   placeholder="AIzaSy..."
                   disabled={isLoading}
-                  className="w-full px-3.5 py-2.5 pr-11 rounded-lg text-sm bg-slate-50 dark:bg-slate-900/80 border border-slate-300 dark:border-slate-700/80 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 font-mono transition-colors"
+                  className="w-full px-3.5 py-2.5 pr-11 rounded-md text-sm bg-well border border-rule text-ink placeholder:text-ink-faint focus:outline-hidden focus:ring-2 focus:ring-accent/50 focus:border-accent font-mono transition-colors"
                 />
                 <button
                   type="button"
@@ -204,7 +204,7 @@ export function SettingsPage(): JSX.Element {
                   onClick={() => setShowApiKey((prev) => !prev)}
                   title={showApiKey ? 'Ocultar clave' : 'Mostrar clave'}
                   aria-label={showApiKey ? 'Ocultar clave' : 'Mostrar clave'}
-                  className="absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  className="absolute right-3 text-ink-muted hover:text-ink transition-colors"
                 >
                   {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -215,29 +215,29 @@ export function SettingsPage(): JSX.Element {
             {testStatus.status !== 'idle' && (
               <div
                 data-testid="api-key-feedback"
-                className={`p-3 rounded-lg flex items-center gap-2.5 text-xs transition-all ${
+                className={`p-3 rounded-md flex items-center gap-2.5 text-xs transition-all ${
                   testStatus.status === 'success'
-                    ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
+                    ? 'bg-success/10 text-success border border-success/30'
                     : testStatus.status === 'error'
-                      ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30'
-                      : 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20'
+                      ? 'bg-danger/10 text-danger border border-danger/30'
+                      : 'bg-accent/10 text-accent border border-accent/20'
                 }`}
               >
                 {testStatus.status === 'loading' && (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-indigo-500 shrink-0" />
+                    <Loader2 className="w-4 h-4 animate-spin text-accent shrink-0" />
                     <span>Verificando conexión con Google Books API...</span>
                   </>
                 )}
                 {testStatus.status === 'success' && (
                   <>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
                     <span>{testStatus.message}</span>
                   </>
                 )}
                 {testStatus.status === 'error' && (
                   <>
-                    <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                    <AlertCircle className="w-4 h-4 text-danger shrink-0" />
                     <span>{testStatus.message}</span>
                   </>
                 )}
@@ -248,9 +248,9 @@ export function SettingsPage(): JSX.Element {
             {saveSuccess && (
               <div
                 data-testid="save-success-indicator"
-                className="p-3 rounded-lg flex items-center gap-2.5 text-xs bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 animate-in fade-in"
+                className="p-3 rounded-md flex items-center gap-2.5 text-xs bg-success/10 text-success border border-success/30 animate-in fade-in"
               >
-                <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                <Check className="w-4 h-4 text-success shrink-0" />
                 <span>Clave de API guardada correctamente de forma segura.</span>
               </div>
             )}
@@ -262,7 +262,7 @@ export function SettingsPage(): JSX.Element {
                 data-testid="test-api-key-button"
                 onClick={handleTestApiKey}
                 disabled={isLoading || testStatus.status === 'loading'}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 transition-colors disabled:opacity-50 cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-medium bg-shelf text-ink hover:bg-rule border border-rule transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {testStatus.status === 'loading' ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -277,7 +277,7 @@ export function SettingsPage(): JSX.Element {
                 data-testid="save-api-key-button"
                 onClick={handleSaveApiKey}
                 disabled={isLoading || isSavingKey}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-500 transition-colors shadow-xs disabled:opacity-50 cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-medium bg-accent text-accent-ink hover:bg-accent-strong transition-colors shadow-xs disabled:opacity-50 cursor-pointer"
               >
                 {isSavingKey ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -293,13 +293,13 @@ export function SettingsPage(): JSX.Element {
         {/* Section 2: Appearance & Theme */}
         <section
           data-testid="appearance-settings-section"
-          className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-xs"
+          className="ficha rounded-md p-6"
         >
-          <div className="flex items-center gap-2.5 mb-2 text-slate-900 dark:text-slate-200 font-semibold text-base">
-            <Sun className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+          <div className="flex items-center gap-2.5 mb-2 text-ink font-semibold text-base">
+            <Sun className="w-5 h-5 text-accent" />
             <h2>Preferencias Generales y Tema</h2>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
+          <p className="text-xs text-ink-muted mb-5">
             Selecciona la paleta visual de BookLog. El tema del sistema adaptará la interfaz automáticamente a la configuración de tu sistema operativo.
           </p>
 
@@ -309,24 +309,24 @@ export function SettingsPage(): JSX.Element {
               type="button"
               data-testid="theme-option-dark"
               onClick={() => handleThemeChange('dark')}
-              className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2.5 transition-all text-center cursor-pointer ${
+              className={`p-4 rounded-md border flex flex-col items-center justify-center gap-2.5 transition-all text-center cursor-pointer ${
                 theme === 'dark'
-                  ? 'bg-indigo-600/10 border-indigo-500 text-indigo-600 dark:text-indigo-400 shadow-xs'
-                  : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
+                  ? 'bg-accent/10 border-accent text-accent shadow-xs'
+                  : 'bg-card/60 border-rule text-ink-muted hover:border-rule-strong'
               }`}
             >
               <div
-                className={`p-2 rounded-lg ${
+                className={`p-2 rounded-md ${
                   theme === 'dark'
-                    ? 'bg-indigo-600/20 text-indigo-500 dark:text-indigo-400'
-                    : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                    ? 'bg-leather text-brass'
+                    : 'bg-shelf text-ink-muted'
                 }`}
               >
                 <Moon className="w-5 h-5" />
               </div>
               <span className="text-xs font-semibold">Oscuro</span>
-              <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                Interfaz con tonos oscuros y contraste suave
+              <span className="text-[11px] text-ink-faint">
+                Biblioteca de noche: nogal, cuero y luz cálida
               </span>
             </button>
 
@@ -335,24 +335,24 @@ export function SettingsPage(): JSX.Element {
               type="button"
               data-testid="theme-option-light"
               onClick={() => handleThemeChange('light')}
-              className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2.5 transition-all text-center cursor-pointer ${
+              className={`p-4 rounded-md border flex flex-col items-center justify-center gap-2.5 transition-all text-center cursor-pointer ${
                 theme === 'light'
-                  ? 'bg-indigo-600/10 border-indigo-500 text-indigo-600 dark:text-indigo-400 shadow-xs'
-                  : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
+                  ? 'bg-accent/10 border-accent text-accent shadow-xs'
+                  : 'bg-card/60 border-rule text-ink-muted hover:border-rule-strong'
               }`}
             >
               <div
-                className={`p-2 rounded-lg ${
+                className={`p-2 rounded-md ${
                   theme === 'light'
-                    ? 'bg-indigo-600/20 text-indigo-500 dark:text-indigo-400'
-                    : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                    ? 'bg-leather text-brass'
+                    : 'bg-shelf text-ink-muted'
                 }`}
               >
                 <Sun className="w-5 h-5" />
               </div>
               <span className="text-xs font-semibold">Claro</span>
-              <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                Interfaz limpia con fondo claro y alto contraste
+              <span className="text-[11px] text-ink-faint">
+                Papel de pergamino con tinta marrón
               </span>
             </button>
 
@@ -361,23 +361,23 @@ export function SettingsPage(): JSX.Element {
               type="button"
               data-testid="theme-option-system"
               onClick={() => handleThemeChange('system')}
-              className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2.5 transition-all text-center cursor-pointer ${
+              className={`p-4 rounded-md border flex flex-col items-center justify-center gap-2.5 transition-all text-center cursor-pointer ${
                 theme === 'system'
-                  ? 'bg-indigo-600/10 border-indigo-500 text-indigo-600 dark:text-indigo-400 shadow-xs'
-                  : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
+                  ? 'bg-accent/10 border-accent text-accent shadow-xs'
+                  : 'bg-card/60 border-rule text-ink-muted hover:border-rule-strong'
               }`}
             >
               <div
-                className={`p-2 rounded-lg ${
+                className={`p-2 rounded-md ${
                   theme === 'system'
-                    ? 'bg-indigo-600/20 text-indigo-500 dark:text-indigo-400'
-                    : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                    ? 'bg-leather text-brass'
+                    : 'bg-shelf text-ink-muted'
                 }`}
               >
                 <Monitor className="w-5 h-5" />
               </div>
               <span className="text-xs font-semibold">Sistema</span>
-              <span className="text-[11px] text-slate-400 dark:text-slate-500">
+              <span className="text-[11px] text-ink-faint">
                 Sincronización automática con el sistema operativo
               </span>
             </button>
@@ -387,25 +387,25 @@ export function SettingsPage(): JSX.Element {
         {/* Section 3: Database & Local Storage */}
         <section
           data-testid="storage-settings-section"
-          className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-xs"
+          className="ficha rounded-md p-6"
         >
-          <div className="flex items-center gap-2.5 mb-2 text-slate-900 dark:text-slate-200 font-semibold text-base">
-            <Database className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+          <div className="flex items-center gap-2.5 mb-2 text-ink font-semibold text-base">
+            <Database className="w-5 h-5 text-accent" />
             <h2>Almacenamiento Local</h2>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+          <p className="text-xs text-ink-muted mb-4">
             Gestión de la base de datos SQLite y portadas descargadas localmente en tu equipo.
           </p>
-          <div className="bg-slate-50 dark:bg-slate-900/60 rounded-lg p-4 border border-slate-200 dark:border-slate-800/80 flex items-center justify-between">
+          <div className="bg-well rounded-md p-4 border border-rule/80 flex items-center justify-between">
             <div>
-              <span className="text-xs font-medium text-slate-900 dark:text-slate-200 block">
+              <span className="text-xs font-medium text-ink block">
                 Motor de base de datos
               </span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+              <span className="text-[11px] text-ink-muted block">
                 SQLite local a través de Prisma Client
               </span>
             </div>
-            <span className="text-xs px-2.5 py-1 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
+            <span className="text-xs px-2.5 py-1 rounded bg-success/10 text-success border border-success/30">
               Activo
             </span>
           </div>
@@ -414,13 +414,13 @@ export function SettingsPage(): JSX.Element {
         {/* Section 4: Privacy & Data */}
         <section
           data-testid="privacy-settings-section"
-          className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-xs"
+          className="ficha rounded-md p-6"
         >
-          <div className="flex items-center gap-2.5 mb-2 text-slate-900 dark:text-slate-200 font-semibold text-base">
-            <Shield className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+          <div className="flex items-center gap-2.5 mb-2 text-ink font-semibold text-base">
+            <Shield className="w-5 h-5 text-accent" />
             <h2>Privacidad y Datos</h2>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+          <p className="text-xs text-ink-muted leading-relaxed">
             Tus datos de lectura, notas y portadas residen 100% en tu dispositivo. No se comparten con
             servidores de terceros, salvo las consultas directas a Google Books para buscar libros y obtener portadas.
           </p>
@@ -429,55 +429,55 @@ export function SettingsPage(): JSX.Element {
         {/* Section 5: About BookLog */}
         <section
           data-testid="about-settings-section"
-          className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-xs"
+          className="ficha rounded-md p-6"
         >
-          <div className="flex items-center gap-2.5 mb-3 text-slate-900 dark:text-slate-200 font-semibold text-base">
-            <Info className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+          <div className="flex items-center gap-2.5 mb-3 text-ink font-semibold text-base">
+            <Info className="w-5 h-5 text-accent" />
             <h2>Acerca de BookLog</h2>
           </div>
 
           <div className="space-y-4">
-            <p className="font-semibold text-slate-900 dark:text-slate-200 text-sm">
+            <p className="font-semibold text-ink text-sm">
               BookLog v{appInfo?.version ?? '0.1.0'}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-ink-muted">
               Aplicación de escritorio para registro, seguimiento y notas de lecturas personales construida con Electron, React, TypeScript y Tailwind CSS.
             </p>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80">
-                <span className="text-[11px] text-slate-400 dark:text-slate-500 block">Versión App</span>
-                <span data-testid="app-version" className="text-xs font-semibold text-slate-800 dark:text-slate-200 font-mono">
+              <div className="bg-well p-3 rounded-md border border-rule/80">
+                <span className="text-[11px] text-ink-faint block">Versión App</span>
+                <span data-testid="app-version" className="text-xs font-semibold text-ink font-mono">
                   v{appInfo?.version ?? '0.1.0'}
                 </span>
               </div>
 
-              <div className="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80">
-                <span className="text-[11px] text-slate-400 dark:text-slate-500 block">Electron</span>
-                <span data-testid="electron-version" className="text-xs font-semibold text-slate-800 dark:text-slate-200 font-mono">
+              <div className="bg-well p-3 rounded-md border border-rule/80">
+                <span className="text-[11px] text-ink-faint block">Electron</span>
+                <span data-testid="electron-version" className="text-xs font-semibold text-ink font-mono">
                   v{appInfo?.electronVersion ?? '28.2.0'}
                 </span>
               </div>
 
-              <div className="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80">
-                <span className="text-[11px] text-slate-400 dark:text-slate-500 block">Node.js</span>
-                <span data-testid="node-version" className="text-xs font-semibold text-slate-800 dark:text-slate-200 font-mono">
+              <div className="bg-well p-3 rounded-md border border-rule/80">
+                <span className="text-[11px] text-ink-faint block">Node.js</span>
+                <span data-testid="node-version" className="text-xs font-semibold text-ink font-mono">
                   v{appInfo?.nodeVersion ?? '18.19.0'}
                 </span>
               </div>
 
-              <div className="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80">
-                <span className="text-[11px] text-slate-400 dark:text-slate-500 block">Chromium</span>
-                <span data-testid="chrome-version" className="text-xs font-semibold text-slate-800 dark:text-slate-200 font-mono">
+              <div className="bg-well p-3 rounded-md border border-rule/80">
+                <span className="text-[11px] text-ink-faint block">Chromium</span>
+                <span data-testid="chrome-version" className="text-xs font-semibold text-ink font-mono">
                   v{appInfo?.chromeVersion ?? '120.0.0'}
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center justify-between pt-2 border-t border-rule text-xs text-ink-muted">
               <div className="flex items-center gap-1.5">
                 <span>Licencia:</span>
-                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                <span className="font-semibold text-ink">
                   {appInfo?.license ?? 'MIT'}
                 </span>
               </div>
@@ -486,7 +486,7 @@ export function SettingsPage(): JSX.Element {
                   href={appInfo.repositoryUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                  className="inline-flex items-center gap-1 text-accent hover:text-accent-strong transition-colors"
                 >
                   <span>Repositorio GitHub</span>
                   <ExternalLink className="w-3.5 h-3.5" />

@@ -1,3 +1,255 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Tema "biblioteca retro" (feature #16).
+ *
+ * Los componentes NUNCA usan colores crudos (slate-*, indigo-*...): usan tokens
+ * semánticos (bg-paper, text-ink, border-rule, bg-accent...). @theme registra
+ * cada token como variable CSS y genera sus utilidades; los valores de @theme
+ * son los del tema CLARO (papel/pergamino). El tema OSCURO (biblioteca de
+ * noche) solo reasigna esas mismas variables bajo `.dark`, así que ningún
+ * componente necesita variantes `dark:`.
+ */
+@theme {
+  /* Superficies */
+  --color-paper: #f2e8d5;
+  --color-card: #fbf5e9;
+  --color-well: #ebe0cb;
+  --color-shelf: #e6d7bc;
+  --color-chrome: #3a2a1f;
+  --color-backdrop: #1a120c;
+
+  /* Tinta */
+  --color-ink: #2e2018;
+  --color-ink-muted: #5c4636;
+  --color-ink-faint: #7d6753;
+  --color-chrome-ink: #ebddc4;
+  --color-chrome-muted: #bca88a;
+
+  /* Filetes (bordes) */
+  --color-rule: #d3bf9c;
+  --color-rule-strong: #b09572;
+
+  /* Acento y materiales */
+  --color-accent: #8a4b22;
+  --color-accent-strong: #713a18;
+  --color-accent-ink: #fbf5e9;
+  --color-brass: #c9974a;
+  --color-leather: #7a2e25;
+  --color-spine: #2f4a3a;
+
+  /* Semánticos de feedback */
+  --color-danger: #a3352a;
+  --color-success: #4e6b30;
+  --color-star: #b07a22;
+
+  /* Estados de lectura (cálidos, distinguibles entre sí) */
+  --color-status-to-read: #3f5f7a;
+  --color-status-reading: #4e6b30;
+  --color-status-paused: #8a5e12;
+  --color-status-finished: #6e3f68;
+  --color-status-abandoned: #a3402f;
+
+  /* Tipografía serif empaquetada con @fontsource (offline) */
+  --font-serif: "Lora Variable", "Lora", Georgia, Cambria, "Times New Roman", serif;
+  --font-display: "Libre Baskerville", "Baskerville", Georgia, "Times New Roman", serif;
+
+  /* Sombras cálidas con relieve: el color sale de variables que cambian por tema */
+  --shadow-xs: 0 1px 1px 0 var(--relief-shade);
+  --shadow-sm: 0 1px 0 0 var(--relief-light) inset, 0 1px 2px 0 var(--relief-shade);
+  --shadow-md: 0 1px 0 0 var(--relief-light) inset, 0 2px 4px -1px var(--relief-shade),
+    0 6px 14px -6px var(--relief-deep);
+  --shadow-2xl: 0 24px 48px -16px var(--relief-deep);
+  --shadow-relief: 0 1px 0 0 var(--relief-light) inset, 0 1px 2px 0 var(--relief-shade),
+    0 8px 18px -10px var(--relief-deep);
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --relief-light: rgb(255 252 244 / 0.7);
+    --relief-shade: rgb(74 48 28 / 0.14);
+    --relief-deep: rgb(74 48 28 / 0.28);
+    /* Grano de papel: ruido fractal SVG inline, tintado de sepia */
+    --texture-paper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.36 0 0 0 0 0.25 0 0 0 0 0.14 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    /* Veta de madera: ruido estirado en horizontal */
+    --texture-wood: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='120'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006 0.32' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.08 0 0 0 0 0.05 0 0 0 0 0.03 0 0 0 0.28 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
+  }
+
+  .dark {
+    color-scheme: dark;
+
+    --color-paper: #1c1410;
+    --color-card: #271c16;
+    --color-well: #140e0b;
+    --color-shelf: #33261d;
+    --color-chrome: #120c09;
+    --color-backdrop: #0b0705;
+
+    --color-ink: #eee0c8;
+    --color-ink-muted: #c2ad90;
+    --color-ink-faint: #9e8870;
+    --color-chrome-ink: #e3d2b5;
+    --color-chrome-muted: #a08b70;
+
+    --color-rule: #45352a;
+    --color-rule-strong: #64503f;
+
+    --color-accent: #d9a25b;
+    --color-accent-strong: #e8b874;
+    --color-accent-ink: #1c1410;
+    --color-brass: #d9a25b;
+    --color-leather: #7e3528;
+    --color-spine: #4f7258;
+
+    --color-danger: #e58a78;
+    --color-success: #a7c285;
+    --color-star: #e9b85a;
+
+    --color-status-to-read: #9db9d0;
+    --color-status-reading: #afc889;
+    --color-status-paused: #e6bc64;
+    --color-status-finished: #d3a6cb;
+    --color-status-abandoned: #ec9580;
+
+    --relief-light: rgb(255 226 180 / 0.05);
+    --relief-shade: rgb(0 0 0 / 0.35);
+    --relief-deep: rgb(0 0 0 / 0.55);
+    --texture-paper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.8 0 0 0 0 0.6 0 0 0 0.035 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    --texture-wood: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='120'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006 0.32' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.36 0 0 0 0 0.2 0 0 0 0.16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
+  }
+
+  html {
+    font-family: var(--font-serif);
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: 0;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--color-accent) 30%, transparent);
+  }
+
+  /* Electron 28 (Chromium 120) todavía no soporta scrollbar-color: se usa ::-webkit-scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-rule-strong);
+    border: 2px solid var(--color-paper);
+    border-radius: 9999px;
+  }
+}
+
+/* Grano de papel sobre una superficie (se superpone al background-color). */
+@utility texture-paper {
+  background-image: var(--texture-paper);
+}
+
+/* Veta de madera para la barra de título y los paneles "de mueble". */
+@utility texture-wood {
+  background-image: var(--texture-wood);
+}
+
+/*
+ * Ficha de catálogo: papel con grano, borde exterior y un segundo filete
+ * interior (dos sombras inset) + sombra de relieve suave.
+ */
+@utility ficha {
+  background-color: var(--color-card);
+  background-image: var(--texture-paper);
+  border: 1px solid var(--color-rule);
+  box-shadow:
+    inset 0 0 0 3px var(--color-card),
+    inset 0 0 0 4px color-mix(in oklab, var(--color-rule) 75%, transparent),
+    var(
+      --ficha-elevation,
+      0 1px 0 0 var(--relief-light) inset,
+      0 1px 2px 0 var(--relief-shade),
+      0 8px 18px -10px var(--relief-deep)
+    );
+}
+
+/* Ficha flotante (modales): misma ficha, sombra más profunda. */
+@utility ficha-float {
+  --ficha-elevation: 0 24px 48px -16px var(--relief-deep), 0 2px 6px 0 var(--relief-shade);
+}
+
+/* Filete doble horizontal (separador de encabezados). */
+@utility rule-double {
+  border-bottom: 3px double var(--color-rule-strong);
+}
+
+/*
+ * Estantería (feature #17).
+ *
+ * La Biblioteca es un CSS grid `auto-fill` SIN separación horizontal: cada celda
+ * dibuja su propio tramo de estante (`shelf-plank`) y, como las celdas de una
+ * fila se tocan y tienen la misma altura de tapa, los tramos se leen como un
+ * único estante continuo. Ver docs/decisions/017-library-bookshelf-view.md.
+ */
+@utility shelf-plank {
+  position: relative;
+  height: 0.875rem;
+  --plank-top: color-mix(in oklab, var(--color-brass) 42%, var(--color-chrome));
+  --plank-front: color-mix(in oklab, var(--color-brass) 22%, var(--color-chrome));
+  --plank-edge: color-mix(in oklab, var(--color-chrome-ink) 30%, var(--plank-top));
+  background-color: var(--plank-front);
+  background-image:
+    linear-gradient(
+      to bottom,
+      var(--plank-top) 0 4px,
+      var(--plank-edge) 4px 5px,
+      transparent 5px calc(100% - 1px),
+      var(--relief-deep) calc(100% - 1px)
+    ),
+    var(--texture-wood);
+  box-shadow:
+    0 -6px 10px -8px var(--relief-deep),
+    0 7px 10px -5px var(--relief-deep);
+}
+
+/*
+ * La última fila puede quedar incompleta: el tramo del último libro se prolonga
+ * hacia la derecha con un pseudo-elemento que hereda la madera, y el contenedor
+ * (overflow: hidden, sin padding lateral) lo recorta justo en el borde del estante.
+ */
+@utility bookshelf {
+  overflow: hidden;
+
+  & > :last-child [data-shelf-plank]::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 100%;
+    width: 100vw;
+    background: inherit;
+    box-shadow: inherit;
+  }
+}
+
+/* Sombra del lomo: el pliegue de la tapa, para que una portada plana parezca un libro. */
+@utility book-hinge {
+  background-image: linear-gradient(
+    to right,
+    color-mix(in oklab, var(--color-backdrop) 45%, transparent),
+    color-mix(in oklab, var(--color-backdrop) 12%, transparent) 70%,
+    color-mix(in oklab, var(--color-chrome-ink) 22%, transparent)
+  );
+}

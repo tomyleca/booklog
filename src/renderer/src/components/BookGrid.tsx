@@ -6,10 +6,14 @@ export interface BookGridProps {
   onBookClick?: (book: BookPrimitives) => void
 }
 
+/*
+ * Estantería responsive: `auto-fill` decide cuántos libros entran por estante según
+ * el ancho, y `gap-x-0` hace que los tramos de estante de cada celda se toquen.
+ */
 export function BookGrid({ books, onBookClick }: BookGridProps): JSX.Element {
   return (
     <div
-      className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+      className="bookshelf grid grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] gap-x-0 gap-y-10 pt-2 pb-6"
       data-testid="book-grid"
     >
       {books.map((book) => (

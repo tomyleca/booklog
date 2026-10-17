@@ -337,3 +337,55 @@
     - ADR: [docs/decisions/015-settings-page.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/decisions/015-settings-page.md).
   - Reportes de ciclo de vida: [progress/report_settings_page.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_settings_page.md) y [progress/review_settings_page.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_settings_page.md).
 
+
+---
+
+## Sesión 2026-10-17 — Feature #16: retro_library_theme (Rediseño visual: tema retro de biblioteca)
+
+- **Estado:** Completada (done)
+- **Logros:**
+  - Sistema de tokens semánticos de diseño con Tailwind CSS v4:
+    - Tokens de color en `@theme` de `src/renderer/src/assets/main.css`, con los valores del tema claro (papel/pergamino con tinta marrón): paper, card, well, shelf, chrome, ink*, rule*, accent*, brass, leather, spine, danger, success, star y status-*.
+    - Las mismas variables se reasignan bajo `.dark` en `@layer base` para el tema oscuro (biblioteca de noche: nogal, cuero y luz cálida). El selector de #15 (Oscuro/Claro/Sistema) y `themeService` no cambiaron.
+    - Se migraron todos los componentes y páginas de `src/renderer` a tokens: ya no hay clases slate/indigo/etc. crudas ni variantes `dark:`. Los layouts y los `data-testid` no cambiaron.
+    - Estética retro moderada:
+      - Texturas de papel y madera hechas con SVG inline (`feTurbulence`).
+      - Utilidades `ficha`/`ficha-float` (tarjeta de catálogo con filete doble interior) y `rule-double`.
+      - Sombras cálidas con relieve.
+      - Barra de título de madera y emblemas de cuero.
+    - Tipografía serif empaquetada sin red con @fontsource: Lora (texto) y Libre Baskerville (títulos). Se agregó `font-src 'self' data:` a la CSP.
+  - Pruebas automatizadas en Vitest:
+    - `tests/renderer/test_retro_library_theme.test.ts` (45 pruebas): tokens y overrides oscuros, contraste WCAG AA en ambos temas, ausencia de colores crudos y de `dark:`, texturas inline, fuentes y CSP.
+    - `tests/renderer/test_google_books_search.test.ts` actualizado al token `text-accent`.
+    - Total de la suite: 21 suites, 364 tests pasando al 100% en verde.
+  - Verificación: `pnpm test`, `pnpm run typecheck`, lint y `pnpm run build` limpios. Se revisó el aspecto con capturas en ambos temas.
+  - Documentación técnica:
+    - Guía conceptual: [docs/guides/design-tokens-theming.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/design-tokens-theming.md).
+    - ADR: [docs/decisions/016-retro-library-theme.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/decisions/016-retro-library-theme.md).
+    - `docs/conventions.md` (sección CSS / Estilos) actualizado.
+  - Reportes de ciclo de vida: [progress/report_retro_library_theme.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_retro_library_theme.md) y [progress/review_retro_library_theme.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_retro_library_theme.md).
+
+
+---
+
+## Sesión 2026-10-17 — Feature #17: library_bookshelf_view (Biblioteca como estantería)
+
+- **Estado:** Completada (done)
+- **Logros:**
+  - La vista Biblioteca se muestra como estantería, con tokens de #16:
+    - `BookGrid` es un CSS grid `auto-fill` (`minmax(9.5rem, 1fr)`) sin separación horizontal. La cantidad de libros por estante depende del ancho de la ventana, sin breakpoints fijos.
+    - Cada `BookCard` apila tapa → tramo de estante (`shelf-plank`) → ficha de catálogo. Los tramos de una fila se tocan y se ven como un solo estante. En la última fila incompleta, el tramo del último libro se prolonga con un `::after` que el contenedor `bookshelf` (`overflow: hidden`) recorta en el borde.
+    - La ficha muestra título, autor, badge de estado (ya no va sobre la tapa), estrellas y progreso cuando corresponde. No se pierde información.
+    - Los libros sin tapa son un placeholder de cuero (`leather`/`spine` alternado por id) con marco doble e icono en `brass`. `book-hinge` simula el pliegue del lomo en todas las tapas.
+    - Utilidades nuevas en `main.css`: `shelf-plank`, `bookshelf` y `book-hinge`. Sólo usan tokens y `color-mix`, sin tokens nuevos.
+    - Se conservan filtros, estado vacío, click al detalle y todos los `data-testid`. `LibraryPage`, Dashboard, Detalle y Settings no cambiaron.
+  - Pruebas automatizadas en Vitest:
+    - `tests/renderer/test_library_bookshelf_view.test.ts` (14 pruebas): estructura tapa/estante/ficha, información dentro de la ficha, placeholder de cuero, grid `auto-fill`, utilidades CSS sin colores fijos e integración con `LibraryPage`.
+    - `tests/renderer/test_library_view.test.ts`: el test de layout ahora valida la estantería en lugar de las clases `grid-cols` fijas.
+    - Total de la suite: 22 suites, 378 tests pasando al 100% en verde.
+  - Verificación: `.\init.ps1`, eslint, typecheck y `pnpm build` limpios. Se revisó el aspecto con capturas en claro y oscuro, a 1200 px y 640 px.
+  - Documentación técnica:
+    - Guía conceptual: [docs/guides/css-grid-bookshelf-layout.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/css-grid-bookshelf-layout.md).
+    - ADR: [docs/decisions/017-library-bookshelf-view.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/decisions/017-library-bookshelf-view.md).
+    - Actualizados: [docs/guides/design-tokens-theming.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/design-tokens-theming.md) (tabla de utilidades), [docs/guides/README.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/README.md) y [docs/conventions.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/conventions.md).
+  - Reportes de ciclo de vida: [progress/report_library_bookshelf_view.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_library_bookshelf_view.md) y [progress/review_library_bookshelf_view.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_library_bookshelf_view.md).

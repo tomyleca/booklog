@@ -341,7 +341,7 @@ export function AddBookModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-backdrop/70 backdrop-blur-xs overflow-y-auto"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onClose()
@@ -353,25 +353,25 @@ export function AddBookModal({
       aria-labelledby="add-book-modal-title"
     >
       <div
-        className="relative w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 text-slate-100 flex flex-col gap-4 my-8"
+        className="relative w-full max-w-xl ficha ficha-float rounded-md p-6 text-ink flex flex-col gap-4 my-8"
         onClick={(e) => e.stopPropagation()}
         data-testid="add-book-modal"
       >
         {/* Header */}
-        <div className="flex items-start justify-between pb-3 border-b border-slate-800">
+        <div className="flex items-start justify-between pb-3 rule-double">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 shadow-xs">
+            <div className="p-2 rounded-md bg-leather texture-wood text-brass border border-backdrop/30 shadow-sm">
               <BookPlus className="w-5 h-5" />
             </div>
             <div>
               <h2
                 id="add-book-modal-title"
-                className="text-lg font-bold tracking-tight text-slate-100"
+                className="text-lg font-bold tracking-tight text-ink"
                 data-testid="modal-title"
               >
                 Agregar Libro
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-ink-muted mt-0.5">
                 Busca en Google Books o ingresa los datos manualmente
               </p>
             </div>
@@ -379,7 +379,7 @@ export function AddBookModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-md text-ink-muted hover:text-ink hover:bg-shelf transition-colors"
             aria-label="Cerrar modal"
             data-testid="close-modal-button"
           >
@@ -388,14 +388,14 @@ export function AddBookModal({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+        <div className="flex items-center gap-2 border-b border-rule pb-2">
           <button
             type="button"
             onClick={() => setActiveTab('search')}
-            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
               activeTab === 'search'
-                ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'
+                ? 'bg-accent/10 text-accent border border-accent/40 shadow-sm'
+                : 'text-ink-muted hover:text-ink hover:bg-shelf/60 border border-transparent'
             }`}
             data-testid="tab-search"
           >
@@ -405,10 +405,10 @@ export function AddBookModal({
           <button
             type="button"
             onClick={() => setActiveTab('manual')}
-            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
               activeTab === 'manual'
-                ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'
+                ? 'bg-accent/10 text-accent border border-accent/40 shadow-sm'
+                : 'text-ink-muted hover:text-ink hover:bg-shelf/60 border border-transparent'
             }`}
             data-testid="tab-manual"
           >
@@ -419,7 +419,7 @@ export function AddBookModal({
 
         {/* Modular Search Slot (Feature #10 compatibility) */}
         {renderSearchSlot && (
-          <div className="search-slot pb-2 border-b border-slate-800" data-testid="search-slot">
+          <div className="search-slot pb-2 border-b border-rule" data-testid="search-slot">
             {renderSearchSlot()}
           </div>
         )}
@@ -432,14 +432,14 @@ export function AddBookModal({
           {/* Search Input Bar */}
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
                 placeholder="Buscar por título, autor o ISBN (mín. 3 letras)..."
-                className="w-full pl-9 pr-3.5 py-2 rounded-xl bg-slate-950/60 border border-slate-800 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                className="w-full pl-9 pr-3.5 py-2 rounded-md bg-well border border-rule text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
                 data-testid="search-books-input"
               />
             </div>
@@ -447,7 +447,7 @@ export function AddBookModal({
               type="button"
               onClick={handleSearchClick}
               disabled={isSearching || searchQuery.trim().length < 3}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-500 transition-colors disabled:opacity-40 disabled:hover:bg-indigo-600 shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-md text-accent-ink bg-accent hover:bg-accent-strong transition-colors disabled:opacity-40 disabled:hover:bg-accent shadow-sm"
               data-testid="search-books-button"
             >
               {isSearching ? (
@@ -462,10 +462,10 @@ export function AddBookModal({
           {/* Search Error Alert */}
           {searchError && (
             <div
-              className="flex items-start gap-2.5 p-3 rounded-xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs"
+              className="flex items-start gap-2.5 p-3 rounded-md bg-danger/10 border border-danger/30 text-danger text-xs"
               data-testid="search-error-banner"
             >
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-danger" />
               <span>{searchError}</span>
             </div>
           )}
@@ -473,10 +473,10 @@ export function AddBookModal({
           {/* Loading Indicator */}
           {isSearching && (
             <div
-              className="flex flex-col items-center justify-center py-10 text-slate-400 gap-2"
+              className="flex flex-col items-center justify-center py-10 text-ink-muted gap-2"
               data-testid="search-loading"
             >
-              <Loader2 className="w-6 h-6 animate-spin text-indigo-400" />
+              <Loader2 className="w-6 h-6 animate-spin text-accent" />
               <span className="text-xs">Buscando libros en Google Books...</span>
             </div>
           )}
@@ -484,10 +484,10 @@ export function AddBookModal({
           {/* Less than 3 chars friendly message */}
           {!isSearching && searchQuery.trim().length < 3 && (
             <div
-              className="flex flex-col items-center justify-center py-10 text-slate-500 text-center gap-2"
+              className="flex flex-col items-center justify-center py-10 text-ink-faint text-center gap-2"
               data-testid="search-min-chars-message"
             >
-              <Search className="w-8 h-8 text-slate-600 stroke-[1.5]" />
+              <Search className="w-8 h-8 text-ink-faint stroke-[1.5]" />
               <p className="text-xs">Ingresa al menos 3 caracteres para buscar libros.</p>
             </div>
           )}
@@ -498,14 +498,14 @@ export function AddBookModal({
             hasSearched &&
             searchResults.length === 0 && (
               <div
-                className="flex flex-col items-center justify-center py-10 text-slate-400 text-center gap-2"
+                className="flex flex-col items-center justify-center py-10 text-ink-muted text-center gap-2"
                 data-testid="search-no-results"
               >
-                <AlertCircle className="w-8 h-8 text-slate-500 stroke-[1.5]" />
-                <p className="text-xs font-medium text-slate-300">
+                <AlertCircle className="w-8 h-8 text-ink-faint stroke-[1.5]" />
+                <p className="text-xs font-medium text-ink">
                   No se encontraron libros para &ldquo;{lastSearchedQuery}&rdquo;
                 </p>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-ink-faint">
                   Intenta con otro término o utiliza la pestaña de &ldquo;Carga manual&rdquo;.
                 </p>
               </div>
@@ -521,7 +521,7 @@ export function AddBookModal({
                 <div
                   key={result.googleBooksId || `${result.title}-${idx}`}
                   onClick={() => handleSelectResult(result)}
-                  className="flex items-start gap-3 p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 hover:border-indigo-500/50 hover:bg-slate-800/50 cursor-pointer transition-all group"
+                  className="flex items-start gap-3 p-3 rounded-md bg-well/40 border border-rule/80 hover:border-accent/50 hover:bg-shelf/50 cursor-pointer transition-all group"
                   data-testid={`search-result-card-${idx}`}
                   role="button"
                   tabIndex={0}
@@ -533,7 +533,7 @@ export function AddBookModal({
                   }}
                 >
                   {/* Thumbnail */}
-                  <div className="w-12 h-16 shrink-0 rounded-lg overflow-hidden border border-slate-800 bg-slate-800 flex items-center justify-center text-slate-500">
+                  <div className="w-12 h-16 shrink-0 rounded-md overflow-hidden border border-rule bg-shelf flex items-center justify-center text-ink-faint">
                     {result.coverUrl ? (
                       <img
                         src={result.coverUrl}
@@ -545,34 +545,34 @@ export function AddBookModal({
                         }}
                       />
                     ) : (
-                      <BookOpen className="w-5 h-5 text-slate-600" />
+                      <BookOpen className="w-5 h-5 text-ink-faint" />
                     )}
                   </div>
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-semibold text-slate-200 group-hover:text-indigo-300 line-clamp-1 transition-colors">
+                    <h4 className="text-sm font-semibold text-ink group-hover:text-accent line-clamp-1 transition-colors">
                       {result.title}
                     </h4>
-                    <p className="text-xs text-slate-400 truncate mt-0.5">
+                    <p className="text-xs text-ink-muted truncate mt-0.5">
                       {result.authors.length > 0 ? result.authors.join(', ') : 'Autor desconocido'}
                     </p>
 
-                    <div className="flex items-center gap-3 mt-2 text-[11px] text-slate-500">
+                    <div className="flex items-center gap-3 mt-2 text-[11px] text-ink-faint">
                       {result.publishedDate && (
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-slate-500" />
+                          <Calendar className="w-3 h-3 text-ink-faint" />
                           <span>{result.publishedDate}</span>
                         </span>
                       )}
                       {result.pageCount && (
                         <span className="flex items-center gap-1">
-                          <BookOpen className="w-3 h-3 text-slate-500" />
+                          <BookOpen className="w-3 h-3 text-ink-faint" />
                           <span>{result.pageCount} págs.</span>
                         </span>
                       )}
                       {result.isbn && (
-                        <span className="truncate max-w-[130px] font-mono text-[10px] bg-slate-800/80 px-1.5 py-0.5 rounded text-slate-400">
+                        <span className="truncate max-w-[130px] font-mono text-[10px] bg-shelf/80 px-1.5 py-0.5 rounded text-ink-muted">
                           ISBN {result.isbn}
                         </span>
                       )}
@@ -584,12 +584,12 @@ export function AddBookModal({
           )}
 
           {/* Footer for search tab */}
-          <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-xs text-slate-500">
+          <div className="flex items-center justify-between pt-2 border-t border-rule text-xs text-ink-faint">
             <span>Haz clic en un libro para autocompletar el formulario</span>
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+              className="px-3 py-1.5 text-xs font-medium rounded-md text-ink-muted hover:text-ink hover:bg-shelf transition-colors"
               data-testid="cancel-search-button"
             >
               Cancelar
@@ -605,11 +605,11 @@ export function AddBookModal({
           {/* Pre-fill Notice Banner */}
           {autoFilledNotice && (
             <div
-              className="flex items-center justify-between p-3 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-indigo-300 text-xs"
+              className="flex items-center justify-between p-3 rounded-md bg-accent/10 border border-accent/40 text-accent text-xs"
               data-testid="prefill-notice"
             >
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-indigo-400 shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-accent shrink-0" />
                 <span>
                   Datos autocompletados desde Google Books. Revisa los datos antes de guardar.
                 </span>
@@ -617,7 +617,7 @@ export function AddBookModal({
               <button
                 type="button"
                 onClick={() => setAutoFilledNotice(false)}
-                className="text-indigo-400 hover:text-indigo-200 transition-colors"
+                className="text-accent hover:text-accent-strong transition-colors"
                 aria-label="Cerrar notificación"
               >
                 <X className="w-3.5 h-3.5" />
@@ -628,10 +628,10 @@ export function AddBookModal({
           {/* Error Alert */}
           {(generalError || mutation.error) && (
             <div
-              className="flex items-start gap-2.5 p-3 rounded-xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs"
+              className="flex items-start gap-2.5 p-3 rounded-md bg-danger/10 border border-danger/30 text-danger text-xs"
               data-testid="form-error-banner"
             >
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-danger" />
               <span>{generalError || mutation.error?.message}</span>
             </div>
           )}
@@ -640,8 +640,8 @@ export function AddBookModal({
           <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
             {/* Title */}
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="book-title" className="text-xs font-semibold text-slate-300">
-                Título <span className="text-rose-400">*</span>
+              <label htmlFor="book-title" className="text-xs font-semibold text-ink">
+                Título <span className="text-danger">*</span>
               </label>
               <input
                 id="book-title"
@@ -652,16 +652,16 @@ export function AddBookModal({
                   if (titleError) setTitleError(null)
                 }}
                 placeholder="Ej. Cien Años de Soledad"
-                className={`w-full px-3.5 py-2 rounded-xl bg-slate-950/60 border text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 transition-all ${
+                className={`w-full px-3.5 py-2 rounded-md bg-well border text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 transition-all ${
                   titleError
-                    ? 'border-rose-500 focus:ring-rose-500/30'
-                    : 'border-slate-800 focus:border-indigo-500 focus:ring-indigo-500/20'
+                    ? 'border-danger focus:ring-danger/30'
+                    : 'border-rule focus:border-accent focus:ring-accent/20'
                 }`}
                 data-testid="input-book-title"
                 required
               />
               {titleError && (
-                <p className="text-xs text-rose-400" data-testid="title-error">
+                <p className="text-xs text-danger" data-testid="title-error">
                   {titleError}
                 </p>
               )}
@@ -669,9 +669,9 @@ export function AddBookModal({
 
             {/* Authors */}
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="book-authors" className="text-xs font-semibold text-slate-300">
+              <label htmlFor="book-authors" className="text-xs font-semibold text-ink">
                 Autor(es){' '}
-                <span className="text-slate-400 text-xs font-normal">(separados por coma)</span>
+                <span className="text-ink-muted text-xs font-normal">(separados por coma)</span>
               </label>
               <input
                 id="book-authors"
@@ -679,10 +679,10 @@ export function AddBookModal({
                 value={authors}
                 onChange={(e) => setAuthors(e.target.value)}
                 placeholder="Ej. Gabriel García Márquez, Mario Vargas Llosa"
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-950/60 border border-slate-800 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                className="w-full px-3.5 py-2 rounded-md bg-well border border-rule text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
                 data-testid="input-book-authors"
               />
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-ink-muted">
                 Si son varios autores, puedes escribirlos separados por comas.
               </p>
             </div>
@@ -690,7 +690,7 @@ export function AddBookModal({
             {/* Pages and ISBN */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="book-pages" className="text-xs font-semibold text-slate-300">
+                <label htmlFor="book-pages" className="text-xs font-semibold text-ink">
                   Páginas
                 </label>
                 <input
@@ -704,22 +704,22 @@ export function AddBookModal({
                     if (pageCountError) setPageCountError(null)
                   }}
                   placeholder="Ej. 350"
-                  className={`w-full px-3.5 py-2 rounded-xl bg-slate-950/60 border text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 transition-all ${
+                  className={`w-full px-3.5 py-2 rounded-md bg-well border text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 transition-all ${
                     pageCountError
-                      ? 'border-rose-500 focus:ring-rose-500/30'
-                      : 'border-slate-800 focus:border-indigo-500 focus:ring-indigo-500/20'
+                      ? 'border-danger focus:ring-danger/30'
+                      : 'border-rule focus:border-accent focus:ring-accent/20'
                   }`}
                   data-testid="input-book-pages"
                 />
                 {pageCountError && (
-                  <p className="text-xs text-rose-400" data-testid="pages-error">
+                  <p className="text-xs text-danger" data-testid="pages-error">
                     {pageCountError}
                   </p>
                 )}
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="book-isbn" className="text-xs font-semibold text-slate-300">
+                <label htmlFor="book-isbn" className="text-xs font-semibold text-ink">
                   ISBN
                 </label>
                 <input
@@ -728,7 +728,7 @@ export function AddBookModal({
                   value={isbn}
                   onChange={(e) => setIsbn(e.target.value)}
                   placeholder="Ej. 9780307474728"
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950/60 border border-slate-800 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                  className="w-full px-3.5 py-2 rounded-md bg-well border border-rule text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
                   data-testid="input-book-isbn"
                 />
               </div>
@@ -736,14 +736,14 @@ export function AddBookModal({
 
             {/* Initial Status */}
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="book-status" className="text-xs font-semibold text-slate-300">
+              <label htmlFor="book-status" className="text-xs font-semibold text-ink">
                 Estado inicial
               </label>
               <select
                 id="book-status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as BookStatus)}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-950/60 border border-slate-800 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                className="w-full px-3.5 py-2 rounded-md bg-well border border-rule text-sm text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
                 data-testid="select-book-status"
               >
                 <option value={BookStatus.TO_READ}>Por leer</option>
@@ -756,7 +756,7 @@ export function AddBookModal({
 
             {/* Cover URL */}
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="book-cover" className="text-xs font-semibold text-slate-300">
+              <label htmlFor="book-cover" className="text-xs font-semibold text-ink">
                 Portada (URL o ruta opcional)
               </label>
               <div className="flex items-center gap-3">
@@ -766,11 +766,11 @@ export function AddBookModal({
                   value={coverUrl}
                   onChange={(e) => setCoverUrl(e.target.value)}
                   placeholder="https://ejemplo.com/portada.jpg"
-                  className="flex-1 px-3.5 py-2 rounded-xl bg-slate-950/60 border border-slate-800 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                  className="flex-1 px-3.5 py-2 rounded-md bg-well border border-rule text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
                   data-testid="input-book-cover"
                 />
                 {coverUrl.trim().length > 0 && (
-                  <div className="w-10 h-14 shrink-0 rounded-lg overflow-hidden border border-slate-700 bg-slate-800 flex items-center justify-center text-slate-400">
+                  <div className="w-10 h-14 shrink-0 rounded-md overflow-hidden border border-rule bg-shelf flex items-center justify-center text-ink-muted">
                     <img
                       src={coverUrl}
                       alt="Vista previa"
@@ -783,18 +783,18 @@ export function AddBookModal({
                   </div>
                 )}
               </div>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-ink-muted">
                 Las URLs externas de portada se descargarán y guardarán localmente en BookLog.
               </p>
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-rule">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={mutation.isPending}
-                className="px-4 py-2 text-xs font-semibold rounded-xl text-slate-300 hover:text-slate-100 hover:bg-slate-800 transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-xs font-semibold rounded-md text-ink hover:text-ink hover:bg-shelf transition-colors disabled:opacity-50"
                 data-testid="cancel-button"
               >
                 Cancelar
@@ -802,11 +802,11 @@ export function AddBookModal({
               <button
                 type="submit"
                 disabled={mutation.isPending}
-                className="inline-flex items-center gap-2 px-5 py-2 text-xs font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-500 transition-colors shadow-sm disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-5 py-2 text-xs font-semibold rounded-md text-accent-ink bg-accent hover:bg-accent-strong transition-colors shadow-sm disabled:opacity-50"
                 data-testid="submit-book-button"
               >
                 {mutation.isPending && (
-                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-3.5 h-3.5 border-2 border-accent-ink border-t-transparent rounded-full animate-spin" />
                 )}
                 <span>{mutation.isPending ? 'Guardando...' : 'Guardar Libro'}</span>
               </button>

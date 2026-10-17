@@ -122,13 +122,18 @@ librería externa). Los nombres deben hacer el resto.
 
 ## CSS / Estilos
 
-**Fase actual: funcionalidad antes que estética.** El objetivo es un producto
-funcional y usable. NO invertir tiempo en diseño visual elaborado, animaciones,
-gradientes, ni pulido estético. Eso se hará en una fase posterior dedicada.
+**Tema "biblioteca retro" (feature #16).** Ver `docs/guides/design-tokens-theming.md`
+y `docs/decisions/016-retro-library-theme.md`.
 
-- Tailwind CSS v4 con las utilidades por defecto.
-- Estilos básicos y limpios: layout correcto, tipografía legible, espaciado razonable.
-- Dark mode como default, con toggle a light.
+- Tailwind CSS v4. Los colores se definen como **tokens semánticos** en `@theme`
+  dentro de `src/renderer/src/assets/main.css` (valores del tema claro) y se
+  reasignan bajo `.dark` (valores del tema oscuro).
+- En `src/renderer` **no** se usan colores crudos (`slate-*`, `indigo-*`, `white`,
+  `black`...) ni variantes `dark:`: sólo tokens (`bg-paper`, `text-ink`,
+  `border-rule`, `bg-accent`, `text-status-reading`...). Un test lo verifica.
+- Rol nuevo de color = token nuevo en `@theme` **y** en `.dark`.
+- Piezas reutilizables: `ficha`, `ficha-float`, `texture-paper`, `texture-wood`,
+  `rule-double`, `shelf-plank`, `bookshelf`, `book-hinge` (definidas con `@utility`).
+- Tipografía: Lora (texto) y Libre Baskerville (títulos `h1–h4` / `font-display`),
+  empaquetadas con @fontsource. Nada de CDNs.
 - No CSS modules ni styled-components. Solo Tailwind utilities.
-- No animaciones, no gradientes, no glassmorphism — todavía.
-- Colores del sistema de diseño definidos en `tailwind.config.ts` si se personalizan.

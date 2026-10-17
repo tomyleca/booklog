@@ -243,7 +243,7 @@ describe('Feature #8 - UI Library View', () => {
   })
 
   describe('BookGrid Component', () => {
-    it('renders responsive grid with books', () => {
+    it('renders books as a responsive bookshelf (auto-fill grid, one shelf plank per book)', () => {
       render(
         h(BookGrid, {
           books: [sampleBookReading, sampleBookFinished, sampleBookToRead]
@@ -251,13 +251,18 @@ describe('Feature #8 - UI Library View', () => {
       )
 
       const grid = screen.getByTestId('book-grid')
+      expect(grid.className).toContain('bookshelf')
       expect(grid.className).toContain('grid')
-      expect(grid.className).toContain('sm:grid-cols-2')
-      expect(grid.className).toContain('md:grid-cols-3')
-      expect(grid.className).toContain('lg:grid-cols-4')
+      expect(grid.className).toContain('grid-cols-[repeat(auto-fill,minmax(')
+      expect(grid.className).toContain('gap-x-0')
+      expect(grid.className).not.toMatch(/(?:sm|md|lg|xl):grid-cols-\d/)
 
       const cards = screen.getAllByTestId('book-card')
       expect(cards.length).toBe(3)
+      for (const card of cards) {
+        expect(card.parentElement).toBe(grid)
+        expect(card.querySelectorAll('[data-testid="shelf-plank"]').length).toBe(1)
+      }
     })
   })
 

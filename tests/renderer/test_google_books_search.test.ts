@@ -120,8 +120,8 @@ describe('Feature #10 - Google Books Search Integration (AddBookModal)', () => {
       const searchTabContent = screen.getByTestId('search-tab-content')
       const manualTabContent = screen.getByTestId('manual-tab-content')
 
-      expect(searchTabButton.className).toContain('text-indigo-400')
-      expect(manualTabButton.className).not.toContain('text-indigo-400')
+      expect(searchTabButton.className.split(/\s+/)).toContain('text-accent')
+      expect(manualTabButton.className.split(/\s+/)).not.toContain('text-accent')
       expect(searchTabContent.className).not.toContain('hidden')
       expect(manualTabContent.className).toContain('hidden')
     })

@@ -42,26 +42,26 @@ export function LibraryPage({ onSelectBook }: LibraryPageProps = {}): JSX.Elemen
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-testid="library-page">
       {/* Header */}
       <header className="mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 rule-double">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 shadow-xs">
+            <div className="p-2.5 rounded-md bg-leather texture-wood text-brass border border-backdrop/30 shadow-sm">
               <Library className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold tracking-tight text-slate-100" data-testid="library-title">
+                <h1 className="text-2xl font-bold tracking-tight text-ink" data-testid="library-title">
                   Mi Biblioteca
                 </h1>
                 {books && !isLoading && !isError && (
                   <span
-                    className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700/60"
+                    className="text-xs font-medium px-2 py-0.5 rounded-full bg-shelf text-ink-muted border border-rule/60"
                     data-testid="library-book-count"
                   >
                     {books.length} {books.length === 1 ? 'libro' : 'libros'}
                   </span>
                 )}
               </div>
-              <p className="text-sm text-slate-400 mt-0.5">
+              <p className="text-sm text-ink-muted mt-0.5">
                 Organiza y haz seguimiento a todas tus lecturas
               </p>
             </div>
@@ -71,7 +71,7 @@ export function LibraryPage({ onSelectBook }: LibraryPageProps = {}): JSX.Elemen
             <button
               type="button"
               onClick={() => setIsAddModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md text-accent-ink bg-accent hover:bg-accent-strong shadow-sm transition-colors"
               data-testid="add-book-button"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -82,7 +82,7 @@ export function LibraryPage({ onSelectBook }: LibraryPageProps = {}): JSX.Elemen
               type="button"
               onClick={() => refetch()}
               disabled={isFetching}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-slate-300 bg-slate-800 hover:bg-slate-700/80 border border-slate-700/60 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-ink bg-shelf hover:bg-rule/80 border border-rule/60 transition-colors disabled:opacity-50"
               title="Actualizar biblioteca"
               data-testid="refresh-button"
             >
@@ -105,30 +105,30 @@ export function LibraryPage({ onSelectBook }: LibraryPageProps = {}): JSX.Elemen
       <main>
         {isLoading && (
           <div
-            className="flex flex-col items-center justify-center py-24 text-slate-400 gap-3"
+            className="flex flex-col items-center justify-center py-24 text-ink-muted gap-3"
             data-testid="loading-state"
           >
-            <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
             <p className="text-sm font-medium">Cargando biblioteca...</p>
           </div>
         )}
 
         {isError && (
           <div
-            className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-rose-900/30 bg-rose-950/10 p-8 my-6"
+            className="flex flex-col items-center justify-center py-16 text-center rounded-md border border-danger/30 bg-danger/10 p-8 my-6"
             data-testid="error-state"
           >
-            <div className="w-12 h-12 rounded-full bg-rose-950/50 text-rose-400 flex items-center justify-center mb-3 border border-rose-800/40">
+            <div className="w-12 h-12 rounded-full bg-danger/10 text-danger flex items-center justify-center mb-3 border border-danger/30">
               <AlertCircle className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-semibold text-slate-200">Error al cargar la biblioteca</h3>
-            <p className="text-sm text-slate-400 max-w-md mt-1 mb-4" data-testid="error-message">
+            <h3 className="text-base font-semibold text-ink">Error al cargar la biblioteca</h3>
+            <p className="text-sm text-ink-muted max-w-md mt-1 mb-4" data-testid="error-message">
               {error?.message || 'Error desconocido'}
             </p>
             <button
               type="button"
               onClick={() => refetch()}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors shadow-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-accent hover:bg-accent-strong text-accent-ink text-xs font-medium transition-colors shadow-sm"
               data-testid="retry-button"
             >
               <RefreshCw className="w-3.5 h-3.5" />
