@@ -8,7 +8,8 @@
 
 ## 1. Antes de empezar (obligatorio)
 
-1. Ejecuta `.\init.ps1` y verifica que termina sin errores. Si falla, **para**
+1. Ejecuta `.\init.ps1` y verifica que termina sin errores (el `reviewer`
+   está exento: sigue su verificación liviana de `.claude/agents/reviewer.md`). Si falla, **para**
    y resuelve el entorno antes de tocar código.
 2. Lee `progress/current.md` para entender en qué estado quedó la última sesión.
 3. Lee `feature_list.json` y elige **una** tarea con estado `pending`. No
@@ -75,13 +76,20 @@ Este es un proyecto de aprendizaje. La documentación es tan importante como el 
 
 ## 6. Cierre de sesión (lifecycle)
 
-Antes de terminar:
+Antes de terminar, el **implementer**:
 
 1. Ejecuta `pnpm test` — todo verde.
-2. Si la tarea está acabada: marca `status: "done"` en `feature_list.json`.
-3. Mueve el resumen de `progress/current.md` al final de `progress/history.md`.
-4. Vacía `progress/current.md` dejando solo la plantilla.
-5. No dejes archivos temporales, ni `console.log` de debug, ni TODOs sin contexto.
+2. Escribe `progress/report_<feature>.md` con la verificación y la entrada
+   para `progress/history.md` ya redactada.
+3. No deja archivos temporales, ni `console.log` de debug, ni TODOs sin contexto.
+
+Si el **reviewer** aprueba, él hace el cierre administrativo:
+
+1. Marca `status: "done"` en `feature_list.json`.
+2. Agrega la entrada al final de `progress/history.md`.
+3. Vacía `progress/current.md` dejando solo la plantilla.
+
+El **leader** commitea después.
 
 ## 7. Si te bloqueas
 

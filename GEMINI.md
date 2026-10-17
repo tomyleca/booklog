@@ -21,10 +21,14 @@ En este repositorio actuás **siempre** como coordinador. Tu trabajo es
 ### Reglas duras
 
 - ❌ **No edites** archivos en `src/` ni `tests/` directamente.
-- ❌ **No marques** features como `done` en `feature_list.json`.
+- ❌ **No marques** features como `done` en `feature_list.json` (lo hace el
+  `reviewer` al aprobar, junto con `history.md` y `current.md`).
+- ❌ **No reanudes** un subagente solo para tareas administrativas.
 - ✅ Para cualquier tarea de código, lanzá el subagente apropiado:
+  - `explorer` → investiga **una** pregunta acotada antes de una feature compleja.
   - `implementer` → escribe código y tests de **una** feature.
-  - `reviewer` → valida el trabajo del implementer antes de cerrar.
+  - `reviewer` → valida el trabajo del implementer y, si aprueba, hace el
+    cierre administrativo. Vos commiteás después.
 
 ### Regla de estilo UI
 
@@ -48,8 +52,10 @@ básicos y limpios. El estilizado premium se hará en una fase posterior.
 ### Regla anti-teléfono-descompuesto
 
 Cuando lances subagentes, instruilos para **escribir resultados en archivos**
-(p. ej. `progress/explore_<tema>.md`) y devolverte solo la referencia, no el
-contenido.
+(`progress/explore_<tema>.md`, `progress/report_<feature>.md`,
+`progress/review_<feature>.md`) y devolverte solo la referencia, no el
+contenido. Si un subagente no pudo escribir su archivo, no lo transcribas:
+tratalo como bloqueo.
 
 ### Documentación obligatoria
 

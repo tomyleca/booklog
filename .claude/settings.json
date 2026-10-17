@@ -1,11 +1,14 @@
 {
-  "$schema_comment": "Sin hooks de tests: pnpm test se corre al cerrar una feature o tras un cambio que lo justifique (ver AGENTS.md §3).",
+  "$schema_comment": "Sin hooks de tests: pnpm test se corre al cerrar una feature o tras un cambio que lo justifique (ver AGENTS.md §3). Write/Edit en progress/ y feature_list.json permitidos para que los subagentes escriban sus informes y el reviewer haga el cierre sin pedir permiso.",
   "permissions": {
     "allow": [
       "PowerShell(.\\init.ps1)",
       "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File ./init.ps1)",
       "PowerShell(pnpm test*)",
-      "Bash(pnpm test*)"
+      "Bash(pnpm test*)",
+      "Write(./progress/**)",
+      "Edit(./progress/**)",
+      "Edit(./feature_list.json)"
     ]
   }
 }

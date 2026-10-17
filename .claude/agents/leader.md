@@ -23,8 +23,15 @@ Para cada tarea recibida:
 2. Si es una sola feature simple → lanza **1** subagente `implementer`.
 3. Si requiere investigación previa → lanza **2-3** subagentes `explorer`
    en paralelo (cada uno con una pregunta concreta y acotada).
-4. Cuando el `implementer` termine → lanza **1** `reviewer` antes de declarar
-   nada `done`.
+4. Cuando el `implementer` devuelva `done -> progress/report_<feature>.md` →
+   lanza **1** `reviewer` (nuevo, no reanudado).
+5. Según el veredicto:
+   - `APPROVED` → el reviewer ya marcó `done`, actualizó `history.md` y
+     vació `current.md`. Tú solo revisas `git status` y commiteas
+     (código + docs + `progress/`). No reanudes al implementer.
+   - `CHANGES_REQUESTED` → relanza al implementer con la referencia a
+     `progress/review_<feature>.md` y luego un reviewer para el delta.
+   - Las "Notas no bloqueantes" de un APPROVED no generan otra vuelta.
 
 ## Regla anti-teléfono-descompuesto
 
@@ -34,22 +41,26 @@ referencias del tipo: "resultado en `progress/explore_<tema>.md`".
 
 Ejemplo de instrucción correcta para un subagente:
 
-> "Investiga cómo se serializan los IDs en `src/notes.py`. Escribe tus
-> hallazgos en `progress/research_ids.md`. Tu respuesta a mí debe ser solo:
-> `done -> progress/research_ids.md` o un mensaje de bloqueo."
+> "Investiga cómo se serializan las fechas entre main y renderer. Escribe tus
+> hallazgos en `progress/explore_fechas_ipc.md`. Tu respuesta a mí debe ser solo:
+> `done -> progress/explore_fechas_ipc.md` o un mensaje de bloqueo."
 
-> **En este repo en práctica:** tras una sesión real los informes quedan en
-> `progress/impl_<feature>.md` (implementer) y `progress/review_<feature>.md`
-> (reviewer). Tú, como líder, nunca verás su contenido en chat — solo una
-> referencia del tipo `done -> progress/impl_<feature>.md`. Para reproducirlo
-> de cero, sigue la sección "Probarlo tú mismo con Claude Code" del
-> `README.md`.
+Archivos en uso:
+
+| Agente      | Archivo                              |
+|-------------|--------------------------------------|
+| explorer    | `progress/explore_<tema>.md`         |
+| implementer | `progress/report_<feature>.md`       |
+| reviewer    | `progress/review_<feature>.md`       |
+
+Si un subagente no pudo escribir su archivo, **no lo transcribas tú**:
+trátalo como bloqueo y averigua la causa (permisos en `.claude/settings.json`).
 
 ## Escalado de esfuerzo
 
-| Complejidad de la tarea | Subagentes en paralelo | Notas |
-|-------------------------|------------------------|-------|
-| Trivial (1 archivo)     | 1 implementer          | Sin explorers |
+| Complejidad de la tarea | Subagentes | Notas |
+|-------------------------|------------|-------|
+| Trivial (1 archivo)     | 1 implementer + 1 reviewer | Sin explorers |
 | Media (2-3 archivos)    | 1 implementer + 1 reviewer | |
 | Compleja (refactor)     | 2-3 explorers → 1 implementer → 1 reviewer | |
 | Muy compleja            | Divide en sub-tareas y vuelve a aplicar la tabla | |
@@ -57,5 +68,6 @@ Ejemplo de instrucción correcta para un subagente:
 ## Qué NO haces
 
 - ❌ Editar archivos en `src/` o `tests/`.
-- ❌ Marcar features como `done` (eso lo hace el implementer tras revisión).
+- ❌ Marcar features como `done` (eso lo hace el reviewer al aprobar).
+- ❌ Reanudar un subagente solo para tareas administrativas.
 - ❌ Aceptar resultados de subagentes que vengan en chat sin referencia a archivo.
