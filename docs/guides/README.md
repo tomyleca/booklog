@@ -16,7 +16,7 @@
 | `prisma-sqlite.md` | Prisma en Electron, migraciones, path dinámico | Feature 2 (database schema) |
 | `react-query-tailwind-library.md` | TanStack Query, Tailwind CSS v4 e IPC en la vista de biblioteca | Feature 8 (UI biblioteca) |
 | `react-modal-forms.md` | Formularios modales, validación, accesibilidad e invalidación reactiva | Feature 9 (UI agregar libro manual) |
-| `external-api-integration.md` | Búsqueda en Google Books, sanitización, debounce y persistencia offline | Feature 10 (Google Books search) |
+| `external-api-integration.md` | Búsqueda en Google Books, sanitización, debounce, persistencia offline, consultas combinadas y ranking local | Features 10 y 21 (Google Books search, relevancia) |
 | `react-book-detail-view.md` | Vista de detalle de libro, edición de progreso en línea y bitácora de notas | Feature 11 (UI detalle del libro y notas) |
 | `app-settings-persistence.md` | Persistencia de preferencias, cifrado safeStorage y selector de tema reactivo | Feature 15 (settings page) |
 | `design-tokens-theming.md` | Tokens semánticos con `@theme` de Tailwind v4, temas claro/oscuro con `.dark`, texturas SVG y fuentes @fontsource | Feature 16 (retro library theme) |

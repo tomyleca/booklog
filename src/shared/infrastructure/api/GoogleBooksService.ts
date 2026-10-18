@@ -2,6 +2,8 @@ import type {
   BookSearchResult,
   BookSearchService
 } from '../../domain/ports/BookSearchService.js'
+import { mergeSearchResults } from '../../domain/services/mergeSearchResults.js'
+import { rankSearchResults } from '../../domain/services/rankSearchResults.js'
 
 interface GoogleBooksVolumeItem {
   id?: string
@@ -29,6 +31,8 @@ interface GoogleBooksApiResponse {
   items?: GoogleBooksVolumeItem[]
 }
 
+export const GOOGLE_BOOKS_MAX_RESULTS = 40
+
 export class GoogleBooksService implements BookSearchService {
   private readonly baseUrl = 'https://www.googleapis.com/books/v1/volumes'
 
@@ -37,17 +41,62 @@ export class GoogleBooksService implements BookSearchService {
     private readonly apiKeyProvider?: (() => string | null | undefined) | string | null
   ) {}
 
-  public async searchByQuery(query: string): Promise<BookSearchResult[]> {
-    const trimmed = query.trim()
-    if (!trimmed) {
+  /**
+   * Lanza en paralelo una consulta libre y otra con operadores de campo
+   * (`intitle:` / `inauthor:`), combina ambas sin duplicados y delega el orden final en
+   * el ranking de dominio. Si sólo una de las dos falla, se usan los resultados de la
+   * otra; si fallan ambas, se propaga el error de la consulta libre.
+   */
+  public async searchByQuery(query: string, author?: string | null): Promise<BookSearchResult[]> {
+    const text = typeof query === 'string' ? query.trim() : ''
+    const authorText = typeof author === 'string' ? author.trim() : ''
+    if (!text && !authorText) {
       return []
     }
 
-    let url = `${this.baseUrl}?q=${encodeURIComponent(trimmed)}&maxResults=20`
-    const resolvedKey =
-      typeof this.apiKeyProvider === 'function'
-        ? this.apiKeyProvider()
-        : this.apiKeyProvider ?? (typeof process !== 'undefined' ? process.env?.GOOGLE_BOOKS_API_KEY : undefined)
+    const [freeOutcome, fieldedOutcome] = await Promise.allSettled([
+      this.fetchVolumes(this.buildFreeQuery(text, authorText)),
+      this.fetchVolumes(this.buildFieldedQuery(text, authorText))
+    ])
+
+    if (freeOutcome.status === 'rejected' && fieldedOutcome.status === 'rejected') {
+      throw freeOutcome.reason
+    }
+
+    const freeResults = freeOutcome.status === 'fulfilled' ? freeOutcome.value : []
+    const fieldedResults = fieldedOutcome.status === 'fulfilled' ? fieldedOutcome.value : []
+
+    return rankSearchResults(mergeSearchResults(fieldedResults, freeResults), {
+      query: text,
+      author: authorText || null
+    })
+  }
+
+  private buildFreeQuery(text: string, author: string): string {
+    return [text, author].filter(Boolean).join(' ')
+  }
+
+  private buildFieldedQuery(text: string, author: string): string {
+    // Las comillas internas romperían la frase exacta del operador de campo.
+    const quoted = (value: string): string => `"${value.replace(/"/g, ' ').trim()}"`
+    const parts: string[] = []
+    if (text) parts.push(`intitle:${quoted(text)}`)
+    if (author) parts.push(`inauthor:${quoted(author)}`)
+    return parts.join(' ')
+  }
+
+  private resolveApiKey(): string | null | undefined {
+    return typeof this.apiKeyProvider === 'function'
+      ? this.apiKeyProvider()
+      : this.apiKeyProvider ??
+          (typeof process !== 'undefined' ? process.env?.GOOGLE_BOOKS_API_KEY : undefined)
+  }
+
+  private async fetchVolumes(q: string): Promise<BookSearchResult[]> {
+    let url =
+      `${this.baseUrl}?q=${encodeURIComponent(q)}` +
+      `&printType=books&maxResults=${GOOGLE_BOOKS_MAX_RESULTS}`
+    const resolvedKey = this.resolveApiKey()
 
     if (resolvedKey && resolvedKey.trim()) {
       url += `&key=${encodeURIComponent(resolvedKey.trim())}`

@@ -472,3 +472,20 @@
     - Guía actualizada: [docs/guides/prisma-sqlite-setup.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/docs/guides/prisma-sqlite-setup.md), §6 "Migraciones con backfill de datos".
   - Reportes de ciclo de vida: [progress/report_finished_date.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/report_finished_date.md) y [progress/review_finished_date.md](file:///c:/Users/Tomas/Desktop/BookLog/booklog/progress/review_finished_date.md) (APPROVED).
   - Pendiente fuera de alcance: la base empaquetada (`userData/booklog.db`) no aplica migraciones al arrancar.
+
+---
+
+## Sesión 2026-10-17 — Feature #21: search_relevance (Fix: relevancia de la búsqueda en Google Books)
+
+- **Estado:** Completada (done)
+- **Logros:**
+  - Diagnóstico: la consulta era solo `q=<texto>&maxResults=20`, sin `printType` ni `intitle:`, y sin reordenamiento local; títulos famosos como "pet sematary" quedaban enterrados.
+  - Consultas en paralelo (libre + `intitle:`/`inauthor:`) con `printType=books&maxResults=40`, combinadas sin duplicados y con tolerancia a fallo parcial.
+  - Ranking local puro en el dominio (`rankSearchResults`, `mergeSearchResults`) por coincidencia de título y autor, con bonus por portada/ISBN/páginas; se conservan todas las ediciones.
+  - Campo "Autor (opcional)" en la búsqueda de `AddBookModal`; contrato IPC extendido de forma compatible.
+  - Pruebas con respuestas grabadas (fixture "pet sematary": la edición de Stephen King queda primera). Suite: 32 archivos, 524 tests en verde; lint:check y build limpios.
+  - Documentación: [ADR 021](../docs/decisions/021-search-relevance.md) y [guía de integración externa §5](../docs/guides/external-api-integration.md).
+  - Reportes: [report_search_relevance.md](report_search_relevance.md) y [review_search_relevance.md](review_search_relevance.md) (APPROVED).
+- **Pendientes menores:**
+  - ADR 021: cambiar el estado "Aceptado (pendiente de revisión)" a "Aceptado".
+  - `rankSearchResults.ts`: escribir la clase de diacríticos como `/[̀-ͯ]/g` en vez de caracteres combinantes literales.

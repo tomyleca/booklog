@@ -56,8 +56,11 @@ export const api = {
       ipcRenderer.invoke(IPC_CHANNELS.COVERS.SAVE_FROM_LOCAL, { filePath })
   },
   search: {
-    books: (query: string): Promise<IpcResult<BookSearchResult[]>> =>
-      ipcRenderer.invoke(IPC_CHANNELS.SEARCH.BOOKS, { query })
+    books: (query: string, author?: string): Promise<IpcResult<BookSearchResult[]>> =>
+      ipcRenderer.invoke(
+        IPC_CHANNELS.SEARCH.BOOKS,
+        author ? { query, author } : { query }
+      )
   },
   window: {
     minimize: (): Promise<IpcResult<void>> =>

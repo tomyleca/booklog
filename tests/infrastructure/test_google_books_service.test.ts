@@ -14,7 +14,7 @@ describe('GoogleBooksService Unit Tests', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('calls Google Books API with encoded query and maxResults=20', async () => {
+  it('calls Google Books API with encoded query, printType=books and maxResults=40', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ kind: 'books#volumes', totalItems: 0, items: [] })
@@ -23,11 +23,16 @@ describe('GoogleBooksService Unit Tests', () => {
 
     await service.searchByQuery('Cien Años')
 
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-    const calledUrl = fetchMock.mock.calls[0][0] as string
-    expect(calledUrl).toContain('https://www.googleapis.com/books/v1/volumes')
-    expect(calledUrl).toContain('q=Cien%20A%C3%B1os')
-    expect(calledUrl).toContain('maxResults=20')
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    const calledUrls = fetchMock.mock.calls.map((call) => call[0] as string)
+    for (const calledUrl of calledUrls) {
+      expect(calledUrl).toContain('https://www.googleapis.com/books/v1/volumes')
+      expect(calledUrl).toContain('printType=books')
+      expect(calledUrl).toContain('maxResults=40')
+    }
+    expect(calledUrls).toContain(
+      'https://www.googleapis.com/books/v1/volumes?q=Cien%20A%C3%B1os&printType=books&maxResults=40'
+    )
   })
 
   it('throws an error when HTTP response is not ok', async () => {
@@ -192,10 +197,11 @@ describe('GoogleBooksService Unit Tests', () => {
       ]
     }
 
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockApiResponse
-    })
+    // Los resultados sin id no se deduplican: sólo la consulta libre devuelve el item.
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => mockApiResponse })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ items: [] }) })
     const service = new GoogleBooksService(fetchMock as unknown as typeof fetch)
 
     const results = await service.searchByQuery('Test')
@@ -221,9 +227,10 @@ describe('GoogleBooksService Unit Tests', () => {
 
     await service.searchByQuery('Borges')
 
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-    const calledUrl = fetchMock.mock.calls[0][0] as string
-    expect(calledUrl).toContain('&key=MY_SECRET_KEY_123')
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    for (const call of fetchMock.mock.calls) {
+      expect(call[0] as string).toContain('&key=MY_SECRET_KEY_123')
+    }
   })
 
   it('appends &key parameter when apiKeyProvider function returns a key', async () => {
@@ -238,8 +245,9 @@ describe('GoogleBooksService Unit Tests', () => {
 
     await service.searchByQuery('Cortázar')
 
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-    const calledUrl = fetchMock.mock.calls[0][0] as string
-    expect(calledUrl).toContain('&key=DYNAMIC_KEY_456')
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    for (const call of fetchMock.mock.calls) {
+      expect(call[0] as string).toContain('&key=DYNAMIC_KEY_456')
+    }
   })
 })

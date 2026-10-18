@@ -19,8 +19,13 @@ import type { UpdateNoteDTO } from '../../application/use-cases/UpdateNote.js'
 import type { DeleteNoteDTO } from '../../application/use-cases/DeleteNote.js'
 import type { BookSearchResult } from '../../domain/ports/BookSearchService.js'
 
+/**
+ * Contrato de `search:books`. `author` es opcional (feature #21); el canal también acepta
+ * un string suelto con el texto libre, por compatibilidad con la versión anterior.
+ */
 export interface SearchBooksDTO {
   query: string
+  author?: string | null
 }
 
 export type IpcResult<T> =

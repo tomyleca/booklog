@@ -25,7 +25,8 @@ export interface BookSearchResult {
 }
 
 export interface BookSearchService {
-  searchByQuery(query: string): Promise<BookSearchResult[]>
+  // `author` es opcional desde la feature #21 (ver sección 5)
+  searchByQuery(query: string, author?: string | null): Promise<BookSearchResult[]>
 }
 ```
 
@@ -139,3 +140,114 @@ Cuando el usuario selecciona un libro:
 2. Se activa automáticamente la pestaña de formulario manual, permitiendo al usuario revisar y editar cualquier dato antes de guardar.
 3. Se muestra un banner informativo que confirma que los datos fueron precargados desde Google Books.
 4. Al confirmar el guardado, la portada se descarga físicamente a la carpeta local de BookLog (`userData/covers/`), garantizando que la portada seguirá disponible aun cuando la aplicación no tenga conexión a internet.
+
+---
+
+## 5. Consultas Combinadas y Ranking Local (feature #21)
+
+### El problema
+Con una sola consulta `q=<texto>&maxResults=20`, el orden de Google Books no siempre
+coincide con lo que busca una persona: para "pet sematary" aparecían primero guías de
+estudio, revistas y traducciones, y la novela de Stephen King quedaba abajo o fuera de los
+20 resultados. Google ofrece operadores de campo (`intitle:`, `inauthor:`) y el filtro
+`printType=books`, pero un único criterio nunca es perfecto: `intitle:` es preciso pero
+pierde coincidencias aproximadas; la consulta libre encuentra más pero ordena peor.
+
+### La solución: dos consultas en paralelo + ranking propio
+`GoogleBooksService.searchByQuery(query, author?)` hace tres cosas, y sólo tres:
+
+1. **Arma dos consultas** (ambas con `printType=books&maxResults=40`):
+   - libre: `<texto> <autor>`;
+   - de campo: `intitle:"<texto>" inauthor:"<autor>"` (cada parte sólo si tiene valor).
+2. **Las lanza en paralelo** con `Promise.allSettled` y combina lo que llegue con
+   `mergeSearchResults` (sin duplicados por `googleBooksId`). Si una falla, se usa la otra;
+   si fallan las dos, se propaga el mismo error de siempre.
+3. **Delega el orden** en `rankSearchResults`, una función pura de dominio.
+
+```mermaid
+sequenceDiagram
+    participant UI as AddBookModal
+    participant IPC as search:books handler
+    participant GBS as GoogleBooksService
+    participant API as Google Books API
+    participant R as rankSearchResults (dominio)
+
+    UI->>IPC: invoke({ query, author? }) o invoke("texto")
+    IPC->>GBS: searchByQuery(query, author?)
+    par consulta libre
+        GBS->>API: q=pet sematary&printType=books&maxResults=40
+    and consulta de campo
+        GBS->>API: q=intitle:"pet sematary"&printType=books&maxResults=40
+    end
+    API-->>GBS: items (libre)
+    API-->>GBS: items (de campo)
+    GBS->>GBS: mergeSearchResults(campo, libre)
+    GBS->>R: rankSearchResults(merged, { query, author })
+    R-->>GBS: misma lista, reordenada
+    GBS-->>IPC: BookSearchResult[]
+    IPC-->>UI: IpcResult
+```
+
+### ¿Por qué el ranking vive en el dominio?
+Decidir "qué resultado es más relevante para el usuario" es una regla de negocio de
+BookLog, no un detalle de Google. Por eso `rankSearchResults` y `mergeSearchResults` están
+en `src/shared/domain/services/`: no conocen HTTP ni Electron y se testean con datos en
+memoria. Si mañana se agregara Open Library como segunda fuente, reutilizaría el mismo
+ranking.
+
+```mermaid
+classDiagram
+    class BookSearchService {
+        <<port>>
+        +searchByQuery(query, author?) Promise~BookSearchResult[]~
+    }
+    class GoogleBooksService {
+        -fetchVolumes(q) Promise~BookSearchResult[]~
+        -buildFreeQuery(text, author) string
+        -buildFieldedQuery(text, author) string
+        +searchByQuery(query, author?)
+    }
+    class rankSearchResults {
+        <<domain service>>
+        +rankSearchResults(results, criteria)
+        +scoreSearchResult(result, criteria)
+    }
+    class mergeSearchResults {
+        <<domain service>>
+        +mergeSearchResults(...lists)
+    }
+    BookSearchService <|.. GoogleBooksService
+    GoogleBooksService ..> mergeSearchResults
+    GoogleBooksService ..> rankSearchResults
+```
+
+### Cómo se calcula el puntaje
+Título y autores se normalizan (minúsculas, sin tildes, sin puntuación). Pesos en
+`RELEVANCE_WEIGHTS`:
+
+| Señal | Puntos |
+|---|---|
+| Título idéntico al texto | 100 |
+| Título que empieza con el texto | 60 |
+| Título que contiene la frase | 45 |
+| Si no, proporción de palabras del texto presentes en el título | hasta 30 |
+| Campo autor: proporción de sus palabras presentes en algún autor | hasta 50 |
+| Sin campo autor: palabras del texto que coinciden con un autor | hasta 40 |
+| Tiene portada / ISBN / páginas | +10 / +5 / +5 |
+
+Si el texto libre trae el autor ("it stephen king"), esas palabras cuentan como autor y se
+quitan antes de comparar el título, así "It" sigue siendo coincidencia exacta. **Ningún
+resultado se descarta** (se muestran todas las ediciones, en cualquier idioma) y ante empate
+se conserva el orden original (orden estable).
+
+### Campo "Autor" en el modal
+La pestaña de búsqueda tiene un segundo input opcional (`data-testid="search-author-input"`).
+Se busca si **cualquiera** de los dos campos tiene 3 caracteres o más. El debounce y el
+`searchRequestIdRef` contra condiciones de carrera se comparten entre ambos inputs: cambiar el
+autor cancela el temporizador pendiente y una respuesta vieja nunca pisa a la nueva.
+
+### Cómo se testea sin red
+`tests/fixtures/googleBooksPetSematary.ts` contiene respuestas grabadas (recortadas) de la API.
+El `fetchFn` inyectado en `GoogleBooksService` responde una u otra según si la URL usa
+`intitle:`/`inauthor:`. Así se verifican la combinación, los fallos parciales y que la
+edición de Stephen King quede primera, sin API key ni cuota.

@@ -796,6 +796,44 @@ describe('IPC Search Handlers (SEARCH.BOOKS)', () => {
     expect(searchServiceMock.searchByQuery).toHaveBeenCalledWith('Quijote')
   })
 
+  it('should keep accepting a plain string query (backwards compatible contract)', async () => {
+    vi.mocked(searchServiceMock.searchByQuery).mockResolvedValue([])
+
+    const res = await invoke<BookSearchResult[]>(IPC_CHANNELS.SEARCH.BOOKS, '  Pet Sematary ')
+    expect(res).toEqual({ success: true, data: [] })
+    expect(searchServiceMock.searchByQuery).toHaveBeenCalledWith('Pet Sematary')
+  })
+
+  it('should forward the optional trimmed author along with the query', async () => {
+    vi.mocked(searchServiceMock.searchByQuery).mockResolvedValue([])
+
+    await invoke<BookSearchResult[]>(IPC_CHANNELS.SEARCH.BOOKS, {
+      query: ' Pet Sematary ',
+      author: ' Stephen King '
+    })
+    expect(searchServiceMock.searchByQuery).toHaveBeenCalledWith('Pet Sematary', 'Stephen King')
+  })
+
+  it('should search by author alone when the query is empty', async () => {
+    vi.mocked(searchServiceMock.searchByQuery).mockResolvedValue([])
+
+    const res = await invoke<BookSearchResult[]>(IPC_CHANNELS.SEARCH.BOOKS, {
+      query: '',
+      author: 'Stephen King'
+    })
+    expect(res).toEqual({ success: true, data: [] })
+    expect(searchServiceMock.searchByQuery).toHaveBeenCalledWith('', 'Stephen King')
+  })
+
+  it('should return empty list without searching when query and author are blank', async () => {
+    const res = await invoke<BookSearchResult[]>(IPC_CHANNELS.SEARCH.BOOKS, {
+      query: ' ',
+      author: '   '
+    })
+    expect(res).toEqual({ success: true, data: [] })
+    expect(searchServiceMock.searchByQuery).not.toHaveBeenCalled()
+  })
+
   it('should return formatted IPC error when searchService throws', async () => {
     vi.mocked(searchServiceMock.searchByQuery).mockRejectedValue(new Error('Network error'))
 

@@ -325,6 +325,22 @@
         "Tests por capa (dominio, use cases, repositorio, IPC, renderer); pnpm test, typecheck, lint:check y build en verde"
       ],
       "status": "done"
+    },
+    {
+      "id": 21,
+      "name": "search_relevance",
+      "title": "Fix: relevancia de la búsqueda en Google Books",
+      "description": "Bug: la búsqueda no prioriza lo más relevante (p. ej. \"pet sematary\" no trae el de Stephen King). Hoy la consulta es solo q=<texto>&maxResults=20, sin printType ni intitle:, y no hay reordenamiento local. Decisiones del usuario: mostrar todas las ediciones; sin preferencia de idioma; agregar campo de autor opcional; la verificación contra la API real la hace el usuario (tests con respuestas grabadas).",
+      "acceptance": [
+        "La consulta usa printType=books y maxResults=40",
+        "Se lanzan en paralelo la consulta libre y una con intitle:\"<texto>\" (y inauthor:\"<autor>\" cuando se completa el autor); los resultados se combinan sin duplicados por googleBooksId",
+        "Reordenamiento local por puntaje: coincidencia exacta/parcial de título, coincidencia de autor (campo de autor o palabras del texto), bonus por portada, ISBN y páginas; todas las ediciones se conservan",
+        "AddBookModal tiene un campo de autor opcional en la pestaña de búsqueda; la búsqueda funciona con solo título, solo autor o ambos",
+        "Contrato IPC de búsqueda extendido de forma compatible (query + author opcional)",
+        "Si una de las consultas paralelas falla, se usan los resultados de la otra; si fallan ambas se muestra el error actual",
+        "Tests con respuestas grabadas, incluido \"pet sematary\" → la edición de Stephen King queda primera; pnpm test, typecheck, lint:check y build en verde"
+      ],
+      "status": "done"
     }
   ]
 }

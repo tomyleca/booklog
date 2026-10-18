@@ -65,7 +65,8 @@ src/
 │   ├── domain/
 │   │   ├── entities/              # Book.ts, ReadingSession.ts
 │   │   ├── ports/                 # Interfaces de repositorio
-│   │   └── errors/                # Excepciones del dominio
+│   │   ├── errors/                # Excepciones del dominio
+│   │   └── services/              # Funciones de dominio puras (p. ej. ranking de búsqueda)
 │   ├── application/
 │   │   └── use-cases/             # Casos de uso
 │   └── infrastructure/

@@ -11,5 +11,9 @@ export interface BookSearchResult {
 }
 
 export interface BookSearchService {
-  searchByQuery(query: string): Promise<BookSearchResult[]>
+  /**
+   * Busca libros por texto libre y, opcionalmente, por autor. Basta con uno de los dos:
+   * si ambos están vacíos devuelve `[]` sin consultar la fuente externa.
+   */
+  searchByQuery(query: string, author?: string | null): Promise<BookSearchResult[]>
 }

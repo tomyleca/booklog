@@ -35,6 +35,12 @@ export interface AddBookModalProps {
   renderSearchSlot?: () => React.ReactNode
 }
 
+const MIN_SEARCH_CHARS = 3
+
+function hasEnoughSearchInput(query: string, author: string): boolean {
+  return query.trim().length >= MIN_SEARCH_CHARS || author.trim().length >= MIN_SEARCH_CHARS
+}
+
 export function AddBookModal({
   isOpen,
   onClose,
@@ -48,6 +54,7 @@ export function AddBookModal({
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('')
+  const [searchAuthor, setSearchAuthor] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const [searchResults, setSearchResults] = useState<BookSearchResult[]>([])
   const [searchError, setSearchError] = useState<string | null>(null)
@@ -74,6 +81,7 @@ export function AddBookModal({
   // Refs for search race conditions and debounce timer
   const searchRequestIdRef = useRef(0)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const canSearch = hasEnoughSearchInput(searchQuery, searchAuthor)
 
   useEffect(() => {
     if (isOpen) {
@@ -86,6 +94,7 @@ export function AddBookModal({
       )
       setActiveTab(hasInitialData ? 'manual' : 'search')
       setSearchQuery('')
+      setSearchAuthor('')
       setSearchResults([])
       setSearchError(null)
       setHasSearched(false)
@@ -141,9 +150,10 @@ export function AddBookModal({
     }
   }, [])
 
-  const executeSearch = useCallback(async (queryToSearch: string) => {
+  const executeSearch = useCallback(async (queryToSearch: string, authorToSearch: string) => {
     const trimmed = queryToSearch.trim()
-    if (trimmed.length < 3) {
+    const trimmedAuthor = authorToSearch.trim()
+    if (!hasEnoughSearchInput(trimmed, trimmedAuthor)) {
       setSearchResults([])
       setHasSearched(false)
       setIsSearching(false)
@@ -158,10 +168,10 @@ export function AddBookModal({
     const requestId = ++searchRequestIdRef.current
     setIsSearching(true)
     setSearchError(null)
-    setLastSearchedQuery(trimmed)
+    setLastSearchedQuery([trimmed, trimmedAuthor].filter(Boolean).join(' — '))
 
     try {
-      const res = await searchService.searchBooks(trimmed)
+      const res = await searchService.searchBooks(trimmed, trimmedAuthor)
       if (requestId !== searchRequestIdRef.current) {
         return
       }
@@ -189,23 +199,32 @@ export function AddBookModal({
     }
   }, [])
 
-  const handleSearchChange = (value: string): void => {
-    setSearchQuery(value)
+  const scheduleSearch = (query: string, author: string): void => {
     setSearchError(null)
 
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current)
     }
 
-    if (value.trim().length >= 3) {
+    if (hasEnoughSearchInput(query, author)) {
       debounceTimerRef.current = setTimeout(() => {
-        executeSearch(value)
+        executeSearch(query, author)
       }, 500)
     } else {
       setSearchResults([])
       setHasSearched(false)
       setIsSearching(false)
     }
+  }
+
+  const handleSearchChange = (value: string): void => {
+    setSearchQuery(value)
+    scheduleSearch(value, searchAuthor)
+  }
+
+  const handleSearchAuthorChange = (value: string): void => {
+    setSearchAuthor(value)
+    scheduleSearch(searchQuery, value)
   }
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
@@ -215,7 +234,7 @@ export function AddBookModal({
         clearTimeout(debounceTimerRef.current)
         debounceTimerRef.current = null
       }
-      executeSearch(searchQuery)
+      executeSearch(searchQuery, searchAuthor)
     }
   }
 
@@ -224,7 +243,7 @@ export function AddBookModal({
       clearTimeout(debounceTimerRef.current)
       debounceTimerRef.current = null
     }
-    executeSearch(searchQuery)
+    executeSearch(searchQuery, searchAuthor)
   }
 
   const handleSelectResult = (result: BookSearchResult): void => {
@@ -461,7 +480,7 @@ export function AddBookModal({
             <button
               type="button"
               onClick={handleSearchClick}
-              disabled={isSearching || searchQuery.trim().length < 3}
+              disabled={isSearching || !canSearch}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-md text-accent-ink bg-accent hover:bg-accent-strong transition-colors disabled:opacity-40 disabled:hover:bg-accent shadow-sm"
               data-testid="search-books-button"
             >
@@ -472,6 +491,21 @@ export function AddBookModal({
               )}
               <span>Buscar</span>
             </button>
+          </div>
+
+          {/* Optional author filter (feature #21) */}
+          <div className="relative">
+            <PenLine className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint" />
+            <input
+              type="text"
+              value={searchAuthor}
+              onChange={(e) => handleSearchAuthorChange(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              placeholder="Autor (opcional)"
+              aria-label="Autor (opcional)"
+              className="w-full pl-9 pr-3.5 py-2 rounded-md bg-well border border-rule text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
+              data-testid="search-author-input"
+            />
           </div>
 
           {/* Search Error Alert */}
@@ -497,19 +531,21 @@ export function AddBookModal({
           )}
 
           {/* Less than 3 chars friendly message */}
-          {!isSearching && searchQuery.trim().length < 3 && (
+          {!isSearching && !canSearch && (
             <div
               className="flex flex-col items-center justify-center py-10 text-ink-faint text-center gap-2"
               data-testid="search-min-chars-message"
             >
               <Search className="w-8 h-8 text-ink-faint stroke-[1.5]" />
-              <p className="text-xs">Ingresa al menos 3 caracteres para buscar libros.</p>
+              <p className="text-xs">
+                Ingresa al menos 3 caracteres en la búsqueda o en el autor para buscar libros.
+              </p>
             </div>
           )}
 
           {/* No results message */}
           {!isSearching &&
-            searchQuery.trim().length >= 3 &&
+            canSearch &&
             hasSearched &&
             searchResults.length === 0 && (
               <div
