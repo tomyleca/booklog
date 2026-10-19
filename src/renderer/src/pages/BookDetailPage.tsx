@@ -11,16 +11,31 @@ import {
   Loader2,
   Sparkles,
   Calendar,
-  TrendingUp
+  TrendingUp,
+  Tablet,
+  MapPin,
+  Highlighter
 } from 'lucide-react'
 import { BookStatus } from '../../../shared/domain/entities/BookStatus.js'
-import type { BookPrimitives, NotePrimitives } from '../../../shared/infrastructure/ipc/contracts.js'
+import { NoteOrigin } from '../../../shared/domain/entities/NoteOrigin.js'
+import type {
+  BookPrimitives,
+  HighlightPrimitives,
+  NotePrimitives
+} from '../../../shared/infrastructure/ipc/contracts.js'
 import { bookService } from '../services/bookService.js'
 import { noteService } from '../services/noteService.js'
+import { highlightService } from '../services/highlightService.js'
 import { useCoverSource } from '../hooks/useCoverSource.js'
 import { AddNoteModal, UpdateProgressModal } from '../components/index.js'
 import { STATUS_CONFIG, STATUS_ORDER } from '../components/statusConfig.js'
 import { FinishedDateField } from '../components/FinishedDateField.js'
+import { HighlightsSection } from '../components/HighlightsSection.js'
+import {
+  formatAnnotationDate,
+  formatAnnotationLocation,
+  noteDisplayDate
+} from '../components/annotations.js'
 import {
   defaultFinishedDateInput,
   formatFinishedDate,
@@ -87,6 +102,22 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
       const res = await noteService.getByBook(bookId)
       if (!res.success) {
         throw new Error(res.error || 'No se pudieron cargar las notas')
+      }
+      return res.data
+    }
+  })
+
+  // Highlights Query (feature #22)
+  const {
+    data: highlights,
+    isLoading: isHighlightsLoading,
+    error: highlightsError
+  } = useQuery<HighlightPrimitives[], Error>({
+    queryKey: ['highlights', bookId],
+    queryFn: async () => {
+      const res = await highlightService.getByBook(bookId)
+      if (!res.success) {
+        throw new Error(res.error || 'No se pudieron cargar los subrayados')
       }
       return res.data
     }
@@ -194,6 +225,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
       queryClient.invalidateQueries({ queryKey: ['books'] })
       queryClient.removeQueries({ queryKey: ['book', bookId] })
       queryClient.removeQueries({ queryKey: ['notes', bookId] })
+      queryClient.removeQueries({ queryKey: ['highlights', bookId] })
       setIsDeleteBookModalOpen(false)
       onBack()
     }
@@ -209,6 +241,21 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
       }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes', bookId] })
+    }
+  })
+
+  // Mutation: Delete Highlight. Las notas vinculadas se conservan (highlightId pasa a null),
+  // por eso también se refrescan las notas.
+  const deleteHighlightMutation = useMutation({
+    mutationFn: async (highlightId: number) => {
+      const res = await highlightService.delete(highlightId)
+      if (!res.success) {
+        throw new Error(res.error || 'Error al eliminar el subrayado')
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['highlights', bookId] })
       queryClient.invalidateQueries({ queryKey: ['notes', bookId] })
     }
   })
@@ -316,8 +363,10 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
   // Sort notes newest first
   const sortedNotes = notes
     ? [...notes].sort((a, b) => {
-        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0
-        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+        const dateA = noteDisplayDate(a)
+        const dateB = noteDisplayDate(b)
+        const timeA = dateA ? new Date(dateA).getTime() : 0
+        const timeB = dateB ? new Date(dateB).getTime() : 0
         return timeB - timeA
       })
     : []
@@ -789,13 +838,16 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
         </div>
       </div>
 
-      {/* Notes and Ideas Section */}
-      <section className="mt-8 pt-8 border-t-[3px] border-double border-rule-strong">
+      {/* Mis notas: todo lo escrito por el usuario, a mano o en el Kindle (feature #22) */}
+      <section
+        className="mt-8 pt-8 border-t-[3px] border-double border-rule-strong"
+        data-testid="my-notes-section"
+      >
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2.5">
             <h2 className="text-xl font-bold text-ink flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-accent" />
-              <span>Notas e Ideas</span>
+              <span>Mis notas</span>
             </h2>
             {notes && !isNotesLoading && (
               <span
@@ -864,15 +916,13 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
               >
                 {sortedNotes.map((note) => {
                   const noteId = note.id
-                  const formattedDate = note.createdAt
-                    ? new Date(note.createdAt).toLocaleDateString('es-ES', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })
-                    : ''
+                  const formattedDate = formatAnnotationDate(noteDisplayDate(note))
+                  const isKindleNote = note.origin === NoteOrigin.KINDLE
+                  const location = formatAnnotationLocation(note.location)
+                  const linkedHighlight =
+                    note.highlightId !== null && note.highlightId !== undefined
+                      ? highlights?.find((h) => h.id === note.highlightId)
+                      : undefined
 
                   return (
                     <article
@@ -880,6 +930,38 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
                       className="group flex flex-col justify-between p-4 rounded-md ficha hover:border-rule-strong transition-all"
                       data-testid="note-item"
                     >
+                      {(isKindleNote || location || linkedHighlight) && (
+                        <div className="flex flex-wrap items-center gap-2 mb-2 text-[11px] text-ink-muted">
+                          {isKindleNote && (
+                            <span
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-shelf border border-rule/60 font-medium"
+                              data-testid="note-origin-kindle"
+                            >
+                              <Tablet className="w-3 h-3" />
+                              Kindle
+                            </span>
+                          )}
+                          {location && (
+                            <span
+                              className="inline-flex items-center gap-1"
+                              data-testid="note-location"
+                            >
+                              <MapPin className="w-3 h-3" />
+                              {location}
+                            </span>
+                          )}
+                          {linkedHighlight && (
+                            <span
+                              className="inline-flex items-center gap-1"
+                              title={linkedHighlight.content}
+                              data-testid="note-linked-highlight"
+                            >
+                              <Highlighter className="w-3 h-3" />
+                              Sobre un subrayado
+                            </span>
+                          )}
+                        </div>
+                      )}
                       <p
                         className="text-sm text-ink whitespace-pre-wrap leading-relaxed break-words"
                         data-testid="note-content"
@@ -917,6 +999,15 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
           </>
         )}
       </section>
+
+      <HighlightsSection
+        highlights={highlights}
+        notes={notes ?? []}
+        isLoading={isHighlightsLoading}
+        errorMessage={highlightsError ? highlightsError.message : null}
+        isDeleting={deleteHighlightMutation.isPending}
+        onDelete={(highlightId) => deleteHighlightMutation.mutate(highlightId)}
+      />
 
       {/* Modal Reutilizable: Agregar Nueva Nota / Idea */}
       <AddNoteModal

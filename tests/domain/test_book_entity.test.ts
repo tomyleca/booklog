@@ -357,6 +357,11 @@ describe('Book Domain Entity', () => {
             id: 1,
             bookId: 42,
             content: 'Red, Green, Refactor cycle.',
+            origin: 'MANUAL',
+            highlightId: null,
+            location: null,
+            capturedAt: null,
+            fingerprint: null,
             createdAt,
             updatedAt
           }

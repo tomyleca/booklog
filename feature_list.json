@@ -341,6 +341,51 @@
         "Tests con respuestas grabadas, incluido \"pet sematary\" → la edición de Stephen King queda primera; pnpm test, typecheck, lint:check y build en verde"
       ],
       "status": "done"
+    },
+    {
+      "id": 22,
+      "name": "highlights_and_note_origin",
+      "title": "Subrayados y origen de las notas",
+      "description": "Base para importar del Kindle. Distingue lo escrito por el usuario (notas, a mano en BookLog o escritas en el Kindle) de lo subrayado. Decisiones del usuario: entidad Subrayado separada; Note con origen (MANUAL | KINDLE); una nota del Kindle atada a un subrayado queda vinculada a él y se muestra debajo como comentario, pero sigue siendo una nota del usuario.",
+      "acceptance": [
+        "Nueva entidad de dominio Highlight (bookId, texto, ubicación: tipo página|posición con inicio y fin opcional, fecha del Kindle, huella única para dedupe) con tabla Prisma y migración; borrado en cascada con el libro",
+        "Note gana origin (MANUAL | KINDLE, default MANUAL; las existentes quedan MANUAL), highlightId opcional (vínculo a un subrayado, SET NULL al borrar el subrayado), ubicación y huella única opcionales para notas importadas",
+        "Repositorio, use cases (listar y borrar subrayados de un libro) y contratos IPC tipados",
+        "Detalle del libro: sección \"Mis notas\" (todas las Note, con indicador de origen Kindle) y sección \"Subrayados\" (con su ubicación y fecha); las notas vinculadas se muestran también debajo de su subrayado",
+        "Se conservan los data-testid y el flujo actual de notas manuales; solo tokens de color",
+        "Tests por capa; guía conceptual y ADR"
+      ],
+      "status": "done"
+    },
+    {
+      "id": 23,
+      "name": "kindle_clippings_import",
+      "title": "Importar subrayados y notas desde My Clippings.txt",
+      "description": "Depende de #22. Ver progress/explore_kindle_clippings.md (formato real del usuario, MTP, títulos sucios). Decisiones: parser ES/EN (tipo y fecha por separado); se ignoran marcadores y resaltados vacíos; subrayados editados superpuestos → se queda el más nuevo; dedupe por huella al reimportar; match por ISBN → título normalizado + autor → similitud; vista previa por libro con selector para corregir el libro asociado o pasarlo a \"crear libro\" (alta con título/autor precargados); varios títulos del Kindle pueden apuntar al mismo libro; lectura del Kindle MTP vía PowerShell (Shell.Application) desde el main process con fallback a selector de archivo.",
+      "acceptance": [
+        "Parser puro de My Clippings.txt: BOM, CRLF, separador ==========, tipos resaltado/nota/marcador en ES y EN, página o posición con número o rango, fechas ES y EN; descarta marcadores y cuerpos vacíos",
+        "Normalización de títulos sucios (segmentos --, Anna’s Archive, (Z-Library), hashes, [NNNN] (rX.Y), _OceanofPDF.com_, _ y - como espacios) y extracción de ISBN y autor",
+        "Matching: ISBN, luego título normalizado + autor, luego similitud; resultado con nivel de confianza",
+        "Subrayados superpuestos del mismo libro (editados): se conserva el más reciente; notas vinculadas al subrayado cuya posición final coincide",
+        "Reimportar el mismo archivo no duplica nada (huella única)",
+        "Main process: detecta el Kindle conectado por MTP con PowerShell y copia My Clippings.txt a una carpeta temporal (esperando que termine la copia); si no lo encuentra, ofrece un selector de archivo .txt",
+        "UI: botón \"Importar del Kindle\"; vista previa agrupada por libro con cantidad de subrayados/notas, libro asociado (corregible) o \"crear libro\" con datos precargados; confirmación e informe final (importados, omitidos por duplicado)",
+        "Tests con fixtures anonimizados derivados de la muestra real (nunca el archivo original); guía y ADR"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": 24,
+      "name": "finished_date_from_clippings",
+      "title": "Fecha de terminado sugerida desde los subrayados",
+      "description": "Depende de #20 y #23. Al marcar un libro como terminado, si tiene subrayados o notas importadas del Kindle, se propone la fecha del último en vez de hoy; el usuario la confirma o cambia. No se agrega fecha de inicio.",
+      "acceptance": [
+        "Los caminos manuales a FINISHED (AddBookModal no aplica, UpdateProgressModal, cambio de estado en detalle) precargan la fecha del último subrayado/nota importada si existe y no es futura; si no, hoy",
+        "Se indica en la UI de dónde sale la fecha sugerida (p. ej. \"último subrayado del Kindle\")",
+        "El autocompletado al 100% sigue usando hoy",
+        "Tests y ADR"
+      ],
+      "status": "pending"
     }
   ]
 }

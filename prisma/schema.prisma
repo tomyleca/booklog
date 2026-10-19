@@ -16,8 +16,8 @@ enum BookStatus {
 }
 
 model Book {
-  id                 Int        @id @default(autoincrement())
-  googleBooksId      String?    @unique
+  id                 Int         @id @default(autoincrement())
+  googleBooksId      String?     @unique
   title              String
   authors            String
   coverUrl           String?
@@ -26,19 +26,57 @@ model Book {
   currentPage        Int?
   progressPercentage Int?
   isbn               String?
-  status             BookStatus @default(TO_READ)
+  status             BookStatus  @default(TO_READ)
   rating             Int?
   finishedAt         DateTime?
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
   notes              Note[]
+  highlights         Highlight[]
+}
+
+enum NoteOrigin {
+  MANUAL
+  KINDLE
+}
+
+enum LocationKind {
+  PAGE
+  LOCATION
 }
 
 model Note {
-  id        Int      @id @default(autoincrement())
-  bookId    Int
-  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            Int           @id @default(autoincrement())
+  bookId        Int
+  book          Book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  content       String
+  origin        NoteOrigin    @default(MANUAL)
+  highlightId   Int?
+  highlight     Highlight?    @relation(fields: [highlightId], references: [id], onDelete: SetNull)
+  locationKind  LocationKind?
+  locationStart Int?
+  locationEnd   Int?
+  capturedAt    DateTime?
+  fingerprint   String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@unique([bookId, fingerprint])
+  @@index([highlightId])
+}
+
+model Highlight {
+  id            Int          @id @default(autoincrement())
+  bookId        Int
+  book          Book         @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  content       String
+  locationKind  LocationKind
+  locationStart Int
+  locationEnd   Int?
+  capturedAt    DateTime?
+  fingerprint   String
+  createdAt     DateTime     @default(now())
+  notes         Note[]
+
+  @@unique([bookId, fingerprint])
 }

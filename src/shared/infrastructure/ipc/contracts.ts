@@ -1,9 +1,14 @@
 import type { BookPrimitives } from '../../domain/entities/Book.js'
 import type { NotePrimitives } from '../../domain/entities/Note.js'
+import type { HighlightPrimitives } from '../../domain/entities/Highlight.js'
+import type { AnnotationLocation } from '../../domain/entities/AnnotationLocation.js'
+import { LocationKind } from '../../domain/entities/AnnotationLocation.js'
+import { NoteOrigin } from '../../domain/entities/NoteOrigin.js'
 import { BookStatus } from '../../domain/entities/BookStatus.js'
 import { DomainError } from '../../domain/errors/DomainErrors.js'
 import { BookNotFoundError } from '../../application/errors/BookNotFoundError.js'
 import { NoteNotFoundError } from '../../application/errors/NoteNotFoundError.js'
+import { HighlightNotFoundError } from '../../application/errors/HighlightNotFoundError.js'
 
 import type { AddBookDTO } from '../../application/use-cases/AddBook.js'
 import type { ListBooksDTO } from '../../application/use-cases/ListBooks.js'
@@ -17,6 +22,8 @@ import type { AddNoteDTO } from '../../application/use-cases/AddNote.js'
 import type { GetBookNotesDTO } from '../../application/use-cases/GetBookNotes.js'
 import type { UpdateNoteDTO } from '../../application/use-cases/UpdateNote.js'
 import type { DeleteNoteDTO } from '../../application/use-cases/DeleteNote.js'
+import type { GetBookHighlightsDTO } from '../../application/use-cases/GetBookHighlights.js'
+import type { DeleteHighlightDTO } from '../../application/use-cases/DeleteHighlight.js'
 import type { BookSearchResult } from '../../domain/ports/BookSearchService.js'
 
 /**
@@ -43,6 +50,7 @@ export function ipcError<T = never>(error: string, code?: string): IpcResult<T> 
 export const IPC_ERROR_CODES = {
   BOOK_NOT_FOUND: 'BOOK_NOT_FOUND',
   NOTE_NOT_FOUND: 'NOTE_NOT_FOUND',
+  HIGHLIGHT_NOT_FOUND: 'HIGHLIGHT_NOT_FOUND',
   VALIDATION_ERROR: 'VALIDATION_ERROR',
   COVER_STORAGE_ERROR: 'COVER_STORAGE_ERROR',
   SETTINGS_ERROR: 'SETTINGS_ERROR',
@@ -57,6 +65,9 @@ export function formatIpcError(err: unknown): { success: false; error: string; c
   }
   if (err instanceof NoteNotFoundError) {
     return { success: false, error: err.message, code: IPC_ERROR_CODES.NOTE_NOT_FOUND }
+  }
+  if (err instanceof HighlightNotFoundError) {
+    return { success: false, error: err.message, code: IPC_ERROR_CODES.HIGHLIGHT_NOT_FOUND }
   }
   if (err instanceof DomainError) {
     return { success: false, error: err.message, code: IPC_ERROR_CODES.VALIDATION_ERROR }
@@ -108,6 +119,10 @@ export interface AppInfoDTO {
 export {
   BookPrimitives,
   NotePrimitives,
+  HighlightPrimitives,
+  AnnotationLocation,
+  LocationKind,
+  NoteOrigin,
   BookStatus,
   AddBookDTO,
   ListBooksDTO,
@@ -121,5 +136,7 @@ export {
   GetBookNotesDTO,
   UpdateNoteDTO,
   DeleteNoteDTO,
+  GetBookHighlightsDTO,
+  DeleteHighlightDTO,
   BookSearchResult
 }

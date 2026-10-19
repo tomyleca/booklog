@@ -99,6 +99,11 @@ describe('Note Domain Entity', () => {
         id: 99,
         bookId: 12,
         content: 'Reflexión clave sobre acoplamiento y cohesión.',
+        origin: 'MANUAL',
+        highlightId: null,
+        location: null,
+        capturedAt: null,
+        fingerprint: null,
         createdAt,
         updatedAt
       })

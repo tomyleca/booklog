@@ -1,5 +1,6 @@
 export * from './bookService.js'
 export * from './noteService.js'
+export * from './highlightService.js'
 export * from './coverService.js'
 export * from './searchService.js'
 export * from './windowService.js'

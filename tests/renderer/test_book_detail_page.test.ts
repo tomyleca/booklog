@@ -124,6 +124,10 @@ describe('Feature #11 - UI Book Detail View & Notes Management', () => {
         update: vi.fn(),
         delete: vi.fn().mockResolvedValue({ success: true, data: undefined })
       },
+      highlights: {
+        getByBook: vi.fn().mockResolvedValue({ success: true, data: [] }),
+        delete: vi.fn().mockResolvedValue({ success: true, data: undefined })
+      },
       covers: {
         saveFromUrl: vi.fn(),
         saveFromLocal: vi.fn()

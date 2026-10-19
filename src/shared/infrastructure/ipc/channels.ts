@@ -15,6 +15,10 @@ export const IPC_CHANNELS = {
     UPDATE: 'notes:update',
     DELETE: 'notes:delete'
   },
+  HIGHLIGHTS: {
+    GET_BY_BOOK: 'highlights:getByBook',
+    DELETE: 'highlights:delete'
+  },
   COVERS: {
     SAVE_FROM_URL: 'covers:saveFromUrl',
     SAVE_FROM_LOCAL: 'covers:saveFromLocal'
@@ -39,6 +43,7 @@ export const IPC_CHANNELS = {
 export type IpcChannel =
   | (typeof IPC_CHANNELS.BOOKS)[keyof typeof IPC_CHANNELS.BOOKS]
   | (typeof IPC_CHANNELS.NOTES)[keyof typeof IPC_CHANNELS.NOTES]
+  | (typeof IPC_CHANNELS.HIGHLIGHTS)[keyof typeof IPC_CHANNELS.HIGHLIGHTS]
   | (typeof IPC_CHANNELS.COVERS)[keyof typeof IPC_CHANNELS.COVERS]
   | (typeof IPC_CHANNELS.SEARCH)[keyof typeof IPC_CHANNELS.SEARCH]
   | (typeof IPC_CHANNELS.WINDOW)[keyof typeof IPC_CHANNELS.WINDOW]

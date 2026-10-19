@@ -13,6 +13,11 @@ Por esta razón:
 - **Contenido significativo:** El cuerpo de la nota (`content`) es obligatorio y no puede consistir únicamente en espacios en blanco.
 - **Trazabilidad temporal:** Toda nota registra su fecha de creación (`createdAt`) y su fecha de última modificación (`updatedAt`).
 
+> **Actualización (feature #22):** las notas ahora tienen un **origen** (`MANUAL` | `KINDLE`).
+> Las manuales siguen sin página; las importadas del Kindle llevan ubicación, fecha del
+> dispositivo, huella y, opcionalmente, un vínculo a un **subrayado** (`Highlight`). Ver
+> `annotations-model.md`.
+
 ```mermaid
 classDiagram
     class Book {

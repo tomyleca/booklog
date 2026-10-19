@@ -8,6 +8,7 @@ import type {
   IpcResult,
   ListBooksDTO,
   NotePrimitives,
+  HighlightPrimitives,
   RateBookDTO,
   SetFinishedDateDTO,
   UpdateBookProgressDTO,
@@ -48,6 +49,12 @@ export const api = {
       ipcRenderer.invoke(IPC_CHANNELS.NOTES.UPDATE, dto),
     delete: (id: number): Promise<IpcResult<void>> =>
       ipcRenderer.invoke(IPC_CHANNELS.NOTES.DELETE, { id })
+  },
+  highlights: {
+    getByBook: (bookId: number): Promise<IpcResult<HighlightPrimitives[]>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.HIGHLIGHTS.GET_BY_BOOK, { bookId }),
+    delete: (id: number): Promise<IpcResult<void>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.HIGHLIGHTS.DELETE, { id })
   },
   covers: {
     saveFromUrl: (url: string): Promise<IpcResult<string>> =>

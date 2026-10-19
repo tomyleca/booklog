@@ -34,3 +34,15 @@ export class FutureFinishedDateError extends DomainError {
     super('La fecha de terminado no puede ser posterior a hoy.')
   }
 }
+
+export class InvalidHighlightError extends DomainError {
+  constructor(message: string) {
+    super(message)
+  }
+}
+
+export class InvalidAnnotationLocationError extends DomainError {
+  constructor(message: string) {
+    super(message)
+  }
+}

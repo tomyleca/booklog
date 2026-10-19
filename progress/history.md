@@ -489,3 +489,29 @@
 - **Pendientes menores:**
   - ADR 021: cambiar el estado "Aceptado (pendiente de revisión)" a "Aceptado".
   - `rankSearchResults.ts`: escribir la clase de diacríticos como `/[̀-ͯ]/g` en vez de caracteres combinantes literales.
+
+## Sesión 2026-10-19 — Feature #22: highlights_and_note_origin
+
+- **Qué:** base para importar del Kindle. Se distingue lo escrito por el usuario (`Note`, con
+  `origin` MANUAL | KINDLE) de lo resaltado (nueva entidad `Highlight`). Value object
+  `AnnotationLocation` (página o posición, inicio y fin opcional), fecha del dispositivo
+  `capturedAt` y huella `fingerprint` única por libro en ambas tablas. Una nota del Kindle puede
+  vincularse a un subrayado (`highlightId`, `ON DELETE SET NULL`); `Highlight` se borra en
+  cascada con el libro. `Note.createImported` queda lista para #23.
+- **Migración:** `20261019120000_add_highlights_and_note_origin`, no destructiva (recrea `Note`
+  copiando filas; las existentes quedan MANUAL). Aplicada a `prisma/dev.db`.
+- **Capas:** `HighlightRepository` + `PrismaHighlightRepository`, `GetBookHighlights`,
+  `DeleteHighlight`, `HighlightNotFoundError` (código IPC `HIGHLIGHT_NOT_FOUND`), canales
+  `highlights:getByBook` / `highlights:delete`, `window.api.highlights`, `highlightService`.
+- **UI:** detalle del libro con "Mis notas" (etiqueta Kindle, ubicación, "Sobre un subrayado") y
+  "Subrayados" (`HighlightsSection`: cita, ubicación, fecha, notas vinculadas debajo, borrar).
+  `data-testid` previos conservados; solo tokens.
+- **Tests:** 5 archivos nuevos, uno por capa (dominio, application, infra con SQLite real
+  incluidos la migración de notas existentes y SET NULL, IPC, renderer). Total 37 archivos / 577
+  tests en verde; lint y build ok.
+- **Docs:** `docs/guides/annotations-model.md`, ADR `docs/decisions/022-highlights-and-note-origin.md`.
+  - Review: [review_highlights_and_note_origin.md](review_highlights_and_note_origin.md) (APPROVED). El informe del implementer quedó en `progress/current.md` (el entorno no permitió crear el archivo de reporte).
+- **Pendientes menores:**
+  - El modal de borrar libro dice "Se eliminarán también todas sus notas." y no menciona los subrayados; conviene ajustarlo (con su test) en #23.
+  - "Sobre un subrayado" en "Mis notas" depende de que cargue la query de subrayados.
+  - `schema.prisma`: el realineado de `Book` que hizo `prisma format` es ruido en el diff.
