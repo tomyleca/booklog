@@ -51,3 +51,29 @@ Patrones vistos:
 1. Normalizar títulos antes del match: quitar segmentos `-- ...`, sufijos `(Z-Library)`, `Anna’s Archive`, hashes hex de 32 caracteres, `[NNNN] (rX.Y)`, prefijos `_OceanofPDF.com_`; `_`/`-` → espacios; trim; minúsculas y sin acentos para comparar.
 2. Prioridad de match: ISBN → título normalizado + autor → título normalizado parecido (similitud) → sin match.
 3. Fechas en castellano con día de la semana y mes en texto; hora local.
+
+## Diagnóstico 2026-10-19: My Clippings.txt dejó de actualizarse
+
+- Kindle Paperwhite con firmware **5.20.1** (`system/version.txt`).
+- Hay **un solo** `documents/My Clippings.txt`. Su última modificación es del **30/7/2026 19:52**. `My Clippings.sdr` contiene solo el estado de lectura del propio archivo (.mbs/.mbp1), no subrayados.
+- Los libros recientes (desde ~ago 2026) se guardan en `documents/Downloads/Items01/` como `.kfx`, cada uno con su `.sdr`.
+- Las carpetas `.sdr` de los libros con subrayados anteriores tienen `.yjr` grandes (5–28 KB). En cambio, Drácula y Frankenstein (leídos y subrayados en el aparato en ago–sep 2026) tienen un `.yjr` de **233 bytes** que solo contiene `font.prefs`, `sync_lpr`, `next.in.series.info.data` y `annotation.cache.object`. **No hay anotaciones locales** en ese archivo.
+- Conclusión: desde fines de julio de 2026, el Kindle no escribe los subrayados nuevos ni en `My Clippings.txt` ni en el `.sdr` del libro. Probablemente se guardan en una base interna que no se ve por USB/MTP y se sincronizan con la nube de Amazon. Leer `.sdr` **no** recupera esos subrayados.
+- Vía alternativa a evaluar: la exportación de la app de Kindle para PC/Mac (Cuaderno/Notebook) para documentos personales guardados en la nube. Incluiría también las notas escritas en el celular.
+
+## Exportación del Cuaderno de la app de Kindle para PC (fuente para subrayados desde ago 2026 y notas del celular)
+
+Muestras reales del usuario (NO commitear; derivar fixtures anonimizados):
+- `E:\Tomas\Documents\Frankenstein, o el moderno Prometeo -- Mary Shelley -- 1818 -- ePubLibre -- e989a68d586e1781632452c30b20c6e9 -- Anna’s Archive-Bloc de notas.html` (solo subrayados, con capítulos "Carta II > Posición N").
+- `E:\Tomas\Documents\El crepúsculo de los ídolos -- Friedrich Nietzsche -- 1889 -- a47b006f213f82cce713e9691e593bff -- Anna’s Archive-Bloc de notas.html` (subrayados + notas, una nota multilínea escrita en el celular).
+
+Formato (app de Kindle en castellano; se espera "Highlight"/"Note"/"Location"/"Page" en inglés y el sufijo "-Notebook.html"):
+- Nombre de archivo: `<título crudo>-Bloc de notas.html`, guardado en la carpeta Documentos del usuario (`app.getPath('documents')`; acá redirigida a `E:\Tomas\Documents`).
+- XHTML UTF-8 **mal formado**: `<h3 class='noteHeading'>…</div><div class='noteText'>…</h3>`. Hay que parsear de forma tolerante (regex/tokenizado por `noteHeading`/`noteText`, no un parser XML estricto).
+- `div.bookTitle` = título crudo, igual de sucio que en My Clippings (reusar `normalizeKindleTitle`); `div.authors` = autor limpio.
+- `h2.sectionHeading` = capítulo/sección (opcional).
+- Encabezado de entrada: `Subrayado (<span class='highlight_<color>'>amarillo</span>) - [Capítulo X &gt; ]Posición N` o `Nota - [Capítulo X &gt; ]Posición N`. También puede venir `Página N`. Colores: yellow, blue, pink, orange. Entidades HTML (`&gt;`, etc.).
+- **Sin fechas** y **sin posición final**: solo la de inicio.
+- Las notas aparecen **inmediatamente después** del subrayado al que comentan, con posición = inicio del subrayado + 0..2 (p. ej. subrayado 1265 → nota 1267; 1427 → 1427).
+- Un subrayado partido entre páginas aparece como dos entradas consecutivas con la misma o la siguiente posición (p. ej. "Posición 58" ×2): son subrayados distintos, no duplicados.
+- Las notas pueden ser multilínea (saltos de línea dentro de `noteText`).

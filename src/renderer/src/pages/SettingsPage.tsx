@@ -16,11 +16,13 @@ import {
   Info,
   ExternalLink,
   Tablet,
-  FileText
+  FileText,
+  NotebookPen
 } from 'lucide-react'
 import { settingsService } from '../services/settingsService.js'
 import { themeService } from '../services/themeService.js'
 import { KindleImportModal } from '../components/KindleImportModal.js'
+import { KindleNotebookFolderField } from '../components/KindleNotebookFolderField.js'
 import type {
   AppTheme,
   AppInfoDTO,
@@ -403,6 +405,12 @@ export function SettingsPage(): JSX.Element {
             USB y BookLog lo busca solo; si no lo encuentra, podés elegir el archivo a mano. Antes
             de guardar vas a ver una vista previa por libro, y reimportar no duplica nada.
           </p>
+          <p className="text-xs text-ink-muted mb-5 leading-relaxed">
+            Los Kindle con firmware reciente ya no guardan los subrayados nuevos en My Clippings.txt.
+            Para esos libros (y para las notas escritas en el celular) usá{' '}
+            <span className="font-semibold">Exportar cuaderno</span> en la app de Kindle para PC e
+            importá las exportaciones: lo que ya llegó por My Clippings no se duplica.
+          </p>
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
@@ -422,7 +430,17 @@ export function SettingsPage(): JSX.Element {
               <FileText className="w-3.5 h-3.5" />
               <span>Elegir archivo .txt</span>
             </button>
+            <button
+              type="button"
+              data-testid="kindle-notebook-import-button"
+              onClick={() => setKindleImportSource('NOTEBOOK')}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-medium bg-shelf text-ink hover:bg-rule border border-rule transition-colors cursor-pointer"
+            >
+              <NotebookPen className="w-3.5 h-3.5" />
+              <span>Importar exportaciones de la app</span>
+            </button>
           </div>
+          <KindleNotebookFolderField />
         </section>
 
         {/* Section 3: Database & Local Storage */}

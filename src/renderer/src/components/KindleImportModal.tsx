@@ -12,6 +12,7 @@ import {
   initialKindleSelection,
   KINDLE_GROUP_SORT_OPTIONS,
   matchBadge,
+  notebookStateBadge,
   pluralize,
   SELECT_CREATE,
   SELECT_SKIP,
@@ -20,6 +21,7 @@ import {
 import type { KindleGroupSort, KindleSelection } from './kindleImport.js'
 import type {
   BookPrimitives,
+  IpcResult,
   KindleImportGroupPreview,
   KindleImportReport,
   KindleImportSource,
@@ -27,7 +29,10 @@ import type {
 } from '../../../shared/infrastructure/ipc/contracts.js'
 
 export interface KindleImportModalProps {
-  /** Por dónde empezar: buscar el Kindle conectado o elegir un archivo. */
+  /**
+   * Por dónde empezar: buscar el Kindle conectado, elegir un archivo (`My Clippings.txt`) o
+   * buscar las exportaciones del Cuaderno de la app en su carpeta (#26).
+   */
   initialSource: KindleImportSource
   onClose: () => void
 }
@@ -45,10 +50,26 @@ const BUTTON_PRIMARY =
 const BUTTON_SECONDARY =
   'inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-md text-ink bg-shelf hover:bg-rule border border-rule transition-colors disabled:opacity-50'
 
+const LOADING_MESSAGES: Record<KindleImportSource, string> = {
+  DEVICE: 'Buscando el Kindle y copiando My Clippings.txt...',
+  FILE: 'Leyendo el archivo elegido...',
+  NOTEBOOK: 'Buscando exportaciones del Cuaderno de la app de Kindle...'
+}
+
+async function readSource(
+  source: KindleImportSource
+): Promise<IpcResult<KindlePreviewResultDTO | null>> {
+  if (source === 'DEVICE') return await kindleService.previewFromDevice()
+  if (source === 'NOTEBOOK') return await kindleService.previewNotebooks()
+  return await kindleService.previewFromFile()
+}
+
 /**
- * Importación de `My Clippings.txt` (feature #23): lee el Kindle (o un archivo), muestra la
- * vista previa por título con el libro propuesto y permite corregirlo, crear el libro o no
- * importarlo; después confirma y muestra el informe.
+ * Importación del Kindle con vista previa. Dos fuentes con el mismo flujo: `My Clippings.txt`
+ * (feature #23: lee el Kindle o un archivo; un grupo por título) y las exportaciones del
+ * Cuaderno de la app (#26: un grupo por archivo, con los ya importados marcados y
+ * desmarcados). Muestra el libro propuesto de cada grupo y permite corregirlo, crear el libro
+ * o no importarlo; después confirma y muestra el informe.
  */
 export function KindleImportModal({ initialSource, onClose }: KindleImportModalProps): JSX.Element {
   const queryClient = useQueryClient()
@@ -79,10 +100,7 @@ export function KindleImportModal({ initialSource, onClose }: KindleImportModalP
       setPhase({ name: 'loading', source })
       setCommitError(null)
       try {
-        const res =
-          source === 'DEVICE'
-            ? await kindleService.previewFromDevice()
-            : await kindleService.previewFromFile()
+        const res = await readSource(source)
         if (!res.success) {
           setPhase({ name: 'error', message: res.error })
           return
@@ -154,6 +172,7 @@ export function KindleImportModal({ initialSource, onClose }: KindleImportModalP
     }
   }
 
+  const isNotebook = initialSource === 'NOTEBOOK'
   const groups = useMemo(() => result?.preview.groups ?? [], [result])
   const sortedGroups = useMemo(() => sortKindleGroups(groups, sort), [groups, sort])
   const totals = countSelectedAnnotations(groups, selection)
@@ -194,12 +213,14 @@ export function KindleImportModal({ initialSource, onClose }: KindleImportModalP
             </div>
             <div>
               <h2 id="kindle-import-title" className="text-lg font-bold tracking-tight text-ink">
-                Importar del Kindle
+                {isNotebook ? 'Importar exportaciones de la app' : 'Importar del Kindle'}
               </h2>
-              <p className="text-xs text-ink-muted mt-0.5">
+              <p className="text-xs text-ink-muted mt-0.5 break-all">
                 {result
-                  ? `Origen: ${result.sourceLabel}`
-                  : 'Subrayados y notas desde My Clippings.txt'}
+                  ? `${isNotebook ? 'Carpeta' : 'Origen'}: ${result.sourceLabel}`
+                  : isNotebook
+                    ? 'Subrayados y notas desde el Cuaderno de la app de Kindle'
+                    : 'Subrayados y notas desde My Clippings.txt'}
               </p>
             </div>
           </div>
@@ -221,11 +242,7 @@ export function KindleImportModal({ initialSource, onClose }: KindleImportModalP
             data-testid="kindle-import-loading"
           >
             <Loader2 className="w-7 h-7 animate-spin text-accent" />
-            <p className="text-sm">
-              {phase.source === 'DEVICE'
-                ? 'Buscando el Kindle y copiando My Clippings.txt...'
-                : 'Leyendo el archivo elegido...'}
-            </p>
+            <p className="text-sm">{LOADING_MESSAGES[phase.source]}</p>
           </div>
         )}
 
@@ -240,39 +257,66 @@ export function KindleImportModal({ initialSource, onClose }: KindleImportModalP
                 <span>{phase.message}</span>
               </div>
             )}
-            <p className="text-xs text-ink-muted">
-              Conectá el Kindle por USB y desbloquealo, o elegí el archivo{' '}
-              <span className="font-mono">documents/My Clippings.txt</span> copiado a tu equipo.
-            </p>
-            <div className="flex flex-wrap gap-2.5">
-              <button
-                type="button"
-                onClick={() => void load('DEVICE')}
-                className={BUTTON_SECONDARY}
-                data-testid="kindle-import-retry-device"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>Buscar el Kindle de nuevo</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => void load('FILE')}
-                className={BUTTON_PRIMARY}
-                data-testid="kindle-import-choose-file"
-              >
-                <FileText className="w-3.5 h-3.5" />
-                <span>Elegir archivo .txt</span>
-              </button>
-            </div>
+            {isNotebook ? (
+              <>
+                <p className="text-xs text-ink-muted">
+                  En la app de Kindle para PC abrí el libro, mostrá el Cuaderno y usá{' '}
+                  <span className="font-semibold">Exportar cuaderno</span>. BookLog busca los
+                  archivos <span className="font-mono">*-Bloc de notas.html</span> y{' '}
+                  <span className="font-mono">*-Notebook.html</span> en la carpeta elegida en
+                  Configuración.
+                </p>
+                <div className="flex flex-wrap gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => void load('NOTEBOOK')}
+                    className={BUTTON_PRIMARY}
+                    data-testid="kindle-import-retry-notebook"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Buscar de nuevo</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-ink-muted">
+                  Conectá el Kindle por USB y desbloquealo, o elegí el archivo{' '}
+                  <span className="font-mono">documents/My Clippings.txt</span> copiado a tu equipo.
+                </p>
+                <div className="flex flex-wrap gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => void load('DEVICE')}
+                    className={BUTTON_SECONDARY}
+                    data-testid="kindle-import-retry-device"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Buscar el Kindle de nuevo</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void load('FILE')}
+                    className={BUTTON_PRIMARY}
+                    data-testid="kindle-import-choose-file"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Elegir archivo .txt</span>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
 
         {(phase.name === 'preview' || phase.name === 'committing') && result && (
           <div className="flex flex-col gap-4" data-testid="kindle-import-preview">
             <p className="text-xs text-ink-muted" data-testid="kindle-import-summary">
-              {pluralize(result.preview.totalEntries, 'entrada', 'entradas')} en el archivo ·{' '}
-              {pluralize(groups.length, 'título', 'títulos')} · se ignoran{' '}
-              {pluralize(result.preview.ignoredBookmarks, 'marcador', 'marcadores')} y{' '}
+              {isNotebook &&
+                `${pluralize(result.preview.fileCount ?? groups.length, 'exportación', 'exportaciones')} en la carpeta · `}
+              {pluralize(result.preview.totalEntries, 'entrada', 'entradas')}
+              {isNotebook ? '' : ' en el archivo'} · {pluralize(groups.length, 'título', 'títulos')}{' '}
+              · se ignoran {pluralize(result.preview.ignoredBookmarks, 'marcador', 'marcadores')} y{' '}
               {pluralize(result.preview.ignoredEmpty, 'entrada vacía', 'entradas vacías')}
               {result.preview.unrecognizedEntries > 0 &&
                 ` · ${pluralize(result.preview.unrecognizedEntries, 'entrada no reconocida', 'entradas no reconocidas')}`}
@@ -312,12 +356,15 @@ export function KindleImportModal({ initialSource, onClose }: KindleImportModalP
                 className="text-sm text-ink-muted py-6 text-center"
                 data-testid="kindle-import-empty"
               >
-                El archivo no tiene subrayados ni notas para importar.
+                {isNotebook
+                  ? 'No hay exportaciones del Cuaderno con subrayados o notas en esta carpeta.'
+                  : 'El archivo no tiene subrayados ni notas para importar.'}
               </p>
             ) : (
               <ul className="flex flex-col gap-2 max-h-[55vh] overflow-y-auto pr-1">
                 {sortedGroups.map((group) => {
                   const badge = matchBadge(group.match)
+                  const stateBadge = notebookStateBadge(group.importState)
                   const selected = selection[group.key]
                   const selectedMissing =
                     typeof selected === 'number' && !sortedBooks.some((b) => b.id === selected)
@@ -334,8 +381,13 @@ export function KindleImportModal({ initialSource, onClose }: KindleImportModalP
                         <p className="text-xs text-ink-muted truncate">
                           {group.author ?? 'Autor desconocido'}
                         </p>
-                        <p className="text-[11px] text-ink-faint truncate" title={group.rawTitle}>
-                          Kindle: {group.rawTitle}
+                        <p
+                          className="text-[11px] text-ink-faint truncate"
+                          title={group.fileName ?? group.rawTitle}
+                        >
+                          {group.fileName
+                            ? `Archivo: ${group.fileName}`
+                            : `Kindle: ${group.rawTitle}`}
                         </p>
                         <div className="flex flex-wrap items-center gap-2 mt-1.5 text-[11px] text-ink-muted">
                           <span data-testid="kindle-import-group-counts">
@@ -348,6 +400,14 @@ export function KindleImportModal({ initialSource, onClose }: KindleImportModalP
                           >
                             {badge.label}
                           </span>
+                          {stateBadge && (
+                            <span
+                              className={`px-1.5 py-0.5 rounded border ${stateBadge.className}`}
+                              data-testid="kindle-import-group-state"
+                            >
+                              {stateBadge.label}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <select

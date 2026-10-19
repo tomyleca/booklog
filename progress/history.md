@@ -585,3 +585,46 @@
 - **Pendientes menores:**
   - ADR 025: cambiar el estado "Aceptado (pendiente de revisión)" a "Aceptado" y reemplazar las citas de notas reales del usuario en el Contexto (`mulholland drive…`, `Y pq es mas dificil…`) por ejemplos anonimizados.
   - `AddBookModal.tsx` ya fallaba `prettier --check` en HEAD, antes de esta feature.
+
+## Sesión 2026-10-19 — Feature #26: kindle_app_notebook_import
+
+- **Qué:** importación de las exportaciones HTML del Cuaderno de la app de Kindle para PC
+  (`*-Bloc de notas.html` / `*-Notebook.html`). Es la vía que queda desde que el Kindle
+  (firmware 5.20.1) dejó de escribir subrayados en My Clippings.txt.
+- **Dominio:**
+  - `parseKindleNotebook`: HTML mal formado, ES/EN, color, sección, capítulo, entidades, multilínea.
+  - `resolveKindleNotebook`: vincula la nota al subrayado inmediatamente anterior si
+    `0 ≤ Δ ≤ 2 + ⌈largo/100⌉`.
+  - Huella `kindle-nb-v1` y `annotationDedupeKey` (inicio + texto normalizado).
+  - `HighlightColor` e `ImportedNotebookFile`.
+- **Aplicación:**
+  - `KindleAnnotationWriter` común: dedupe por huella y por contenido entre fuentes, en los dos
+    sentidos; gana lo existente. Lo usan `CommitKindleImport` y el nuevo `CommitKindleNotebookImport`.
+  - `PreviewKindleNotebookImport`: un grupo por archivo, con estado NEW | IMPORTED | CHANGED.
+- **Persistencia:** migración no destructiva `20261019200000_highlight_color_and_notebook_imports`
+  (`Highlight.color` + tabla `ImportedNotebookFile`).
+- **Main/IPC:**
+  - `KindleNotebookScanner` (fs, Documentos por defecto).
+  - Carpeta configurable en settings.json, que solo cambia el main.
+  - Canales `kindleNotebook:*`; `kindle:commit` compartido.
+- **UI:**
+  - Botón "Importar exportaciones de la app" y campo de carpeta en Configuración.
+  - Misma vista previa (fuente NOTEBOOK; los ya importados empiezan desmarcados).
+  - Marca de color en Subrayados con tokens `highlight-*`.
+- **Muestras reales:**
+  - Crepúsculo: 53 subrayados + 7 notas (7 vinculadas).
+  - Frankenstein: 8 + 0.
+  - Tercera: 48 + 1 (1 vinculada).
+- **Docs:** guía `kindle-clippings-import.md` §9, `annotations-model.md`, ADR 026.
+- **Verificación:** 52 suites / 744 tests verdes; lint:check y build OK (re-ejecutados por el
+  reviewer porque el diff toca `prisma/schema.prisma`).
+- Review: [review_kindle_app_notebook_import.md](review_kindle_app_notebook_import.md). El informe
+  del implementer quedó en `progress/current.md` (sección "Reporte #26") porque el entorno no
+  permitió crear el archivo de reporte.
+- **Pendientes menores:**
+  - ADR 026: cambiar el estado "Aceptado (pendiente de revisión)" a "Aceptado".
+  - `KindleImportSessionStore.ts:22`: comentario de más de 100 caracteres (falta Prettier).
+  - Agregar `src/shared/application/services/` al árbol de `docs/architecture.md`.
+  - Dedupe entre fuentes: si la exportación trae solo página y My Clippings página + posición,
+    las claves no coinciden (`page:` vs `pos:`). Las notas de My Clippings (posición final del
+    subrayado) pueden no coincidir con las de la app (inicio + 0..2). No pasa en las muestras.

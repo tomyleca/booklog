@@ -400,6 +400,23 @@
         "Tests actualizados (incluido un fixture anonimizado con correcciones en el medio como \"influenxiq → influenx → influencia?\"); ADR; pnpm test, lint:check y build en verde"
       ],
       "status": "done"
+    },
+    {
+      "id": 26,
+      "name": "kindle_app_notebook_import",
+      "title": "Importar exportaciones del Cuaderno de la app de Kindle",
+      "description": "Desde ~ago 2026 (firmware 5.20.1) el Kindle no escribe subrayados nuevos en My Clippings.txt ni en los .sdr (ver diagnóstico y formato en progress/explore_kindle_clippings.md); viven en la nube. La app de Kindle para PC exporta por libro un HTML (\"Exportar cuaderno\") que también incluye notas escritas en el celular. Decisiones del usuario: búsqueda automática de exportaciones en una carpeta (Documentos por defecto, configurable); recordar las ya importadas; los subrayados repetidos con My Clippings (mismo libro + posición de inicio + texto) se detectan y saltean conservando el existente; se guarda y muestra el color del subrayado; los subrayados de la exportación quedan sin fecha.",
+      "acceptance": [
+        "Parser puro y tolerante del HTML exportado (mal formado): título crudo, autor, sección, tipo Subrayado/Nota (ES y EN: Highlight/Note), color, Posición/Página (Location/Page), texto multilínea, entidades HTML",
+        "Las notas se vinculan al subrayado inmediatamente anterior del mismo archivo cuando su ubicación es igual o posterior a su inicio y cercana; si no, quedan como notas sueltas (origen KINDLE)",
+        "Highlight gana un color opcional (migración no destructiva) que se muestra en la sección Subrayados; los de My Clippings quedan sin color",
+        "Dedupe entre fuentes: un subrayado o nota con el mismo libro, misma posición/página de inicio y mismo texto normalizado ya existente no se vuelve a crear (vale para reimportar la misma exportación y para lo ya importado de My Clippings); huella estable para la exportación",
+        "Main process: escanea la carpeta de exportaciones (por defecto app.getPath(documents), configurable en Configuración) buscando *-Bloc de notas.html y *-Notebook.html; recuerda qué archivos (ruta + fecha de modificación) ya se importaron y los marca en la vista previa",
+        "UI: en la sección del Kindle de Configuración, botón \"Importar exportaciones de la app\" que usa la misma vista previa de #23/#25 (matching, orden, crear libro con búsqueda precargada, No importar), un grupo por archivo/libro",
+        "Los subrayados de la exportación quedan sin fecha y no afectan la sugerencia de fecha de terminado (#24)",
+        "Tests con fixtures anonimizados derivados de las dos muestras reales (nunca los originales); guía y ADR"
+      ],
+      "status": "done"
     }
   ]
 }

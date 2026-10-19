@@ -24,6 +24,13 @@ export const IPC_CHANNELS = {
     PREVIEW_FROM_FILE: 'kindle:previewFromFile',
     COMMIT: 'kindle:commit'
   },
+  /** Exportaciones del Cuaderno de la app de Kindle (#26); el commit es `kindle:commit`. */
+  KINDLE_NOTEBOOK: {
+    PREVIEW: 'kindleNotebook:preview',
+    GET_FOLDER: 'kindleNotebook:getFolder',
+    CHOOSE_FOLDER: 'kindleNotebook:chooseFolder',
+    RESET_FOLDER: 'kindleNotebook:resetFolder'
+  },
   COVERS: {
     SAVE_FROM_URL: 'covers:saveFromUrl',
     SAVE_FROM_LOCAL: 'covers:saveFromLocal'
@@ -50,6 +57,7 @@ export type IpcChannel =
   | (typeof IPC_CHANNELS.NOTES)[keyof typeof IPC_CHANNELS.NOTES]
   | (typeof IPC_CHANNELS.HIGHLIGHTS)[keyof typeof IPC_CHANNELS.HIGHLIGHTS]
   | (typeof IPC_CHANNELS.KINDLE)[keyof typeof IPC_CHANNELS.KINDLE]
+  | (typeof IPC_CHANNELS.KINDLE_NOTEBOOK)[keyof typeof IPC_CHANNELS.KINDLE_NOTEBOOK]
   | (typeof IPC_CHANNELS.COVERS)[keyof typeof IPC_CHANNELS.COVERS]
   | (typeof IPC_CHANNELS.SEARCH)[keyof typeof IPC_CHANNELS.SEARCH]
   | (typeof IPC_CHANNELS.WINDOW)[keyof typeof IPC_CHANNELS.WINDOW]

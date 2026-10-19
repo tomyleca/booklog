@@ -49,6 +49,7 @@ classDiagram
         +AnnotationLocation location
         +Date|null capturedAt
         +string fingerprint
+        +HighlightColor|null color
         +Date createdAt
         +create(props) Highlight$
     }
@@ -109,6 +110,10 @@ Texto resaltado, ubicación obligatoria, fecha del dispositivo (`capturedAt`, pu
 la importación (#23); el dominio solo exige que no esté vacía. Un subrayado no se edita:
 solo se lista y se borra.
 
+> **#26**: color opcional (`YELLOW | BLUE | PINK | ORANGE`) que trae la exportación del
+> Cuaderno de la app de Kindle; los de My Clippings quedan sin color. La UI lo muestra con los
+> tokens `highlight-*`. Ver `kindle-clippings-import.md` §9 y ADR 026.
+
 ### `Note` ampliada
 
 - `origin` con default `MANUAL`: los datos anteriores a #22 (sin origen) se leen como manuales.
@@ -152,6 +157,7 @@ erDiagram
         int positionEnd "nullable"
         datetime capturedAt "nullable"
         string fingerprint "unico por libro"
+        HighlightColor color "nullable (#26)"
     }
 ```
 

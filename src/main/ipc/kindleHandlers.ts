@@ -9,20 +9,38 @@ import {
 import type {
   CommitKindleImportRequestDTO,
   IpcResult,
+  KindleImportReport,
   KindleImportSource,
+  KindleNotebookFolderDTO,
   KindlePreviewResultDTO
 } from '../../shared/infrastructure/ipc/contracts.js'
 import type { BookRepository } from '../../shared/domain/ports/BookRepository.js'
 import type { HighlightRepository } from '../../shared/domain/ports/HighlightRepository.js'
 import type { NoteRepository } from '../../shared/domain/ports/NoteRepository.js'
+import type { ImportedNotebookFileRepository } from '../../shared/domain/ports/ImportedNotebookFileRepository.js'
 import { PreviewKindleImport } from '../../shared/application/use-cases/PreviewKindleImport.js'
 import { CommitKindleImport } from '../../shared/application/use-cases/CommitKindleImport.js'
+import { PreviewKindleNotebookImport } from '../../shared/application/use-cases/PreviewKindleNotebookImport.js'
+import { CommitKindleNotebookImport } from '../../shared/application/use-cases/CommitKindleNotebookImport.js'
+import type { KindleNotebookScanner } from '../services/KindleNotebookScanner.js'
 import { KindleDeviceError, KindleFileError } from '../services/KindleDeviceService.js'
 import type { KindleDeviceService, KindleFileContents } from '../services/KindleDeviceService.js'
 import { KindleImportSessionStore } from '../services/KindleImportSessionStore.js'
 
 /** Abre el selector nativo de archivos `.txt`; devuelve `null` si el usuario cancela. */
 export type ChooseClippingsFile = () => Promise<string | null>
+
+/** Abre el selector nativo de carpetas; devuelve `null` si el usuario cancela. */
+export type ChooseNotebookFolder = () => Promise<string | null>
+
+/** Dependencias de la importación de exportaciones del Cuaderno (feature #26). */
+export interface KindleNotebookHandlerDependencies {
+  scanner: KindleNotebookScanner
+  importedFiles: ImportedNotebookFileRepository
+  chooseFolder: ChooseNotebookFolder
+  /** Persiste la carpeta elegida (`''` = volver a Documentos). */
+  saveFolder: (folder: string) => Promise<unknown>
+}
 
 export interface KindleHandlerDependencies {
   bookRepository: BookRepository
@@ -31,6 +49,8 @@ export interface KindleHandlerDependencies {
   deviceService: KindleDeviceService
   chooseFile: ChooseClippingsFile
   sessions?: KindleImportSessionStore
+  /** Sin esto no se registran los canales `kindleNotebook:*` (tests de #23). */
+  notebook?: KindleNotebookHandlerDependencies
 }
 
 const DEVICE_ERROR_CODES = {
@@ -100,15 +120,24 @@ export function registerKindleHandlers(deps: KindleHandlerDependencies): void {
             IPC_ERROR_CODES.KINDLE_SESSION_EXPIRED
           )
         }
-        const useCase = new CommitKindleImport(
-          deps.bookRepository,
-          deps.highlightRepository,
-          deps.noteRepository
-        )
-        const report = await useCase.execute({
-          text: session.text,
-          assignments: args.assignments
-        })
+        let report: KindleImportReport
+        if (session.kind === 'NOTEBOOK') {
+          if (!deps.notebook) {
+            return ipcError('Importación no disponible.', IPC_ERROR_CODES.VALIDATION_ERROR)
+          }
+          report = await new CommitKindleNotebookImport(
+            deps.bookRepository,
+            deps.highlightRepository,
+            deps.noteRepository,
+            deps.notebook.importedFiles
+          ).execute({ files: session.files, assignments: args.assignments })
+        } else {
+          report = await new CommitKindleImport(
+            deps.bookRepository,
+            deps.highlightRepository,
+            deps.noteRepository
+          ).execute({ text: session.text, assignments: args.assignments })
+        }
         sessions.delete(args.sourceId)
         return ipcSuccess(report)
       } catch (error) {
@@ -116,4 +145,68 @@ export function registerKindleHandlers(deps: KindleHandlerDependencies): void {
       }
     }
   )
+
+  if (deps.notebook) {
+    registerKindleNotebookHandlers(deps, deps.notebook, sessions)
+  }
+}
+
+/**
+ * Canales de las exportaciones del Cuaderno (feature #26). Como en #23, el renderer nunca
+ * manda rutas: la carpeta se elige con el diálogo nativo en el main y los archivos leídos
+ * quedan en la sesión hasta el commit (`kindle:commit`).
+ */
+function registerKindleNotebookHandlers(
+  deps: KindleHandlerDependencies,
+  notebook: KindleNotebookHandlerDependencies,
+  sessions: KindleImportSessionStore
+): void {
+  ipcMain.handle(IPC_CHANNELS.KINDLE_NOTEBOOK.PREVIEW, async () => {
+    try {
+      const scan = await notebook.scanner.scan()
+      const preview = await new PreviewKindleNotebookImport(
+        deps.bookRepository,
+        notebook.importedFiles
+      ).execute({ files: scan.files })
+      const sourceId = sessions.put({ kind: 'NOTEBOOK', files: scan.files, label: scan.folder })
+      return ipcSuccess<KindlePreviewResultDTO>({
+        sourceId,
+        source: 'NOTEBOOK',
+        sourceLabel: scan.folder,
+        preview
+      })
+    } catch (error) {
+      return formatKindleError(error)
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.KINDLE_NOTEBOOK.GET_FOLDER, async () => {
+    try {
+      return ipcSuccess<KindleNotebookFolderDTO>(await notebook.scanner.resolveFolder())
+    } catch (error) {
+      return formatKindleError(error)
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.KINDLE_NOTEBOOK.CHOOSE_FOLDER, async () => {
+    try {
+      const folder = await notebook.chooseFolder()
+      if (!folder) {
+        return ipcSuccess<KindleNotebookFolderDTO | null>(null)
+      }
+      await notebook.saveFolder(folder)
+      return ipcSuccess<KindleNotebookFolderDTO | null>(await notebook.scanner.resolveFolder())
+    } catch (error) {
+      return formatKindleError(error)
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.KINDLE_NOTEBOOK.RESET_FOLDER, async () => {
+    try {
+      await notebook.saveFolder('')
+      return ipcSuccess<KindleNotebookFolderDTO>(await notebook.scanner.resolveFolder())
+    } catch (error) {
+      return formatKindleError(error)
+    }
+  })
 }

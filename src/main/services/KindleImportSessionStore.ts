@@ -1,13 +1,25 @@
 import crypto from 'node:crypto'
+import type { KindleNotebookFileInput } from '../../shared/application/services/kindleNotebookFiles.js'
 
-export interface KindleImportSession {
+/** Texto de `My Clippings.txt` (#23). `kind` es opcional para no romper a quien ya lo usa. */
+export interface KindleClippingsSession {
+  kind?: 'CLIPPINGS'
   text: string
   label: string
 }
 
+/** Exportaciones del Cuaderno leídas de la carpeta (#26). */
+export interface KindleNotebookSession {
+  kind: 'NOTEBOOK'
+  files: KindleNotebookFileInput[]
+  label: string
+}
+
+export type KindleImportSession = KindleClippingsSession | KindleNotebookSession
+
 /**
- * Guarda en memoria del main process el texto leído entre la vista previa y el commit de
- * la importación (feature #23). El renderer solo recibe un `sourceId`: nunca manda rutas ni
+ * Guarda en memoria del main process lo leído entre la vista previa y el commit de la
+ * importación (feature #23: el texto de My Clippings; #26: las exportaciones del Cuaderno). El renderer solo recibe un `sourceId`: nunca manda rutas ni
  * el contenido del archivo de vuelta. Se conservan pocas sesiones porque solo hay una
  * importación activa a la vez.
  */

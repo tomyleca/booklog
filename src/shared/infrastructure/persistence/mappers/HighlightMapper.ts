@@ -1,5 +1,6 @@
 import type { Highlight as PrismaHighlight, Prisma } from '@prisma/client'
 import { Highlight } from '../../../domain/entities/Highlight.js'
+import { isHighlightColor } from '../../../domain/entities/HighlightColor.js'
 import { AnnotationLocationMapper } from './AnnotationLocationMapper.js'
 
 export class HighlightMapper {
@@ -11,6 +12,7 @@ export class HighlightMapper {
       location: AnnotationLocationMapper.toDomain(raw) ?? {},
       capturedAt: raw.capturedAt,
       fingerprint: raw.fingerprint,
+      color: isHighlightColor(raw.color) ? raw.color : null,
       createdAt: raw.createdAt
     })
   }
@@ -23,6 +25,7 @@ export class HighlightMapper {
       ...AnnotationLocationMapper.toColumns(highlight.location),
       capturedAt: highlight.capturedAt,
       fingerprint: highlight.fingerprint,
+      color: highlight.color,
       createdAt: highlight.createdAt
     }
   }

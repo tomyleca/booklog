@@ -4,6 +4,16 @@ import { groupKindleClippings } from '../../domain/services/kindle/groupKindleCl
 import { matchKindleBook } from '../../domain/services/kindle/matchKindleBook.js'
 import type { KindleBookMatch } from '../../domain/services/kindle/matchKindleBook.js'
 import { resolveKindleAnnotations } from '../../domain/services/kindle/resolveKindleAnnotations.js'
+import { loadKindleMatchCandidates } from '../services/kindleMatchCandidates.js'
+
+/** Estado de una exportación del Cuaderno respecto de importaciones anteriores (#26). */
+export const NotebookImportState = {
+  NEW: 'NEW',
+  IMPORTED: 'IMPORTED',
+  CHANGED: 'CHANGED'
+} as const
+
+export type NotebookImportState = (typeof NotebookImportState)[keyof typeof NotebookImportState]
 
 export interface PreviewKindleImportDTO {
   /** Contenido completo de `My Clippings.txt`. */
@@ -24,9 +34,15 @@ export interface KindleImportGroupPreview {
   lastCapturedAt: Date | null
   /** Libro propuesto de la biblioteca, o `null` si no hubo coincidencia. */
   match: KindleBookMatch | null
+  /** Solo en exportaciones del Cuaderno (#26): nombre del archivo exportado. */
+  fileName?: string
+  /** Solo en exportaciones del Cuaderno (#26): ya importado, cambiado desde entonces o nuevo. */
+  importState?: NotebookImportState
 }
 
 export interface KindleImportPreview {
+  /** Solo en exportaciones del Cuaderno (#26): archivos encontrados en la carpeta. */
+  fileCount?: number
   totalEntries: number
   ignoredBookmarks: number
   ignoredEmpty: number
@@ -44,15 +60,7 @@ export class PreviewKindleImport {
 
   public async execute(dto: PreviewKindleImportDTO): Promise<KindleImportPreview> {
     const parsed = parseKindleClippings(dto.text)
-    const books = await this.bookRepository.findAll()
-    const candidates = books
-      .filter((book) => book.id !== undefined)
-      .map((book) => ({
-        id: book.id as number,
-        title: book.title,
-        authors: book.authors,
-        isbn: book.isbn ?? null
-      }))
+    const candidates = await loadKindleMatchCandidates(this.bookRepository)
 
     const groups = groupKindleClippings(parsed.clippings).map((group) => {
       const resolved = resolveKindleAnnotations(group.clippings)

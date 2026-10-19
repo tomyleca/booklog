@@ -2,6 +2,8 @@ import { InvalidHighlightError } from '../errors/DomainErrors.js'
 import { createAnnotationLocation } from './AnnotationLocation.js'
 import type { AnnotationLocation, AnnotationLocationInput } from './AnnotationLocation.js'
 import { isValidDate } from './CalendarDate.js'
+import { isHighlightColor } from './HighlightColor.js'
+import type { HighlightColor } from './HighlightColor.js'
 
 /**
  * Un subrayado: texto resaltado del libro (no escrito por el usuario). Hoy llegan solo
@@ -16,6 +18,8 @@ export interface HighlightProps {
   /** Momento en que se subrayó en el dispositivo; `null` si no se pudo determinar. */
   capturedAt?: Date | null
   fingerprint: string
+  /** Color en el que se subrayó (exportación de la app de Kindle, #26); `null` si no se sabe. */
+  color?: HighlightColor | null
   createdAt?: Date
 }
 
@@ -26,6 +30,7 @@ export interface HighlightPrimitives {
   location: AnnotationLocation
   capturedAt: Date | null
   fingerprint: string
+  color?: HighlightColor | null
   createdAt?: Date
 }
 
@@ -36,6 +41,7 @@ export class Highlight {
   private readonly _location: AnnotationLocation
   private readonly _capturedAt: Date | null
   private readonly _fingerprint: string
+  private readonly _color: HighlightColor | null
   private readonly _createdAt: Date
 
   constructor(props: HighlightProps) {
@@ -52,6 +58,10 @@ export class Highlight {
     if (capturedAt !== null && !isValidDate(capturedAt)) {
       throw new InvalidHighlightError('La fecha del subrayado no es válida.')
     }
+    const color = props.color ?? null
+    if (color !== null && !isHighlightColor(color)) {
+      throw new InvalidHighlightError('El color del subrayado no es válido.')
+    }
 
     this._id = props.id
     this._bookId = props.bookId
@@ -59,6 +69,7 @@ export class Highlight {
     this._location = createAnnotationLocation(props.location)
     this._capturedAt = capturedAt
     this._fingerprint = props.fingerprint.trim()
+    this._color = color
     this._createdAt = props.createdAt ?? new Date()
   }
 
@@ -74,6 +85,7 @@ export class Highlight {
       location: primitives.location,
       capturedAt: primitives.capturedAt ? new Date(primitives.capturedAt) : null,
       fingerprint: primitives.fingerprint,
+      color: primitives.color ?? null,
       createdAt: primitives.createdAt ? new Date(primitives.createdAt) : undefined
     })
   }
@@ -86,6 +98,7 @@ export class Highlight {
       location: this._location,
       capturedAt: this._capturedAt,
       fingerprint: this._fingerprint,
+      color: this._color,
       createdAt: this._createdAt
     }
   }
@@ -112,6 +125,10 @@ export class Highlight {
 
   get fingerprint(): string {
     return this._fingerprint
+  }
+
+  get color(): HighlightColor | null {
+    return this._color
   }
 
   get createdAt(): Date {

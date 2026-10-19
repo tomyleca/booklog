@@ -14,6 +14,8 @@ interface StoredSettingsData {
   googleBooksApiKey?: string
   encryptedGoogleBooksApiKey?: string
   theme?: AppTheme
+  /** Carpeta de exportaciones del Cuaderno de Kindle (#26); vacía = Documentos. */
+  kindleNotebookFolder?: string
 }
 
 export interface SafeStorageProvider {
@@ -25,6 +27,12 @@ export interface SafeStorageProvider {
 export class SettingsStorageService {
   private readonly storageFilePath: string
   private cachedSettings: AppSettings | null = null
+  /**
+   * Carpeta de exportaciones del Cuaderno (#26). Se guarda en el mismo `settings.json` pero no
+   * forma parte de `AppSettings`: el renderer no la escribe con `settings:save` (solo el main
+   * la cambia tras el diálogo nativo), igual que nunca manda rutas en la importación.
+   */
+  private kindleNotebookFolder = ''
   private readonly safeStorageClient: SafeStorageProvider | null
 
   constructor(
@@ -104,11 +112,14 @@ export class SettingsStorageService {
           ? parsed.theme
           : DEFAULT_SETTINGS.theme
 
+      this.kindleNotebookFolder =
+        typeof parsed.kindleNotebookFolder === 'string' ? parsed.kindleNotebookFolder.trim() : ''
       this.cachedSettings = {
         googleBooksApiKey: resolvedApiKey,
         theme: validTheme
       }
     } catch {
+      this.kindleNotebookFolder = ''
       this.cachedSettings = { ...DEFAULT_SETTINGS }
     }
 
@@ -131,6 +142,9 @@ export class SettingsStorageService {
     const dataToSave: StoredSettingsData = {
       theme: updatedTheme
     }
+    if (this.kindleNotebookFolder) {
+      dataToSave.kindleNotebookFolder = this.kindleNotebookFolder
+    }
 
     const canEncrypt =
       Boolean(updatedApiKey) &&
@@ -149,9 +163,7 @@ export class SettingsStorageService {
       dataToSave.googleBooksApiKey = updatedApiKey
     }
 
-    const dir = path.dirname(this.storageFilePath)
-    await fs.promises.mkdir(dir, { recursive: true })
-    await fs.promises.writeFile(this.storageFilePath, JSON.stringify(dataToSave, null, 2), 'utf-8')
+    await this.writeStoredData(dataToSave)
 
     this.cachedSettings = {
       googleBooksApiKey: updatedApiKey,
@@ -159,5 +171,26 @@ export class SettingsStorageService {
     }
 
     return { ...this.cachedSettings }
+  }
+
+  /** Carpeta configurada para las exportaciones del Cuaderno; `''` = la predeterminada. */
+  public async getKindleNotebookFolder(): Promise<string> {
+    await this.getSettings()
+    return this.kindleNotebookFolder
+  }
+
+  /** Guarda la carpeta de exportaciones (`''` vuelve a la predeterminada). */
+  public async setKindleNotebookFolder(folder: string): Promise<string> {
+    await this.getSettings()
+    this.kindleNotebookFolder = typeof folder === 'string' ? folder.trim() : ''
+    // `saveSettings` reescribe el archivo completo, incluida la carpeta.
+    await this.saveSettings({})
+    return this.kindleNotebookFolder
+  }
+
+  private async writeStoredData(data: StoredSettingsData): Promise<void> {
+    const dir = path.dirname(this.storageFilePath)
+    await fs.promises.mkdir(dir, { recursive: true })
+    await fs.promises.writeFile(this.storageFilePath, JSON.stringify(data, null, 2), 'utf-8')
   }
 }

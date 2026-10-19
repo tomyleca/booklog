@@ -1,6 +1,7 @@
 import type { BookPrimitives } from '../../domain/entities/Book.js'
 import type { NotePrimitives } from '../../domain/entities/Note.js'
 import type { HighlightPrimitives } from '../../domain/entities/Highlight.js'
+import type { HighlightColor } from '../../domain/entities/HighlightColor.js'
 import type {
   AnnotationLocation,
   LocationRange
@@ -29,7 +30,8 @@ import type { DeleteHighlightDTO } from '../../application/use-cases/DeleteHighl
 import type { BookSearchResult } from '../../domain/ports/BookSearchService.js'
 import type {
   KindleImportGroupPreview,
-  KindleImportPreview
+  KindleImportPreview,
+  NotebookImportState
 } from '../../application/use-cases/PreviewKindleImport.js'
 import type {
   KindleImportAssignment,
@@ -100,14 +102,17 @@ export function formatIpcError(err: unknown): { success: false; error: string; c
   return { success: false, error: String(err), code: IPC_ERROR_CODES.INTERNAL_ERROR }
 }
 
-/** De dónde salió el archivo que se está importando (feature #23). */
-export type KindleImportSource = 'DEVICE' | 'FILE'
+/**
+ * De dónde salió lo que se está importando: el Kindle conectado o un `.txt` elegido
+ * (`My Clippings.txt`, #23), o la carpeta de exportaciones del Cuaderno de la app (#26).
+ */
+export type KindleImportSource = 'DEVICE' | 'FILE' | 'NOTEBOOK'
 
 export interface KindlePreviewResultDTO {
   /** Identifica el texto guardado en el main process; se devuelve en el commit. */
   sourceId: string
   source: KindleImportSource
-  /** Nombre del Kindle o del archivo elegido. */
+  /** Nombre del Kindle, del archivo elegido o la carpeta de exportaciones. */
   sourceLabel: string
   preview: KindleImportPreview
 }
@@ -115,6 +120,13 @@ export interface KindlePreviewResultDTO {
 export interface CommitKindleImportRequestDTO {
   sourceId: string
   assignments: KindleImportAssignment[]
+}
+
+/** Carpeta donde se buscan las exportaciones del Cuaderno (#26). */
+export interface KindleNotebookFolderDTO {
+  folder: string
+  /** `true` si es la carpeta Documentos del usuario (no se configuró otra). */
+  isDefault: boolean
 }
 
 export interface SaveCoverFromUrlDTO {
@@ -180,10 +192,12 @@ export {
   BookSearchResult,
   KindleImportGroupPreview,
   KindleImportPreview,
+  NotebookImportState,
   KindleImportAssignment,
   KindleImportBookReport,
   KindleImportReport,
   KindleBookMatch,
   KindleMatchConfidence,
-  KindleMatchMethod
+  KindleMatchMethod,
+  HighlightColor
 }

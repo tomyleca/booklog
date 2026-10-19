@@ -2,7 +2,10 @@ import type {
   AnnotationLocation,
   LocationRange
 } from '../../../shared/domain/entities/AnnotationLocation.js'
-import type { NotePrimitives } from '../../../shared/infrastructure/ipc/contracts.js'
+import type {
+  HighlightColor,
+  NotePrimitives
+} from '../../../shared/infrastructure/ipc/contracts.js'
 
 function formatRange(range: LocationRange): string {
   return range.end !== null ? `${range.start}–${range.end}` : `${range.start}`
@@ -47,4 +50,24 @@ export function groupNotesByHighlight(notes: NotePrimitives[]): Map<number, Note
     groups.set(note.highlightId, group)
   }
   return groups
+}
+
+export interface HighlightColorMark {
+  label: string
+  className: string
+}
+
+/** Clases con los tokens `highlight-*` de main.css (#26): nada de colores crudos. */
+const HIGHLIGHT_COLOR_MARKS: Record<HighlightColor, HighlightColorMark> = {
+  YELLOW: { label: 'Amarillo', className: 'bg-highlight-yellow' },
+  BLUE: { label: 'Azul', className: 'bg-highlight-blue' },
+  PINK: { label: 'Rosa', className: 'bg-highlight-pink' },
+  ORANGE: { label: 'Naranja', className: 'bg-highlight-orange' }
+}
+
+/** Marca de color de un subrayado, o `null` si no tiene (los de My Clippings). */
+export function highlightColorMark(
+  color: HighlightColor | null | undefined
+): HighlightColorMark | null {
+  return color ? (HIGHLIGHT_COLOR_MARKS[color] ?? null) : null
 }

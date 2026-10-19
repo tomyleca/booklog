@@ -137,6 +137,7 @@ describe('Feature #22 — Highlight entity', () => {
       location: { page: { start: 10, end: 11 }, position: null },
       capturedAt,
       fingerprint: 'f1',
+      color: null,
       createdAt: new Date('2026-10-01T10:00:00Z')
     })
     expect(Highlight.fromPrimitives(primitives).toPrimitives()).toEqual(primitives)

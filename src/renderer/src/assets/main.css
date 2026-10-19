@@ -52,6 +52,12 @@
   --color-status-finished: #6e3f68;
   --color-status-abandoned: #a3402f;
 
+  /* Colores de subrayado de la app de Kindle (#26): marca chica en la sección Subrayados */
+  --color-highlight-yellow: #e0b53a;
+  --color-highlight-blue: #6f98c6;
+  --color-highlight-pink: #d6849b;
+  --color-highlight-orange: #de904a;
+
   /* Tipografía serif empaquetada con @fontsource (offline) */
   --font-serif: "Lora Variable", "Lora", Georgia, Cambria, "Times New Roman", serif;
   --font-display: "Libre Baskerville", "Baskerville", Georgia, "Times New Roman", serif;
@@ -113,6 +119,11 @@
     --color-status-paused: #e6bc64;
     --color-status-finished: #d3a6cb;
     --color-status-abandoned: #ec9580;
+
+    --color-highlight-yellow: #d9b44f;
+    --color-highlight-blue: #86a9d0;
+    --color-highlight-pink: #d495a8;
+    --color-highlight-orange: #dc9a5e;
 
     --relief-light: rgb(255 226 180 / 0.05);
     --relief-shade: rgb(0 0 0 / 0.35);

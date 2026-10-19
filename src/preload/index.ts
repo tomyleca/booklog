@@ -21,6 +21,7 @@ import type {
   AppInfoDTO,
   CommitKindleImportRequestDTO,
   KindleImportReport,
+  KindleNotebookFolderDTO,
   KindlePreviewResultDTO
 } from '../shared/infrastructure/ipc/contracts.js'
 
@@ -65,7 +66,15 @@ export const api = {
     previewFromFile: (): Promise<IpcResult<KindlePreviewResultDTO | null>> =>
       ipcRenderer.invoke(IPC_CHANNELS.KINDLE.PREVIEW_FROM_FILE),
     commit: (dto: CommitKindleImportRequestDTO): Promise<IpcResult<KindleImportReport>> =>
-      ipcRenderer.invoke(IPC_CHANNELS.KINDLE.COMMIT, dto)
+      ipcRenderer.invoke(IPC_CHANNELS.KINDLE.COMMIT, dto),
+    previewNotebooks: (): Promise<IpcResult<KindlePreviewResultDTO>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.KINDLE_NOTEBOOK.PREVIEW),
+    getNotebookFolder: (): Promise<IpcResult<KindleNotebookFolderDTO>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.KINDLE_NOTEBOOK.GET_FOLDER),
+    chooseNotebookFolder: (): Promise<IpcResult<KindleNotebookFolderDTO | null>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.KINDLE_NOTEBOOK.CHOOSE_FOLDER),
+    resetNotebookFolder: (): Promise<IpcResult<KindleNotebookFolderDTO>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.KINDLE_NOTEBOOK.RESET_FOLDER)
   },
   covers: {
     saveFromUrl: (url: string): Promise<IpcResult<string>> =>

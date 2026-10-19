@@ -4,11 +4,13 @@ import type { OpenDialogOptions } from 'electron'
 import { PrismaBookRepository } from '../../shared/infrastructure/persistence/repositories/PrismaBookRepository.js'
 import { PrismaNoteRepository } from '../../shared/infrastructure/persistence/repositories/PrismaNoteRepository.js'
 import { PrismaHighlightRepository } from '../../shared/infrastructure/persistence/repositories/PrismaHighlightRepository.js'
+import { PrismaImportedNotebookFileRepository } from '../../shared/infrastructure/persistence/repositories/PrismaImportedNotebookFileRepository.js'
 import { CoverStorageService } from '../services/CoverStorageService.js'
 import type { BookSearchService } from '../../shared/domain/ports/BookSearchService.js'
 import { GoogleBooksService } from '../../shared/infrastructure/api/GoogleBooksService.js'
 import { SettingsStorageService } from '../services/SettingsStorageService.js'
 import { KindleDeviceService } from '../services/KindleDeviceService.js'
+import { KindleNotebookScanner } from '../services/KindleNotebookScanner.js'
 import { registerBookHandlers } from './bookHandlers.js'
 import { registerNoteHandlers } from './noteHandlers.js'
 import { registerHighlightHandlers } from './highlightHandlers.js'
@@ -16,7 +18,11 @@ import { registerCoverHandlers } from './coverHandlers.js'
 import { registerSearchHandlers } from './searchHandlers.js'
 import { registerWindowHandlers, type WindowGetter } from './windowHandlers.js'
 import { registerSettingsHandlers } from './settingsHandlers.js'
-import { registerKindleHandlers, type ChooseClippingsFile } from './kindleHandlers.js'
+import {
+  registerKindleHandlers,
+  type ChooseClippingsFile,
+  type ChooseNotebookFolder
+} from './kindleHandlers.js'
 
 const CLIPPINGS_DIALOG_OPTIONS: OpenDialogOptions = {
   title: 'Elegí el archivo My Clippings.txt del Kindle',
@@ -30,6 +36,21 @@ function createClippingsFileChooser(getWindow?: WindowGetter): ChooseClippingsFi
     const result = window
       ? await dialog.showOpenDialog(window, CLIPPINGS_DIALOG_OPTIONS)
       : await dialog.showOpenDialog(CLIPPINGS_DIALOG_OPTIONS)
+    return result.canceled ? null : (result.filePaths[0] ?? null)
+  }
+}
+
+const NOTEBOOK_FOLDER_DIALOG_OPTIONS: OpenDialogOptions = {
+  title: 'Elegí la carpeta donde la app de Kindle guarda las exportaciones',
+  properties: ['openDirectory']
+}
+
+function createNotebookFolderChooser(getWindow?: WindowGetter): ChooseNotebookFolder {
+  return async () => {
+    const window = getWindow?.()
+    const result = window
+      ? await dialog.showOpenDialog(window, NOTEBOOK_FOLDER_DIALOG_OPTIONS)
+      : await dialog.showOpenDialog(NOTEBOOK_FOLDER_DIALOG_OPTIONS)
     return result.canceled ? null : (result.filePaths[0] ?? null)
   }
 }
@@ -63,7 +84,16 @@ export function registerIpcHandlers(
     highlightRepository,
     noteRepository,
     deviceService: kindleService ?? new KindleDeviceService({ baseDir: app.getPath('userData') }),
-    chooseFile: createClippingsFileChooser(getWindow)
+    chooseFile: createClippingsFileChooser(getWindow),
+    notebook: {
+      scanner: new KindleNotebookScanner({
+        defaultFolder: () => app.getPath('documents'),
+        configuredFolder: () => settingsService.getKindleNotebookFolder()
+      }),
+      importedFiles: new PrismaImportedNotebookFileRepository(prisma),
+      chooseFolder: createNotebookFolderChooser(getWindow),
+      saveFolder: (folder) => settingsService.setKindleNotebookFolder(folder)
+    }
   })
 }
 

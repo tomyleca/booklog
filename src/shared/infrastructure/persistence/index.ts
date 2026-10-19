@@ -14,5 +14,6 @@ export {
 export {
   PrismaBookRepository,
   PrismaNoteRepository,
-  PrismaHighlightRepository
+  PrismaHighlightRepository,
+  PrismaImportedNotebookFileRepository
 } from './repositories/index.js'

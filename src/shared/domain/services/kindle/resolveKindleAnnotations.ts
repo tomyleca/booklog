@@ -1,5 +1,6 @@
 import { locationLastPoint, rangeContains } from '../../entities/AnnotationLocation.js'
 import type { AnnotationLocationInput } from '../../entities/AnnotationLocation.js'
+import type { HighlightColor } from '../../entities/HighlightColor.js'
 import { KindleClippingKind } from './KindleClipping.js'
 import type { KindleClipping, KindleRange } from './KindleClipping.js'
 import { kindleFingerprint } from './kindleFingerprint.js'
@@ -9,6 +10,8 @@ export interface ResolvedKindleHighlight {
   content: string
   location: AnnotationLocationInput
   capturedAt: Date | null
+  /** Solo la exportación del Cuaderno (#26) trae color; My Clippings no. */
+  color?: HighlightColor | null
 }
 
 export interface ResolvedKindleNote {

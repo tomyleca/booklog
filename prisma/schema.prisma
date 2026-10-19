@@ -72,8 +72,23 @@ model Highlight {
   positionEnd   Int?
   capturedAt    DateTime?
   fingerprint   String
+  color         HighlightColor?
   createdAt     DateTime     @default(now())
   notes         Note[]
 
   @@unique([bookId, fingerprint])
+}
+
+enum HighlightColor {
+  YELLOW
+  BLUE
+  PINK
+  ORANGE
+}
+
+model ImportedNotebookFile {
+  id         Int      @id @default(autoincrement())
+  path       String   @unique
+  modifiedAt DateTime
+  importedAt DateTime @default(now())
 }

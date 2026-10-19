@@ -1,7 +1,8 @@
 import type {
   KindleBookMatch,
   KindleImportAssignment,
-  KindleImportGroupPreview
+  KindleImportGroupPreview,
+  NotebookImportState
 } from '../../../shared/infrastructure/ipc/contracts.js'
 
 /** Libro elegido para cada grupo del Kindle (`null` = no importar). */
@@ -10,11 +11,14 @@ export type KindleSelection = Record<string, number | null>
 export const SELECT_SKIP = ''
 export const SELECT_CREATE = '__create__'
 
-/** Selección inicial: el libro propuesto por el matching o "No importar". */
+/**
+ * Selección inicial: el libro propuesto por el matching o "No importar". Las exportaciones
+ * del Cuaderno ya importadas (#26, misma ruta y fecha) arrancan en "No importar".
+ */
 export function initialKindleSelection(groups: KindleImportGroupPreview[]): KindleSelection {
   const selection: KindleSelection = {}
   for (const group of groups) {
-    selection[group.key] = group.match?.bookId ?? null
+    selection[group.key] = group.importState === 'IMPORTED' ? null : (group.match?.bookId ?? null)
   }
   return selection
 }
@@ -62,6 +66,20 @@ export function matchBadge(match: KindleBookMatch | null): MatchBadge {
     return { label: 'Sin coincidencia', className: 'bg-shelf text-ink-muted border-rule' }
   }
   return { label: METHOD_LABELS[match.method], className: CONFIDENCE_CLASSES[match.confidence] }
+}
+
+const NOTEBOOK_STATE_BADGES: Record<NotebookImportState, MatchBadge | null> = {
+  NEW: null,
+  IMPORTED: { label: 'Ya importado', className: 'bg-shelf text-ink-muted border-rule' },
+  CHANGED: {
+    label: 'Cambió desde la última importación',
+    className: 'bg-accent/10 text-accent border-accent/30'
+  }
+}
+
+/** Etiqueta del estado de una exportación del Cuaderno (#26); `null` si es nueva. */
+export function notebookStateBadge(state: NotebookImportState | undefined): MatchBadge | null {
+  return state ? NOTEBOOK_STATE_BADGES[state] : null
 }
 
 export function pluralize(count: number, singular: string, plural: string): string {

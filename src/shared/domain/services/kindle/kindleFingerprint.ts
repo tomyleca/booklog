@@ -1,6 +1,9 @@
 import type { KindleClipping, KindleRange } from './KindleClipping.js'
+import { annotationDedupeKey } from './annotationDedupeKey.js'
 
 export const KINDLE_FINGERPRINT_VERSION = 'kindle-v1'
+/** Versión de la huella de la exportación del Cuaderno de la app (feature #26). */
+export const KINDLE_NOTEBOOK_FINGERPRINT_VERSION = 'kindle-nb-v1'
 
 /** cyrb53: hash no criptográfico de 53 bits, puro y determinista (sin APIs de Node). */
 function cyrb53(value: string, seed = 0): string {
@@ -34,4 +37,20 @@ export function kindleFingerprint(clipping: KindleClipping): string {
     : `page:${rangeKey(clipping.page)}`
   const key = [clipping.kind, where, content].join('|')
   return `${KINDLE_FINGERPRINT_VERSION}:${cyrb53(key)}${cyrb53(key, 1)}`
+}
+
+/**
+ * Huella de una entrada de la exportación del Cuaderno (feature #26): tipo + ubicación de
+ * inicio (posición, o página si no hay) + texto normalizado, es decir el tipo más la clave
+ * de contenido (`annotationDedupeKey`). La exportación no trae fechas ni posición final, así
+ * que estos son todos los datos estables que tiene; reexportar el mismo libro da las mismas
+ * huellas. Usa otro prefijo que `kindle-v1` porque se calcula con otros campos.
+ */
+export function kindleNotebookFingerprint(clipping: KindleClipping): string {
+  const contentKey = annotationDedupeKey(
+    { page: clipping.page, position: clipping.position },
+    clipping.content
+  )
+  const key = [clipping.kind, contentKey ?? `entry:${clipping.index}`].join('|')
+  return `${KINDLE_NOTEBOOK_FINGERPRINT_VERSION}:${cyrb53(key)}${cyrb53(key, 1)}`
 }

@@ -5,6 +5,8 @@
 > `docs/decisions/023-kindle-clippings-import.md`. Ajustes de la #25
 > (`kindle_import_refinements`): una nota por ubicación, orden de la vista previa y búsqueda
 > automática al crear un libro — `docs/decisions/025-kindle-import-refinements.md`.
+> Exportaciones del Cuaderno de la app de Kindle (#26, `kindle_app_notebook_import`): §9 y
+> `docs/decisions/026-kindle-app-notebook-import.md`.
 
 ## 1. Qué es `My Clippings.txt`
 
@@ -266,3 +268,162 @@ vinculadas a un subrayado.
 Con la regla de la #25 (una nota por ubicación): **46 notas** (806 descartadas), 45
 vinculadas a un subrayado. Las 256 que sobraban eran correcciones del autoguardado en el
 medio del texto que la regla del prefijo no detectaba.
+
+## 9. Exportaciones del Cuaderno de la app de Kindle (#26)
+
+### Por qué `My Clippings.txt` dejó de alcanzar
+
+Desde fines de julio de 2026 (firmware 5.20.1) el Kindle del usuario **no escribe los
+subrayados nuevos** en `My Clippings.txt` ni en el `.sdr` del libro: el archivo quedó con
+fecha 30/7/2026 y los `.yjr` de los libros leídos después no tienen anotaciones. Los
+subrayados viven en una base interna que no se ve por USB/MTP y se sincronizan con la nube de
+Amazon (diagnóstico en `progress/explore_kindle_clippings.md`). La vía que sí funciona es la
+**app de Kindle para PC**: abre el libro, muestra el Cuaderno con todo lo sincronizado (incluso
+las notas escritas en el celular) y tiene **Exportar cuaderno**, que guarda un HTML por libro
+en Documentos.
+
+### El formato
+
+- Nombre: `<título crudo>-Bloc de notas.html` (app en castellano) o `<título>-Notebook.html`
+  (en inglés), en la carpeta Documentos (`app.getPath('documents')`).
+- XHTML UTF-8 **mal formado**: las etiquetas se cruzan.
+
+```html
+<div class='bookTitle'>El crepúsculo de los ídolos -- Friedrich Nietzsche -- 1889 -- <hash> -- Anna’s Archive
+</div>, de <div class='authors'>
+Friedrich Nietzsche
+</div>
+<h2 class='sectionHeading'>8</h2>
+<h3 class='noteHeading'>Subrayado (<span class='highlight_yellow'>amarillo</span>) - Posición 872</div><div class='noteText'>Texto subrayado…</h3>
+<h3 class='noteHeading'>Nota - Posición 873</div><div class='noteText'>primera línea
+segunda línea</h3>
+<h3 class='noteHeading'>Subrayado (<span class='highlight_yellow'>amarillo</span>) - Carta II &gt; Posición 1069</div><div class='noteText'>…</h3>
+```
+
+- `div.bookTitle` es el mismo título sucio de My Clippings (se limpia con
+  `normalizeKindleTitle`); `div.authors` trae el autor **limpio** y tiene prioridad.
+- Encabezado: tipo (`Subrayado`/`Nota`, `Highlight`/`Note`), color
+  (`highlight_yellow|blue|pink|orange`), capítulo opcional antes de `>` y `Posición N` /
+  `Página N` (`Location`/`Page`).
+- **Sin fechas y sin posición final**: solo la de inicio.
+- Un subrayado partido entre páginas llega como **dos entradas con la misma posición** y
+  textos distintos: son dos subrayados.
+- La nota aparece justo después del subrayado que comenta, con posición = inicio del
+  subrayado + 0..2.
+
+### Parser tolerante (`parseKindleNotebook`)
+
+No se usa un parser XML estricto (fallaría con este HTML). Se buscan las etiquetas de apertura
+con las clases conocidas (`bookTitle`, `authors`, `sectionHeading`, `noteHeading`, `noteText`)
+y el contenido de cada una llega hasta el **primer cierre de bloque** (`</div>`, `</h3>`…) o la
+próxima etiqueta conocida. Después: `<br>` → salto de línea, se quitan las etiquetas, se
+decodifican las entidades (`&gt;`, `&amp;`, `&#233;`…) y se recortan espacios por línea (las
+notas multilínea conservan sus saltos). Marcadores y entradas vacías se ignoran; los
+encabezados sin tipo o sin página/posición numérica (p. ej. `Page xii`) se cuentan como no
+reconocidos.
+
+### Vínculo nota → subrayado y huella (`resolveKindleNotebook`)
+
+La exportación refleja el estado actual (no hay versiones viejas que descartar), así que se
+conservan todos los subrayados y todas las notas. Como no hay posición final, el vínculo de la
+#23 (la nota dentro del rango `[inicio, fin]`) no sirve. Regla nueva:
+
+```mermaid
+flowchart TD
+    N[Nota en la posición p] --> P{¿Hay un subrayado antes<br/>en el archivo?}
+    P -- no --> S[Nota suelta]
+    P -- sí --> Q[Subrayado inmediatamente anterior<br/>con inicio i]
+    Q --> R{"0 ≤ p − i ≤ 2 + ⌈largo / 100⌉<br/>(por página: 0 ≤ p − i ≤ 1)"}
+    R -- sí --> L[Vinculada a ese subrayado]
+    R -- no --> S
+```
+
+El margen crece con el largo del subrayado porque la nota queda al **final** del subrayado
+(una posición del Kindle son unos 128 bytes). La huella es `kindle-nb-v1:` + hash de tipo +
+ubicación de inicio + texto normalizado: estable al reexportar.
+
+### Flujo completo
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant S as SettingsPage
+    participant M as KindleImportModal (fuente NOTEBOOK)
+    participant H as kindleHandlers (main)
+    participant SC as KindleNotebookScanner (fs)
+    participant P as PreviewKindleNotebookImport
+    participant C as CommitKindleNotebookImport
+    participant DB as SQLite
+
+    U->>S: "Importar exportaciones de la app"
+    S->>M: initialSource = NOTEBOOK
+    M->>H: kindleNotebook:preview
+    H->>SC: scan() — carpeta configurada o Documentos
+    SC-->>H: archivos *-Bloc de notas.html / *-Notebook.html (ruta, mtime, html)
+    H->>P: execute({ files })
+    P->>DB: ImportedNotebookFile por ruta
+    P-->>H: un grupo por archivo + importState NEW / IMPORTED / CHANGED
+    H->>H: sessions.put({ kind: NOTEBOOK, files }) → sourceId
+    H-->>M: { sourceId, source: NOTEBOOK, sourceLabel: carpeta, preview }
+    M-->>U: misma vista previa que #23/#25 ("Ya importado" desmarcado)
+    U->>M: Importar
+    M->>H: kindle:commit { sourceId, assignments }
+    H->>C: execute({ files de la sesión, assignments })
+    C->>DB: KindleAnnotationWriter (huella + clave de contenido)
+    C->>DB: guarda ruta + mtime de cada archivo importado
+    C-->>M: informe
+```
+
+- **Sin PowerShell**: Documentos es un directorio normal; alcanza con `fs.readdir` + `stat`.
+  No se recorren subcarpetas.
+- **La carpeta es configurable** en Configuración: "Cambiar carpeta…" abre el diálogo nativo
+  en el main y la guarda en `settings.json`; "Usar Documentos" la reinicia. El renderer nunca
+  manda la ruta (igual que en #23 nunca manda la del `.txt`).
+- **Archivos ya importados**: tabla `ImportedNotebookFile` (ruta única + fecha de
+  modificación). Misma ruta y misma fecha = "Ya importado" (arranca en "No importar"); otra
+  fecha = "Cambió desde la última importación" (reexportado). Reimportarlo igual es seguro.
+- **Vista previa compartida**: `KindleImportModal` recibe la fuente `NOTEBOOK` y muestra el
+  nombre del archivo y el estado; el matching, el orden, "+ Crear libro…" con búsqueda
+  precargada y "No importar" son los mismos de #23/#25.
+
+### Dedupe entre fuentes
+
+Un libro puede tener subrayados importados de My Clippings (con fecha y rango de posición) y
+después llegar los mismos en la exportación (sin fecha y solo con el inicio). Las huellas son
+distintas (cada fuente usa campos distintos), así que el escritor común
+(`KindleAnnotationWriter`) compara también una **clave de contenido**:
+
+```mermaid
+flowchart LR
+    A["My Clippings<br/>pos 1265-1268<br/>«Texto  del subrayado»"] --> K1["pos:1265 | Texto del subrayado"]
+    B["Exportación<br/>Posición 1265<br/>«Texto del subrayado»"] --> K2["pos:1265 | Texto del subrayado"]
+    K1 --> EQ{{iguales}}
+    K2 --> EQ
+    EQ --> R["Se omite la nueva:<br/>gana la existente"]
+```
+
+- Clave = inicio de la ubicación (posición, o página si no hay posición) + texto normalizado
+  (NFC, espacios colapsados, sin bordes). Solo el **inicio**, porque la exportación no tiene fin.
+- Vale para subrayados y para notas, en los dos sentidos (exportación después de My Clippings y
+  al revés). Gana lo existente: el subrayado de My Clippings conserva su fecha (útil para la
+  fecha de terminado, #24) y queda sin color.
+- Si el subrayado de la exportación se omitió por existir, sus notas se vinculan al existente.
+- Mismo inicio con otro texto (subrayado editado o partido) = anotaciones distintas.
+
+### Color y fecha
+
+`Highlight.color` (`YELLOW | BLUE | PINK | ORANGE`, opcional) se agregó con una migración no
+destructiva (`ALTER TABLE ... ADD COLUMN`). La sección Subrayados muestra una marca chica con
+los tokens `highlight-*` de `main.css` (valores para claro y oscuro). Los subrayados de la
+exportación quedan con `capturedAt = null`; `suggestFinishedDate` (#24) ya ignoraba las
+anotaciones sin fecha, así que la sugerencia de fecha de terminado no cambia.
+
+### Números de las muestras reales
+
+| Exportación | Entradas | Subrayados | Notas | Vinculadas | Otros |
+|---|---|---|---|---|---|
+| El crepúsculo de los ídolos | 60 | 53 | 7 (1 multilínea) | 7 | 8 secciones, todo amarillo, varios subrayados partidos con la misma posición (58, 893, 1065, 1067, 1244 ×3, 1327) |
+| Frankenstein | 8 | 8 | 0 | — | 6 encabezados con capítulo (`Carta II > …`), 2 secciones |
+| Tercera exportación de la misma carpeta | 49 | 48 | 1 | 1 | 4 secciones |
+
+0 entradas no reconocidas, 0 vacías y 0 huellas repetidas en las tres.

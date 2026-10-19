@@ -6,7 +6,8 @@ import type {
 import {
   formatAnnotationDate,
   formatAnnotationLocation,
-  groupNotesByHighlight
+  groupNotesByHighlight,
+  highlightColorMark
 } from './annotations.js'
 
 export interface HighlightsSectionProps {
@@ -87,6 +88,7 @@ export function HighlightsSection({
             const linkedNotes =
               highlightId !== undefined ? (notesByHighlight.get(highlightId) ?? []) : []
             const capturedAt = formatAnnotationDate(highlight.capturedAt)
+            const colorMark = highlightColorMark(highlight.color)
 
             return (
               <li
@@ -118,6 +120,19 @@ export function HighlightsSection({
 
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-dashed border-rule text-[11px] text-ink-muted">
                   <div className="flex items-center gap-3">
+                    {colorMark && (
+                      <span
+                        className="flex items-center gap-1"
+                        title={`Subrayado ${colorMark.label.toLowerCase()}`}
+                        data-testid="highlight-color"
+                      >
+                        <span
+                          className={`inline-block w-2.5 h-2.5 rounded-full border border-rule-strong ${colorMark.className}`}
+                          aria-hidden="true"
+                        />
+                        {colorMark.label}
+                      </span>
+                    )}
                     <span className="flex items-center gap-1" data-testid="highlight-location">
                       <MapPin className="w-3 h-3" />
                       {formatAnnotationLocation(highlight.location)}
