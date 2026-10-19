@@ -8,6 +8,8 @@ export interface FinishedDateFieldProps {
   error?: string | null
   label?: string
   testId?: string
+  /** De dónde sale el valor precargado, p. ej. "Sugerida: último subrayado del Kindle (…)". */
+  hint?: string | null
 }
 
 export function FinishedDateField({
@@ -16,7 +18,8 @@ export function FinishedDateField({
   onChange,
   error,
   label = 'Fecha de terminado',
-  testId = 'finished-date-input'
+  testId = 'finished-date-input',
+  hint
 }: FinishedDateFieldProps): JSX.Element {
   return (
     <div className="flex flex-col gap-1.5" data-testid={`${testId}-field`}>
@@ -36,6 +39,11 @@ export function FinishedDateField({
         }`}
         data-testid={testId}
       />
+      {hint && (
+        <p className="text-xs text-ink-muted" data-testid={`${testId}-hint`}>
+          {hint}
+        </p>
+      )}
       {error && (
         <p className="text-xs text-danger" data-testid={`${testId}-error`}>
           {error}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { BookStatus } from '../../../shared/domain/entities/BookStatus.js'
 import { NoteOrigin } from '../../../shared/domain/entities/NoteOrigin.js'
+import { suggestFinishedDate } from '../../../shared/domain/services/suggestFinishedDate.js'
 import type {
   BookPrimitives,
   HighlightPrimitives,
@@ -39,6 +40,7 @@ import {
 import {
   defaultFinishedDateInput,
   formatFinishedDate,
+  preloadFinishedDate,
   validateFinishedDateInput
 } from '../components/finishedDate.js'
 
@@ -71,6 +73,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
   const [isEditingFinishedDate, setIsEditingFinishedDate] = useState(false)
   const [finishedDateInput, setFinishedDateInput] = useState(() => defaultFinishedDateInput())
   const [finishedDateError, setFinishedDateError] = useState<string | null>(null)
+  const [finishedDateHint, setFinishedDateHint] = useState<string | null>(null)
 
   // Book Query
   const {
@@ -307,12 +310,21 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
     setIsProgressDirty(true)
   }
 
+  // Fecha sugerida al terminar (ADR 024): último subrayado/nota del Kindle, o hoy. Reusa las
+  // queries de notas y subrayados que el detalle ya carga; si fallan, se sugiere hoy.
+  const finishedDateSuggestion = useMemo(
+    () => suggestFinishedDate(highlights ?? [], notes ?? []),
+    [highlights, notes]
+  )
+
   const handleStatusChange = (newStatus: BookStatus): void => {
     setFinishedDateError(null)
     setIsEditingFinishedDate(false)
     if (newStatus === BookStatus.FINISHED && book?.status !== BookStatus.FINISHED) {
-      // Pasar a terminado pide la fecha (hoy precargado) antes de guardar.
-      setFinishedDateInput(defaultFinishedDateInput())
+      // Pasar a terminado pide la fecha (sugerida desde el Kindle u hoy) antes de guardar.
+      const preload = preloadFinishedDate(finishedDateSuggestion)
+      setFinishedDateInput(preload.value)
+      setFinishedDateHint(preload.hint)
       setIsConfirmingFinish(true)
       return
     }
@@ -549,6 +561,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
                       setFinishedDateError(null)
                     }}
                     error={finishedDateError}
+                    hint={finishedDateHint}
                     label="¿Cuándo lo terminaste?"
                     testId="detail-confirm-finished-date-input"
                   />
@@ -1022,6 +1035,7 @@ export function BookDetailPage({ bookId, onBack }: BookDetailPageProps): JSX.Ele
         book={book}
         isOpen={isUpdateProgressModalOpen}
         onClose={() => setIsUpdateProgressModalOpen(false)}
+        finishedDateSuggestion={finishedDateSuggestion}
       />
 
       {/* Modal: Confirmar Eliminación del Libro */}

@@ -11,9 +11,10 @@ import {
 } from 'lucide-react'
 import { BookStatus } from '../../../shared/domain/entities/BookStatus.js'
 import type { BookPrimitives } from '../../../shared/infrastructure/ipc/contracts.js'
+import type { FinishedDateSuggestion } from '../../../shared/domain/services/suggestFinishedDate.js'
 import { bookService } from '../services/bookService.js'
 import { FinishedDateField } from './FinishedDateField.js'
-import { defaultFinishedDateInput, validateFinishedDateInput } from './finishedDate.js'
+import { preloadFinishedDate, validateFinishedDateInput } from './finishedDate.js'
 
 export type ProgressMode = 'page' | 'percentage'
 
@@ -21,12 +22,15 @@ export interface UpdateProgressModalProps {
   book: BookPrimitives
   isOpen: boolean
   onClose: () => void
+  /** Fecha sugerida desde el Kindle (ADR 024). Sin ella se propone hoy. */
+  finishedDateSuggestion?: FinishedDateSuggestion | null
 }
 
 export function UpdateProgressModal({
   book,
   isOpen,
-  onClose
+  onClose,
+  finishedDateSuggestion = null
 }: UpdateProgressModalProps): JSX.Element | null {
   const queryClient = useQueryClient()
 
@@ -37,9 +41,19 @@ export function UpdateProgressModal({
   const [pageInput, setPageInput] = useState<number | ''>(book.currentPage ?? 0)
   const [percentageInput, setPercentageInput] = useState<number | ''>(book.progressPercentage ?? 0)
   const [markAsFinished, setMarkAsFinished] = useState(true)
-  const [finishedDate, setFinishedDate] = useState(() =>
-    defaultFinishedDateInput(book.status === BookStatus.FINISHED ? book.finishedAt : null)
+  const suggestedDate = finishedDateSuggestion?.date ?? null
+  const suggestionSource = finishedDateSuggestion?.source ?? null
+  const initialFinishedDate = useMemo(
+    () =>
+      preloadFinishedDate(
+        suggestedDate && suggestionSource
+          ? { date: suggestedDate, source: suggestionSource }
+          : null,
+        book.status === BookStatus.FINISHED ? book.finishedAt : null
+      ),
+    [suggestedDate, suggestionSource, book.status, book.finishedAt]
   )
+  const [finishedDate, setFinishedDate] = useState(initialFinishedDate.value)
   const [finishedDateError, setFinishedDateError] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -50,14 +64,12 @@ export function UpdateProgressModal({
       setPageInput(book.currentPage ?? 0)
       setPercentageInput(book.progressPercentage ?? 0)
       setMarkAsFinished(true)
-      // Un libro que ya estaba terminado conserva su fecha; si no, se propone hoy.
-      setFinishedDate(
-        defaultFinishedDateInput(book.status === BookStatus.FINISHED ? book.finishedAt : null)
-      )
+      // Un libro que ya estaba terminado conserva su fecha; si no, se propone la del Kindle u hoy.
+      setFinishedDate(initialFinishedDate.value)
       setFinishedDateError(null)
       setErrorMessage(null)
     }
-  }, [isOpen, book, hasPageCount])
+  }, [isOpen, book, hasPageCount, initialFinishedDate])
 
   // Escape key listener for accessibility
   useEffect(() => {
@@ -454,6 +466,7 @@ export function UpdateProgressModal({
                       setErrorMessage(null)
                     }}
                     error={finishedDateError}
+                    hint={initialFinishedDate.hint}
                     testId="modal-finished-date-input"
                   />
                 )}

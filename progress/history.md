@@ -541,3 +541,23 @@
   - ADR 023: cambiar el estado "Aceptado (pendiente de revisión)" a "Aceptado".
   - Si se edita en el Kindle un subrayado ya importado, la reimportación agrega la versión nueva y deja la vieja. Conviene documentarlo como limitación conocida.
   - Sigue abierto el pendiente de la #22: el modal de borrar libro (`BookDetailPage.tsx:1045`) no menciona los subrayados.
+
+## Sesión 2026-10-19 — Feature #24: Fecha de terminado sugerida desde los subrayados (`finished_date_from_clippings`)
+
+- **Qué cambia:** al marcar un libro como terminado a mano (checkbox "¿Marcar libro como terminado?" de `UpdateProgressModal` y confirmación del cambio de estado en el detalle), se precarga el día local del último subrayado o nota KINDLE si no es futuro; si no, hoy. Junto al campo aparece `Sugerida: último subrayado del Kindle (dd/mm/aaaa)` o `… última nota del Kindle …`. El usuario puede cambiar la fecha. `AddBookModal` no aplica.
+- **Dominio puro:** `suggestFinishedDate(highlights, notes, now?)` en `shared/domain/services/`.
+  - Cuenta todos los subrayados y sólo las notas `origin = KINDLE`.
+  - Si el más reciente es futuro, sugiere hoy.
+  - En un empate gana el subrayado.
+  - Convierte a día local con `CalendarDate`.
+- **Sin IPC nuevo:** `BookDetailPage` calcula la sugerencia con las queries de subrayados y notas que ya carga y la pasa a `UpdateProgressModal` (prop `finishedDateSuggestion`). Si las queries fallan, se sugiere hoy.
+- **Prioridad del precargado** (`preloadFinishedDate`): fecha existente, después la sugerencia del Kindle y por último hoy. Al re-terminar se conserva #20:
+  - el modal con el libro ya FINISHED mantiene su `finishedAt`;
+  - un libro reabierto, que antes precargaba hoy, ahora precarga la sugerencia.
+- `FinishedDateField` gana la prop `hint`. `UpdateBookProgress` (100% automático) no cambia y sigue asignando hoy.
+- **Verificación:** 45 archivos, 675 tests en verde (`.\init.ps1` y re-ejecutado por el reviewer). `pnpm lint:check` y `pnpm build` (con typecheck) en verde.
+- **Docs:** `docs/decisions/024-finished-date-from-clippings.md`.
+- Review: [review_finished_date_from_clippings.md](review_finished_date_from_clippings.md). El informe del implementer quedó en `progress/current.md` (sección "Reporte #24") porque el entorno no permitió crear el archivo de reporte.
+- **Pendientes menores:**
+  - ADR 024: cambiar el estado "Aceptado (pendiente de revisión)" a "Aceptado".
+  - `UpdateProgressModal`: el `useEffect` de reset depende de `initialFinishedDate`, así que si las queries de subrayados/notas llegan con el modal ya abierto, se reinician todos los campos del formulario (página, porcentaje, checkbox). Es poco probable, porque el modal se abre desde el detalle ya cargado.
