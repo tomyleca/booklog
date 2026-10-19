@@ -19,9 +19,7 @@ export class NoteMapper {
   }
 
   public static toPersistence(note: Note): Prisma.NoteUncheckedCreateInput {
-    const location = note.location
-      ? AnnotationLocationMapper.toColumns(note.location)
-      : { locationKind: null, locationStart: null, locationEnd: null }
+    const location = AnnotationLocationMapper.toColumns(note.location)
 
     return {
       ...(note.id !== undefined ? { id: note.id } : {}),

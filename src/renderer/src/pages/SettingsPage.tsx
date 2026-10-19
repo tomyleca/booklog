@@ -14,11 +14,18 @@ import {
   Database,
   Shield,
   Info,
-  ExternalLink
+  ExternalLink,
+  Tablet,
+  FileText
 } from 'lucide-react'
 import { settingsService } from '../services/settingsService.js'
 import { themeService } from '../services/themeService.js'
-import type { AppTheme, AppInfoDTO } from '../../../shared/infrastructure/ipc/contracts.js'
+import { KindleImportModal } from '../components/KindleImportModal.js'
+import type {
+  AppTheme,
+  AppInfoDTO,
+  KindleImportSource
+} from '../../../shared/infrastructure/ipc/contracts.js'
 
 interface TestStatus {
   status: 'idle' | 'loading' | 'success' | 'error'
@@ -34,6 +41,7 @@ export function SettingsPage(): JSX.Element {
   const [testStatus, setTestStatus] = useState<TestStatus>({ status: 'idle' })
   const [appInfo, setAppInfo] = useState<AppInfoDTO | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [kindleImportSource, setKindleImportSource] = useState<KindleImportSource | null>(null)
 
   // Load initial settings and app information
   useEffect(() => {
@@ -384,6 +392,39 @@ export function SettingsPage(): JSX.Element {
           </div>
         </section>
 
+        {/* Section: Kindle import (feature #23) */}
+        <section data-testid="kindle-import-settings-section" className="ficha rounded-md p-6">
+          <div className="flex items-center gap-2.5 mb-2 text-ink font-semibold text-base">
+            <Tablet className="w-5 h-5 text-accent" />
+            <h2>Importar del Kindle</h2>
+          </div>
+          <p className="text-xs text-ink-muted mb-5 leading-relaxed">
+            Trae tus subrayados y notas desde el archivo My Clippings.txt del Kindle. Conectalo por
+            USB y BookLog lo busca solo; si no lo encuentra, podés elegir el archivo a mano. Antes
+            de guardar vas a ver una vista previa por libro, y reimportar no duplica nada.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              data-testid="kindle-import-button"
+              onClick={() => setKindleImportSource('DEVICE')}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-medium bg-accent text-accent-ink hover:bg-accent-strong transition-colors shadow-xs cursor-pointer"
+            >
+              <Tablet className="w-3.5 h-3.5" />
+              <span>Importar del Kindle</span>
+            </button>
+            <button
+              type="button"
+              data-testid="kindle-import-file-button"
+              onClick={() => setKindleImportSource('FILE')}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-medium bg-shelf text-ink hover:bg-rule border border-rule transition-colors cursor-pointer"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Elegir archivo .txt</span>
+            </button>
+          </div>
+        </section>
+
         {/* Section 3: Database & Local Storage */}
         <section
           data-testid="storage-settings-section"
@@ -496,6 +537,13 @@ export function SettingsPage(): JSX.Element {
           </div>
         </section>
       </div>
+
+      {kindleImportSource && (
+        <KindleImportModal
+          initialSource={kindleImportSource}
+          onClose={() => setKindleImportSource(null)}
+        />
+      )}
     </div>
   )
 }

@@ -62,7 +62,7 @@ const kindleNote: NotePrimitives = {
   content: 'Comentario escrito en el Kindle',
   origin: 'KINDLE',
   highlightId: 50,
-  location: { kind: 'LOCATION', start: 1205, end: null },
+  location: { position: { start: 1205, end: null } },
   capturedAt: new Date(2025, 6, 14, 22, 16, 0),
   fingerprint: 'n-1',
   createdAt: new Date('2026-10-19T10:00:00Z'),
@@ -74,7 +74,7 @@ const highlights: HighlightPrimitives[] = [
     id: 50,
     bookId: 7,
     content: 'El jardín de senderos que se bifurcan',
-    location: { kind: 'LOCATION', start: 1200, end: 1205 },
+    location: { position: { start: 1200, end: 1205 } },
     capturedAt: new Date(2025, 6, 14, 22, 15, 3),
     fingerprint: 'h-1',
     createdAt: new Date('2026-10-19T10:00:00Z')
@@ -83,7 +83,7 @@ const highlights: HighlightPrimitives[] = [
     id: 51,
     bookId: 7,
     content: 'Tlön, Uqbar, Orbis Tertius',
-    location: { kind: 'PAGE', start: 12, end: null },
+    location: { page: { start: 12, end: null } },
     capturedAt: null,
     fingerprint: 'h-2',
     createdAt: new Date('2026-10-19T10:00:00Z')
@@ -111,9 +111,9 @@ function mockApi(notes: NotePrimitives[], highlightList: HighlightPrimitives[]):
 
 describe('Feature #22 — annotation helpers', () => {
   it('should format page and position references', () => {
-    expect(formatAnnotationLocation({ kind: 'PAGE', start: 12, end: null })).toBe('pág. 12')
-    expect(formatAnnotationLocation({ kind: 'PAGE', start: 12, end: 14 })).toBe('pág. 12–14')
-    expect(formatAnnotationLocation({ kind: 'LOCATION', start: 1200, end: 1205 })).toBe(
+    expect(formatAnnotationLocation({ page: { start: 12, end: null } })).toBe('pág. 12')
+    expect(formatAnnotationLocation({ page: { start: 12, end: 14 } })).toBe('pág. 12–14')
+    expect(formatAnnotationLocation({ position: { start: 1200, end: 1205 } })).toBe(
       'pos. 1200–1205'
     )
     expect(formatAnnotationLocation(null)).toBe('')

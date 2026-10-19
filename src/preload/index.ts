@@ -18,7 +18,10 @@ import type {
   AppSettingsDTO,
   SaveSettingsDTO,
   TestApiKeyResultDTO,
-  AppInfoDTO
+  AppInfoDTO,
+  CommitKindleImportRequestDTO,
+  KindleImportReport,
+  KindlePreviewResultDTO
 } from '../shared/infrastructure/ipc/contracts.js'
 
 export const api = {
@@ -55,6 +58,14 @@ export const api = {
       ipcRenderer.invoke(IPC_CHANNELS.HIGHLIGHTS.GET_BY_BOOK, { bookId }),
     delete: (id: number): Promise<IpcResult<void>> =>
       ipcRenderer.invoke(IPC_CHANNELS.HIGHLIGHTS.DELETE, { id })
+  },
+  kindle: {
+    previewFromDevice: (): Promise<IpcResult<KindlePreviewResultDTO>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.KINDLE.PREVIEW_FROM_DEVICE),
+    previewFromFile: (): Promise<IpcResult<KindlePreviewResultDTO | null>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.KINDLE.PREVIEW_FROM_FILE),
+    commit: (dto: CommitKindleImportRequestDTO): Promise<IpcResult<KindleImportReport>> =>
+      ipcRenderer.invoke(IPC_CHANNELS.KINDLE.COMMIT, dto)
   },
   covers: {
     saveFromUrl: (url: string): Promise<IpcResult<string>> =>

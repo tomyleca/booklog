@@ -23,8 +23,7 @@ import {
   Book,
   BookStatus,
   Highlight,
-  InvalidHighlightError,
-  LocationKind
+  InvalidHighlightError
 } from '../../src/shared/domain/index.js'
 import type { BookRepository } from '../../src/shared/domain/ports/BookRepository.js'
 import type { HighlightRepository } from '../../src/shared/domain/ports/HighlightRepository.js'
@@ -103,7 +102,7 @@ describe('Feature #22 — highlights IPC contracts', () => {
       Highlight.create({
         bookId: 1,
         content: 'El jardín de senderos que se bifurcan',
-        location: { kind: LocationKind.PAGE, start: 12, end: 13 },
+        location: { page: { start: 12, end: 13 } },
         capturedAt: new Date(2026, 6, 14, 22, 15, 3),
         fingerprint: 'f1'
       })
@@ -128,7 +127,7 @@ describe('Feature #22 — highlights IPC contracts', () => {
       id: savedId,
       bookId: 1,
       content: 'El jardín de senderos que se bifurcan',
-      location: { kind: 'PAGE', start: 12, end: 13 },
+      location: { page: { start: 12, end: 13 } },
       fingerprint: 'f1'
     })
   })

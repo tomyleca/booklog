@@ -7,3 +7,4 @@ export * from './windowService.js'
 export * from './settingsService.js'
 export * from './themeService.js'
 
+export * from './kindleService.js'

@@ -5,7 +5,7 @@ import {
   GetBookHighlights,
   HighlightNotFoundError
 } from '../../src/shared/application/index.js'
-import { Book, BookStatus, Highlight, LocationKind } from '../../src/shared/domain/index.js'
+import { Book, BookStatus, Highlight } from '../../src/shared/domain/index.js'
 import type { BookRepository } from '../../src/shared/domain/ports/BookRepository.js'
 import type { HighlightRepository } from '../../src/shared/domain/ports/HighlightRepository.js'
 
@@ -69,7 +69,7 @@ function highlightFor(bookId: number, fingerprint: string): Highlight {
   return Highlight.create({
     bookId,
     content: `Subrayado ${fingerprint}`,
-    location: { kind: LocationKind.PAGE, start: 10 },
+    location: { page: { start: 10 } },
     fingerprint
   })
 }

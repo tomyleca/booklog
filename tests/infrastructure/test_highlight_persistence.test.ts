@@ -7,7 +7,6 @@ import {
   Book,
   BookStatus,
   Highlight,
-  LocationKind,
   Note,
   NoteOrigin
 } from '../../src/shared/domain/index.js'
@@ -67,7 +66,7 @@ function kindleHighlight(bookId: number, fingerprint: string, start: number): Hi
   return Highlight.create({
     bookId,
     content: `Subrayado en ${start}`,
-    location: { kind: LocationKind.LOCATION, start, end: start + 3 },
+    location: { position: { start, end: start + 3 } },
     capturedAt: new Date(2026, 6, 14, 22, 15, 3),
     fingerprint
   })
@@ -147,7 +146,7 @@ describe('Feature #22 — PrismaHighlightRepository and Note origin persistence'
 
     const list = await highlights.findByBookId(bookId)
     expect(list.map((h) => h.fingerprint)).toEqual(['h-early', 'h-late'])
-    expect(list[0]?.location).toEqual({ kind: 'LOCATION', start: 15, end: 18 })
+    expect(list[0]?.location).toEqual({ page: null, position: { start: 15, end: 18 } })
     expect(list[0]?.capturedAt).toEqual(new Date(2026, 6, 14, 22, 15, 3))
   })
 
@@ -157,12 +156,12 @@ describe('Feature #22 — PrismaHighlightRepository and Note origin persistence'
       Highlight.create({
         bookId: book.id as number,
         content: 'Una frase',
-        location: { kind: LocationKind.PAGE, start: 42 },
+        location: { page: { start: 42 } },
         fingerprint: 'p-42'
       })
     )
     const found = await highlights.findById(saved.id as number)
-    expect(found?.location).toEqual({ kind: 'PAGE', start: 42, end: null })
+    expect(found?.location).toEqual({ page: { start: 42, end: null }, position: null })
     expect(found?.capturedAt).toBeNull()
   })
 
@@ -185,7 +184,7 @@ describe('Feature #22 — PrismaHighlightRepository and Note origin persistence'
       Note.createImported({
         bookId,
         content: 'Mi comentario en el Kindle',
-        location: { kind: LocationKind.LOCATION, start: 103 },
+        location: { position: { start: 103 } },
         capturedAt: new Date(2026, 6, 14, 22, 16, 0),
         fingerprint: 'n1',
         highlightId: highlight.id as number
@@ -195,7 +194,7 @@ describe('Feature #22 — PrismaHighlightRepository and Note origin persistence'
     const found = await notes.findById(saved.id as number)
     expect(found?.origin).toBe(NoteOrigin.KINDLE)
     expect(found?.highlightId).toBe(highlight.id)
-    expect(found?.location).toEqual({ kind: 'LOCATION', start: 103, end: null })
+    expect(found?.location).toEqual({ page: null, position: { start: 103, end: null } })
     expect(found?.capturedAt).toEqual(new Date(2026, 6, 14, 22, 16, 0))
     expect(found?.fingerprint).toBe('n1')
 
@@ -216,7 +215,7 @@ describe('Feature #22 — PrismaHighlightRepository and Note origin persistence'
       Note.createImported({
         bookId,
         content: 'Repetida',
-        location: { kind: LocationKind.PAGE, start: 5 },
+        location: { page: { start: 5 } },
         fingerprint: 'same'
       })
     await notes.create(imported())
@@ -233,7 +232,7 @@ describe('Feature #22 — PrismaHighlightRepository and Note origin persistence'
       Note.createImported({
         bookId,
         content: 'Sobrevive',
-        location: { kind: LocationKind.LOCATION, start: 13 },
+        location: { position: { start: 13 } },
         fingerprint: 'n-del',
         highlightId: highlight.id as number
       })

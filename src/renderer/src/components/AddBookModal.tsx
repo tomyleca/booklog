@@ -15,6 +15,7 @@ import { BookStatus } from '../../../shared/domain/entities/BookStatus.js'
 import { bookService } from '../services/bookService.js'
 import { searchService } from '../services/searchService.js'
 import type { BookSearchResult } from '../../../shared/domain/ports/BookSearchService.js'
+import type { BookPrimitives } from '../../../shared/infrastructure/ipc/contracts.js'
 import { FinishedDateField } from './FinishedDateField.js'
 import { defaultFinishedDateInput, validateFinishedDateInput } from './finishedDate.js'
 
@@ -33,6 +34,8 @@ export interface AddBookModalProps {
   onClose: () => void
   initialValues?: Partial<AddBookFormValues>
   renderSearchSlot?: () => React.ReactNode
+  /** Se llama con el libro recién guardado (p. ej. la importación del Kindle lo asigna). */
+  onCreated?: (book: BookPrimitives) => void
 }
 
 const MIN_SEARCH_CHARS = 3
@@ -45,7 +48,8 @@ export function AddBookModal({
   isOpen,
   onClose,
   initialValues,
-  renderSearchSlot
+  renderSearchSlot,
+  onCreated
 }: AddBookModalProps): JSX.Element | null {
   const queryClient = useQueryClient()
 
@@ -320,8 +324,9 @@ export function AddBookModal({
 
       return res.data
     },
-    onSuccess: () => {
+    onSuccess: (book) => {
       queryClient.invalidateQueries({ queryKey: ['books'] })
+      onCreated?.(book)
       onClose()
     },
     onError: (err: Error) => {

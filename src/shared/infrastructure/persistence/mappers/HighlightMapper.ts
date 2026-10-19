@@ -8,7 +8,7 @@ export class HighlightMapper {
       id: raw.id,
       bookId: raw.bookId,
       content: raw.content,
-      location: { kind: raw.locationKind, start: raw.locationStart, end: raw.locationEnd },
+      location: AnnotationLocationMapper.toDomain(raw) ?? {},
       capturedAt: raw.capturedAt,
       fingerprint: raw.fingerprint,
       createdAt: raw.createdAt

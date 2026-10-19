@@ -7,59 +7,65 @@ import {
   InvalidNoteError,
   isNoteOrigin,
   locationLastPoint,
-  LocationKind,
   Note,
   NoteOrigin
 } from '../../src/shared/domain/index.js'
 
 describe('Feature #22 — AnnotationLocation value object', () => {
   it('should accept a single page reference', () => {
-    const location = createAnnotationLocation({ kind: LocationKind.PAGE, start: 12 })
-    expect(location).toEqual({ kind: 'PAGE', start: 12, end: null })
+    const location = createAnnotationLocation({ page: { start: 12 } })
+    expect(location).toEqual({ page: { start: 12, end: null }, position: null })
   })
 
   it('should accept a Kindle position range', () => {
-    const location = createAnnotationLocation({
-      kind: LocationKind.LOCATION,
-      start: 1200,
-      end: 1205
-    })
-    expect(location).toEqual({ kind: 'LOCATION', start: 1200, end: 1205 })
-    expect(locationLastPoint(location)).toBe(1205)
+    const location = createAnnotationLocation({ position: { start: 1200, end: 1205 } })
+    expect(location).toEqual({ page: null, position: { start: 1200, end: 1205 } })
+    expect(locationLastPoint(location.position as { start: number; end: number | null })).toBe(
+      1205
+    )
   })
 
   it('should normalize a range with equal ends to a single point', () => {
-    const location = createAnnotationLocation({ kind: LocationKind.PAGE, start: 7, end: 7 })
-    expect(location.end).toBeNull()
-    expect(locationLastPoint(location)).toBe(7)
+    const location = createAnnotationLocation({ page: { start: 7, end: 7 } })
+    expect(location.page?.end).toBeNull()
+    expect(locationLastPoint(location.page as { start: number; end: number | null })).toBe(7)
   })
 
   it('should be immutable', () => {
-    const location = createAnnotationLocation({ kind: LocationKind.PAGE, start: 3 })
+    const location = createAnnotationLocation({ page: { start: 3 } })
     expect(Object.isFrozen(location)).toBe(true)
   })
 
-  it('should reject an unknown kind', () => {
-    expect(() =>
-      createAnnotationLocation({ kind: 'CHAPTER' as LocationKind, start: 1 })
-    ).toThrow(InvalidAnnotationLocationError)
+  it('should reject a location without page nor position', () => {
+    expect(() => createAnnotationLocation({})).toThrow(InvalidAnnotationLocationError)
+    expect(() => createAnnotationLocation({ page: null, position: null })).toThrow(
+      InvalidAnnotationLocationError
+    )
+  })
+
+  it('should keep page and position together when the Kindle gives both (feature #23)', () => {
+    const location = createAnnotationLocation({
+      page: { start: 12 },
+      position: { start: 180, end: 183 }
+    })
+    expect(location).toEqual({ page: { start: 12, end: null }, position: { start: 180, end: 183 } })
   })
 
   it('should reject non positive or non integer numbers', () => {
-    expect(() => createAnnotationLocation({ kind: LocationKind.PAGE, start: 0 })).toThrow(
+    expect(() => createAnnotationLocation({ page: { start: 0 } })).toThrow(
       InvalidAnnotationLocationError
     )
-    expect(() => createAnnotationLocation({ kind: LocationKind.PAGE, start: 1.5 })).toThrow(
+    expect(() => createAnnotationLocation({ page: { start: 1.5 } })).toThrow(
       InvalidAnnotationLocationError
     )
     expect(() =>
-      createAnnotationLocation({ kind: LocationKind.PAGE, start: 2, end: -1 })
+      createAnnotationLocation({ page: { start: 2, end: -1 } })
     ).toThrow(InvalidAnnotationLocationError)
   })
 
   it('should reject a range whose end is before its start', () => {
     expect(() =>
-      createAnnotationLocation({ kind: LocationKind.LOCATION, start: 50, end: 40 })
+      createAnnotationLocation({ position: { start: 50, end: 40 } })
     ).toThrow(InvalidAnnotationLocationError)
   })
 })
@@ -71,14 +77,14 @@ describe('Feature #22 — Highlight entity', () => {
     const highlight = Highlight.create({
       bookId: 5,
       content: '  Un fragmento resaltado.  ',
-      location: { kind: LocationKind.LOCATION, start: 100, end: 104 },
+      location: { position: { start: 100, end: 104 } },
       capturedAt,
       fingerprint: ' abc123 '
     })
 
     expect(highlight.bookId).toBe(5)
     expect(highlight.content).toBe('Un fragmento resaltado.')
-    expect(highlight.location).toEqual({ kind: 'LOCATION', start: 100, end: 104 })
+    expect(highlight.location).toEqual({ page: null, position: { start: 100, end: 104 } })
     expect(highlight.capturedAt).toEqual(capturedAt)
     expect(highlight.fingerprint).toBe('abc123')
     expect(highlight.createdAt).toBeInstanceOf(Date)
@@ -88,7 +94,7 @@ describe('Feature #22 — Highlight entity', () => {
     const highlight = Highlight.create({
       bookId: 5,
       content: 'Texto',
-      location: { kind: LocationKind.PAGE, start: 1 },
+      location: { page: { start: 1 } },
       fingerprint: 'f1'
     })
     expect(highlight.capturedAt).toBeNull()
@@ -98,7 +104,7 @@ describe('Feature #22 — Highlight entity', () => {
     const base = {
       bookId: 5,
       content: 'Texto',
-      location: { kind: LocationKind.PAGE, start: 1 },
+      location: { page: { start: 1 } },
       fingerprint: 'f1'
     }
     expect(() => Highlight.create({ ...base, content: '   ' })).toThrow(InvalidHighlightError)
@@ -108,7 +114,7 @@ describe('Feature #22 — Highlight entity', () => {
       InvalidHighlightError
     )
     expect(() =>
-      Highlight.create({ ...base, location: { kind: LocationKind.PAGE, start: -3 } })
+      Highlight.create({ ...base, location: { page: { start: -3 } } })
     ).toThrow(InvalidAnnotationLocationError)
   })
 
@@ -117,7 +123,7 @@ describe('Feature #22 — Highlight entity', () => {
       id: 9,
       bookId: 5,
       content: 'Texto',
-      location: { kind: LocationKind.PAGE, start: 10, end: 11 },
+      location: { page: { start: 10, end: 11 } },
       capturedAt,
       fingerprint: 'f1',
       createdAt: new Date('2026-10-01T10:00:00Z')
@@ -128,7 +134,7 @@ describe('Feature #22 — Highlight entity', () => {
       id: 9,
       bookId: 5,
       content: 'Texto',
-      location: { kind: 'PAGE', start: 10, end: 11 },
+      location: { page: { start: 10, end: 11 }, position: null },
       capturedAt,
       fingerprint: 'f1',
       createdAt: new Date('2026-10-01T10:00:00Z')
@@ -157,7 +163,7 @@ describe('Feature #22 — Note origin', () => {
     const note = Note.createImported({
       bookId: 3,
       content: 'Comentario escrito en el Kindle',
-      location: { kind: LocationKind.LOCATION, start: 104 },
+      location: { position: { start: 104 } },
       capturedAt,
       fingerprint: 'n1',
       highlightId: 9
@@ -165,7 +171,7 @@ describe('Feature #22 — Note origin', () => {
 
     expect(note.origin).toBe(NoteOrigin.KINDLE)
     expect(note.highlightId).toBe(9)
-    expect(note.location).toEqual({ kind: 'LOCATION', start: 104, end: null })
+    expect(note.location).toEqual({ page: null, position: { start: 104, end: null } })
     expect(note.capturedAt).toEqual(capturedAt)
     expect(note.fingerprint).toBe('n1')
   })
@@ -174,7 +180,7 @@ describe('Feature #22 — Note origin', () => {
     const note = Note.createImported({
       bookId: 3,
       content: 'Nota suelta',
-      location: { kind: LocationKind.PAGE, start: 40 },
+      location: { page: { start: 40 } },
       fingerprint: 'n2'
     })
     expect(note.highlightId).toBeNull()
@@ -201,7 +207,7 @@ describe('Feature #22 — Note origin', () => {
         new Note({
           bookId: 3,
           content: 'Manual',
-          location: { kind: LocationKind.PAGE, start: 1 }
+          location: { page: { start: 1 } }
         })
     ).toThrow(InvalidNoteError)
   })
@@ -219,7 +225,7 @@ describe('Feature #22 — Note origin', () => {
     const note = Note.createImported({
       bookId: 3,
       content: 'Original',
-      location: { kind: LocationKind.PAGE, start: 40 },
+      location: { page: { start: 40 } },
       fingerprint: 'n3',
       highlightId: 2
     })
@@ -234,7 +240,7 @@ describe('Feature #22 — Note origin', () => {
     const note = Note.createImported({
       bookId: 3,
       content: 'Ida y vuelta',
-      location: { kind: LocationKind.LOCATION, start: 10, end: 12 },
+      location: { position: { start: 10, end: 12 } },
       capturedAt: new Date(2026, 0, 2, 9, 0, 0),
       fingerprint: 'n4',
       highlightId: 7

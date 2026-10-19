@@ -515,3 +515,29 @@
   - El modal de borrar libro dice "Se eliminarán también todas sus notas." y no menciona los subrayados; conviene ajustarlo (con su test) en #23.
   - "Sobre un subrayado" en "Mis notas" depende de que cargue la query de subrayados.
   - `schema.prisma`: el realineado de `Book` que hizo `prisma format` es ruido en el diff.
+
+## Sesión 2026-10-19 — Feature #23: kindle_clippings_import (Importar subrayados y notas desde My Clippings.txt)
+
+- **Qué:** importación de `My Clippings.txt` desde Configuración → "Importar del Kindle" o "Elegir archivo .txt".
+  - **Lectura:** el main busca el Kindle por MTP con PowerShell (Shell.Application → Namespace(17), en cualquier almacenamiento con `documents\My Clippings.txt`). La copia usa `CopyHere`, que es asíncrono: espera el tamaño esperado o estable más apertura exclusiva, con timeout. El script es constante, los datos van por variables de entorno y corre con `-NoProfile -NonInteractive -EncodedCommand` vía `execFile`.
+  - **Fallback:** si no encuentra el Kindle, abre un selector `.txt`.
+  - **Vista previa por título:** propone un libro (ISBN → título + autor → título → similitud) con nivel de confianza. Se puede corregir, marcar "No importar" o "+ Crear libro…" (AddBookModal precargado, prop `onCreated`).
+  - **Cierre:** confirmación e informe de importados y omitidos por duplicado.
+- **Dominio puro** (`shared/domain/services/kindle/`):
+  - parser ES/EN que lee tipo, ubicación y fecha por separado; limpieza de títulos sucios con extracción de ISBN y autor;
+  - matching con confianza y huella `kindle-v1` (tipo + posición o página + texto);
+  - dedupe de subrayados editados: rangos que se tocan y comparten texto; queda el más nuevo;
+  - borradores de notas: se descartan los prefijos de una nota más nueva en la misma ubicación y los duplicados exactos;
+  - vínculo nota → subrayado si la nota cae dentro de `[inicio, fin]`: por posición y, si falta, por página. Gana el fin más cercano y, en empate, el más reciente anterior a la nota.
+- **Use cases:** `PreviewKindleImport` y `CommitKindleImport`. El commit valida todos los libros antes de escribir, salta huellas existentes y vincula a subrayados nuevos o previos.
+- **IPC:** `kindle:previewFromDevice|previewFromFile|commit` con `sourceId`. El texto queda en `KindleImportSessionStore` del main; el renderer no manda rutas ni texto.
+- **Modelo #22 ampliado:** `AnnotationLocation = { page, position }`, ambos opcionales con al menos uno. Migración no destructiva `20261019150000_annotation_page_and_position`. La UI muestra la página si existe y, si no, la posición.
+- **Muestra real** (script fuera del repo): 2652 entradas → 1446 subrayados y 302 notas finales. Se descartaron 329 subrayados editados y 550 borradores. 301 notas vinculadas, 0 no reconocidas.
+- **Verificación:** 43 archivos, 653 tests en verde. `pnpm typecheck` y `pnpm lint:check` en verde (re-ejecutados por el reviewer). `pnpm build` OK según el implementer.
+- **Docs:** `docs/guides/kindle-clippings-import.md`, `docs/decisions/023-kindle-clippings-import.md`, actualización de `annotations-model.md` y nota en el ADR 022.
+- Review: [review_kindle_clippings_import.md](review_kindle_clippings_import.md) (APPROVED). El informe del implementer quedó en `progress/current.md` porque el entorno no permitió crear el archivo de reporte.
+- **Pendientes menores:**
+  - **Prueba manual pendiente:** copia MTP con el Kindle conectado (Configuración → Importar del Kindle).
+  - ADR 023: cambiar el estado "Aceptado (pendiente de revisión)" a "Aceptado".
+  - Si se edita en el Kindle un subrayado ya importado, la reimportación agrega la versión nueva y deja la vieja. Conviene documentarlo como limitación conocida.
+  - Sigue abierto el pendiente de la #22: el modal de borrar libro (`BookDetailPage.tsx:1045`) no menciona los subrayados.

@@ -55,7 +55,12 @@ classDiagram
 
     class AnnotationLocation {
         <<value object>>
-        +LocationKind kind
+        +LocationRange|null page
+        +LocationRange|null position
+    }
+
+    class LocationRange {
+        <<value object>>
         +number start
         +number|null end
     }
@@ -66,35 +71,36 @@ classDiagram
         KINDLE
     }
 
-    class LocationKind {
-        <<enumeration>>
-        PAGE
-        LOCATION
-    }
-
     Book "1" --> "0..*" Note : notas (cascada)
     Book "1" --> "0..*" Highlight : subrayados (cascada)
     Highlight "0..1" <-- "0..*" Note : comenta (SET NULL)
     Note ..> NoteOrigin
     Note ..> AnnotationLocation
     Highlight ..> AnnotationLocation
-    AnnotationLocation ..> LocationKind
+    AnnotationLocation ..> LocationRange
 ```
 
 ## 3. Piezas del dominio
 
 ### `AnnotationLocation` (value object)
 
-El Kindle referencia por **página** (`- Tu resaltado en la página 12`) o por **posición**
-(`- Your Highlight on Location 1200-1205`), con un número suelto o un rango. El value
-object es inmutable (`Object.freeze`) y lo construye `createAnnotationLocation`, que:
+> **Actualizado en #23** (ADR 023): antes era `{ kind: PAGE | LOCATION, start, end }`, una
+> sola referencia. El usuario pidió guardar **las dos** cuando el Kindle las da.
 
-- exige `kind` ∈ `PAGE | LOCATION` y enteros positivos;
+El Kindle referencia por **página** (`- Tu resaltado en la página 12`), por **posición**
+(`- Your Highlight on Location 1200-1205`) o por ambas a la vez
+(`en la página 12 | posición 180-183`), con un número suelto o un rango. El value object es
+`{ page, position }`, cada uno un `LocationRange { start, end }` o `null`, inmutable
+(`Object.freeze`), y lo construye `createAnnotationLocation`, que:
+
+- exige **al menos una** de las dos (página o posición) y enteros positivos;
 - rechaza un fin anterior al inicio;
 - normaliza `12-12` a `12` (`end = null`), para que dos referencias equivalentes queden iguales.
 
-`locationLastPoint(location)` devuelve el fin del rango (o el inicio): la importación lo
-usará para vincular una nota con el subrayado que termina en esa misma posición.
+La UI muestra la página si existe y, si no, la posición (`formatAnnotationLocation`). La
+posición, más fina, es la que usa la importación para vincular notas y calcular la huella.
+`locationLastPoint(range)` devuelve el fin del rango (o el inicio) y `rangeContains(range,
+punto)` dice si un punto cae dentro de `[inicio, fin]`.
 
 ### `Highlight`
 
@@ -129,9 +135,10 @@ erDiagram
         string content
         NoteOrigin origin "default MANUAL"
         int highlightId FK "nullable"
-        LocationKind locationKind "nullable"
-        int locationStart "nullable"
-        int locationEnd "nullable"
+        int pageStart "nullable"
+        int pageEnd "nullable"
+        int positionStart "nullable"
+        int positionEnd "nullable"
         datetime capturedAt "nullable"
         string fingerprint "nullable, unico por libro"
     }
@@ -139,16 +146,22 @@ erDiagram
         int id PK
         int bookId FK
         string content
-        LocationKind locationKind
-        int locationStart
-        int locationEnd "nullable"
+        int pageStart "nullable"
+        int pageEnd "nullable"
+        int positionStart "nullable"
+        int positionEnd "nullable"
         datetime capturedAt "nullable"
         string fingerprint "unico por libro"
     }
 ```
 
-- El value object se guarda en **tres columnas planas** (`locationKind`, `locationStart`,
-  `locationEnd`); `AnnotationLocationMapper` hace la conversión en ambos sentidos.
+- El value object se guarda en **cuatro columnas planas** (`pageStart`, `pageEnd`,
+  `positionStart`, `positionEnd`); `AnnotationLocationMapper` hace la conversión en ambos
+  sentidos. Que al menos una exista lo garantiza el dominio, no la base.
+- La migración `20261019150000_annotation_page_and_position` (#23) reemplazó las tres
+  columnas originales (`locationKind`, `locationStart`, `locationEnd`) copiando cada
+  ubicación a las columnas de página o de posición según su tipo. Los subrayados se
+  ordenan por posición y luego por página.
 - **Huella única por libro**: `@@unique([bookId, fingerprint])` en las dos tablas. En
   `Note` la columna es nullable; SQLite considera distintos todos los `NULL` de un índice
   único, así que las notas manuales (sin huella) no chocan entre sí.

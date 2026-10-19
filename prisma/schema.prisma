@@ -40,11 +40,6 @@ enum NoteOrigin {
   KINDLE
 }
 
-enum LocationKind {
-  PAGE
-  LOCATION
-}
-
 model Note {
   id            Int           @id @default(autoincrement())
   bookId        Int
@@ -53,9 +48,10 @@ model Note {
   origin        NoteOrigin    @default(MANUAL)
   highlightId   Int?
   highlight     Highlight?    @relation(fields: [highlightId], references: [id], onDelete: SetNull)
-  locationKind  LocationKind?
-  locationStart Int?
-  locationEnd   Int?
+  pageStart     Int?
+  pageEnd       Int?
+  positionStart Int?
+  positionEnd   Int?
   capturedAt    DateTime?
   fingerprint   String?
   createdAt     DateTime      @default(now())
@@ -70,9 +66,10 @@ model Highlight {
   bookId        Int
   book          Book         @relation(fields: [bookId], references: [id], onDelete: Cascade)
   content       String
-  locationKind  LocationKind
-  locationStart Int
-  locationEnd   Int?
+  pageStart     Int?
+  pageEnd       Int?
+  positionStart Int?
+  positionEnd   Int?
   capturedAt    DateTime?
   fingerprint   String
   createdAt     DateTime     @default(now())

@@ -19,6 +19,11 @@ export const IPC_CHANNELS = {
     GET_BY_BOOK: 'highlights:getByBook',
     DELETE: 'highlights:delete'
   },
+  KINDLE: {
+    PREVIEW_FROM_DEVICE: 'kindle:previewFromDevice',
+    PREVIEW_FROM_FILE: 'kindle:previewFromFile',
+    COMMIT: 'kindle:commit'
+  },
   COVERS: {
     SAVE_FROM_URL: 'covers:saveFromUrl',
     SAVE_FROM_LOCAL: 'covers:saveFromLocal'
@@ -44,6 +49,7 @@ export type IpcChannel =
   | (typeof IPC_CHANNELS.BOOKS)[keyof typeof IPC_CHANNELS.BOOKS]
   | (typeof IPC_CHANNELS.NOTES)[keyof typeof IPC_CHANNELS.NOTES]
   | (typeof IPC_CHANNELS.HIGHLIGHTS)[keyof typeof IPC_CHANNELS.HIGHLIGHTS]
+  | (typeof IPC_CHANNELS.KINDLE)[keyof typeof IPC_CHANNELS.KINDLE]
   | (typeof IPC_CHANNELS.COVERS)[keyof typeof IPC_CHANNELS.COVERS]
   | (typeof IPC_CHANNELS.SEARCH)[keyof typeof IPC_CHANNELS.SEARCH]
   | (typeof IPC_CHANNELS.WINDOW)[keyof typeof IPC_CHANNELS.WINDOW]

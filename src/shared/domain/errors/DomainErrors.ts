@@ -46,3 +46,9 @@ export class InvalidAnnotationLocationError extends DomainError {
     super(message)
   }
 }
+
+export class InvalidKindleImportError extends DomainError {
+  constructor(message: string) {
+    super(message)
+  }
+}

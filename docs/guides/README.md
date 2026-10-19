@@ -22,6 +22,7 @@
 | `design-tokens-theming.md` | Tokens semánticos con `@theme` de Tailwind v4, temas claro/oscuro con `.dark`, texturas SVG y fuentes @fontsource | Feature 16 (retro library theme) |
 | `css-grid-bookshelf-layout.md` | Estantería responsive con CSS grid `auto-fill`, tramos de estante por celda y pseudo-elemento recortado para la última fila | Feature 17 (library bookshelf view) |
 | `annotations-model.md` | Notas del usuario (manuales o del Kindle) vs. subrayados, value object de ubicación, huella única por libro y `SET NULL` | Feature 22 (highlights and note origin) |
+| `kindle-clippings-import.md` | Formato de `My Clippings.txt`, parser ES/EN, limpieza de títulos y matching, dedupe de editados, vínculo nota→subrayado y lectura del Kindle por MTP con PowerShell desde Electron | Feature 23 (kindle clippings import) |
 
 Las guías se crean conforme se implementan las features relacionadas, no antes.
 

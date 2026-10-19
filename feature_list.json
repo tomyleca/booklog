@@ -372,7 +372,7 @@
         "UI: botón \"Importar del Kindle\"; vista previa agrupada por libro con cantidad de subrayados/notas, libro asociado (corregible) o \"crear libro\" con datos precargados; confirmación e informe final (importados, omitidos por duplicado)",
         "Tests con fixtures anonimizados derivados de la muestra real (nunca el archivo original); guía y ADR"
       ],
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 24,

@@ -62,6 +62,14 @@ Decisiones del usuario (feature_list #22):
    Borrar un subrayado no pide confirmación, igual que borrar una nota; el `title` del botón
    aclara que las notas se conservan.
 
+### Nota posterior (feature #23)
+
+El punto 2 cambió en la #23 por pedido del usuario: `AnnotationLocation` guarda **página y
+posición a la vez** (`{ page, position }`, cada una opcional con inicio y fin) en cuatro
+columnas (`pageStart`, `pageEnd`, `positionStart`, `positionEnd`) y se eliminó el enum
+`LocationKind`. Migración no destructiva `20261019150000_annotation_page_and_position`.
+Ver ADR 023.
+
 ## Alternativas descartadas
 
 - **Una sola tabla `Annotation` con `type = NOTE | HIGHLIGHT`**: mezcla lo escrito por el

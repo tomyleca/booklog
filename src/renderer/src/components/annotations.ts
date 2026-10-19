@@ -1,13 +1,21 @@
-import { LocationKind } from '../../../shared/domain/entities/AnnotationLocation.js'
-import type { AnnotationLocation } from '../../../shared/domain/entities/AnnotationLocation.js'
+import type {
+  AnnotationLocation,
+  LocationRange
+} from '../../../shared/domain/entities/AnnotationLocation.js'
 import type { NotePrimitives } from '../../../shared/infrastructure/ipc/contracts.js'
 
-/** `pág. 12`, `pág. 12–14`, `pos. 1200–1205`. */
+function formatRange(range: LocationRange): string {
+  return range.end !== null ? `${range.start}–${range.end}` : `${range.start}`
+}
+
+/**
+ * `pág. 12`, `pág. 12–14`, `pos. 1200–1205`. Si el Kindle dio página y posición se muestra
+ * solo la página, que es la que entiende el lector (ADR 023).
+ */
 export function formatAnnotationLocation(location: AnnotationLocation | null | undefined): string {
-  if (!location) return ''
-  const prefix = location.kind === LocationKind.PAGE ? 'pág.' : 'pos.'
-  const range = location.end !== null ? `${location.start}–${location.end}` : `${location.start}`
-  return `${prefix} ${range}`
+  if (location?.page) return `pág. ${formatRange(location.page)}`
+  if (location?.position) return `pos. ${formatRange(location.position)}`
+  return ''
 }
 
 /** Fecha con hora en es-ES, p. ej. `05 ene 2026, 14:30`. Vacío si no hay fecha válida. */
