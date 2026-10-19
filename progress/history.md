@@ -628,3 +628,29 @@
   - Dedupe entre fuentes: si la exportación trae solo página y My Clippings página + posición,
     las claves no coinciden (`page:` vs `pos:`). Las notas de My Clippings (posición final del
     subrayado) pueden no coincidir con las de la app (inicio + 0..2). No pasa en las muestras.
+
+## Sesión 2026-10-19 — Feature #27: google_books_resilience
+
+- **Problema:** Google Books devolvía 503 transitorios frecuentes (2 consultas en paralelo
+  por búsqueda desde #21, búsquedas automáticas desde #25) y la UI mostraba un error genérico.
+- **Hecho:** `fetchWithRetry` (infra) reintenta 429/500/502/503/504 y errores de red hasta 2
+  veces con backoff ~0,5 s / ~1,5 s ±20 % y `Retry-After` con tope de 5 s; no reintenta otros
+  4xx. Cada consulta paralela se reintenta por separado. Errores tipados del port en
+  `domain/errors/BookSearchErrors.ts` (no disponible, cuota, key inválida, fallo genérico),
+  clasificados desde status + cuerpo de Google y mapeados a `SEARCH_UNAVAILABLE`,
+  `SEARCH_QUOTA_EXCEEDED`, `SEARCH_INVALID_API_KEY` y `SEARCH_FAILED`.
+  `CachedBookSearchService` (decorador del port, en el main process): caché por texto+autor
+  normalizados, TTL 5 min, 50 entradas LRU, sólo éxitos. `AddBookModal` muestra un mensaje en
+  castellano según el código y un botón Reintentar (`search-retry-button`) que repite la
+  última búsqueda por el mismo `executeSearch` (debounce, requestId y #25 intactos).
+- **Decisiones:** el reintento va en el cliente y por petición, porque un decorador no ve
+  fallos parciales, status ni Retry-After; la caché va como decorador, porque trabaja sobre el
+  resultado combinado. Errores en el dominio porque son el contrato del port (ADR 027).
+- **Docs:** ADR `027-google-books-resilience.md`; sección 6 de
+  `guides/external-api-integration.md` (Mermaid).
+- **Verificación:** `.\init.ps1` 55 archivos / 792 tests en verde; `pnpm lint:check` OK;
+  `pnpm build` OK.
+- **Pendientes menores (review):**
+  - `CachedBookSearchService` devuelve la misma referencia del array en un hit; conviene copiarlo si algún día lo consume código del main process que lo mute.
+  - No hay test del wiring de la caché en `registerIpcHandlers` (requiere Prisma/Electron).
+  - `registerSearchHandlers()` sin argumentos crea un `GoogleBooksService` sin caché (hoy solo lo usan los tests).

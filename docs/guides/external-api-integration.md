@@ -161,7 +161,7 @@ pierde coincidencias aproximadas; la consulta libre encuentra más pero ordena p
    - de campo: `intitle:"<texto>" inauthor:"<autor>"` (cada parte sólo si tiene valor).
 2. **Las lanza en paralelo** con `Promise.allSettled` y combina lo que llegue con
    `mergeSearchResults` (sin duplicados por `googleBooksId`). Si una falla, se usa la otra;
-   si fallan las dos, se propaga el mismo error de siempre.
+   si fallan las dos, se propaga el error tipado más informativo (ver sección 6, feature #27).
 3. **Delega el orden** en `rankSearchResults`, una función pura de dominio.
 
 ```mermaid
@@ -251,3 +251,76 @@ autor cancela el temporizador pendiente y una respuesta vieja nunca pisa a la nu
 El `fetchFn` inyectado en `GoogleBooksService` responde una u otra según si la URL usa
 `intitle:`/`inauthor:`. Así se verifican la combinación, los fallos parciales y que la
 edición de Stephen King quede primera, sin API key ni cuota.
+
+---
+
+## 6. Reintentos con backoff, caché y errores tipados (feature #27)
+
+Google Books devuelve a veces `503 Service Unavailable` transitorios, sobre todo con ráfagas
+(cada búsqueda son dos consultas, y desde #25 hay búsquedas automáticas). Para absorberlos se
+agregaron tres piezas. Detalle y alternativas en
+`docs/decisions/027-google-books-resilience.md`.
+
+### Backoff exponencial con jitter
+`fetchWithRetry` repite la petición si la respuesta es 500/502/503/504/429 o si falló la red.
+Espera ~0,5 s antes del primer reintento y ~1,5 s antes del segundo (base × 3ⁿ). Cada espera
+varía ±20 % al azar (*jitter*) para que varios clientes no reintenten todos a la vez. Si
+Google manda `Retry-After`, se espera eso, con un tope de 5 s. Un 400 o 403 (key inválida,
+cuota diaria) no se reintenta, porque repetirlo no cambia nada.
+
+```mermaid
+sequenceDiagram
+    participant GBS as GoogleBooksService
+    participant R as fetchWithRetry
+    participant G as Google Books
+    GBS->>R: fetchWithRetry(url)
+    R->>G: GET (intento 1)
+    G-->>R: 503
+    R->>R: sleep(~500 ms)
+    R->>G: GET (intento 2)
+    G-->>R: 503
+    R->>R: sleep(~1500 ms o Retry-After ≤ 5 s)
+    R->>G: GET (intento 3)
+    alt 200
+        G-->>R: volúmenes
+        R-->>GBS: Response ok
+    else sigue fallando
+        G-->>R: 503
+        R-->>GBS: Response 503
+        GBS->>GBS: classifyGoogleBooksError → SearchServiceUnavailableError
+    end
+```
+
+El reintento vive **dentro** del adaptador y es **por petición**. Así, si sólo una de las dos
+consultas paralelas falla, se reintenta sólo esa. Un decorador sobre el port no vería ese
+fallo parcial ni el status HTTP.
+
+### Caché corta en el main process
+`CachedBookSearchService` es un **decorador** del port. Implementa `BookSearchService` y
+envuelve al `GoogleBooksService` real. Guarda en memoria el resultado final (ya combinado y
+ordenado) por texto + autor normalizados, durante 5 minutos y hasta 50 entradas (LRU). Sólo
+guarda éxitos, así que "Reintentar" siempre vuelve a consultar la red.
+
+```mermaid
+flowchart LR
+    H[searchHandlers] --> C{CachedBookSearchService<br/>¿clave vigente?}
+    C -- sí --> H
+    C -- no --> G[GoogleBooksService<br/>2 consultas + reintentos]
+    G -- éxito --> S[guardar con TTL] --> H
+    G -- error tipado --> H
+```
+
+### Del error HTTP al mensaje en pantalla
+El adaptador lanza errores del port (`SearchServiceUnavailableError`,
+`SearchQuotaExceededError`, `SearchApiKeyInvalidError`, `SearchRequestFailedError`).
+`formatIpcError` los convierte en códigos (`SEARCH_UNAVAILABLE`, `SEARCH_QUOTA_EXCEEDED`,
+`SEARCH_INVALID_API_KEY`, `SEARCH_FAILED`) y el renderer elige el texto en castellano
+(`searchErrorMessage.ts`). El banner de error trae un botón **Reintentar**
+(`search-retry-button`) que repite la última búsqueda con el mismo `executeSearch`. Por eso
+siguen valiendo el debounce y el `requestId` contra respuestas viejas.
+
+### Cómo se testea sin esperar
+`GoogleBooksService(fetch, key, { retry: { sleep, random, now } })`: los tests pasan un
+`sleep` que resuelve al instante y registra los milisegundos pedidos, un `random` fijo y un
+reloj falso. Así comprueban "esperó 500 y 1500 ms" en milisegundos reales de test.
+`CachedBookSearchService` recibe `now` para simular el vencimiento del TTL.

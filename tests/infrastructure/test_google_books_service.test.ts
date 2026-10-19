@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { GoogleBooksService } from '../../src/shared/infrastructure/api/GoogleBooksService.js'
+import { SearchServiceUnavailableError } from '../../src/shared/domain/errors/BookSearchErrors.js'
 
 describe('GoogleBooksService Unit Tests', () => {
   it('returns empty array when query is empty or only whitespace without calling fetch', async () => {
@@ -35,16 +36,18 @@ describe('GoogleBooksService Unit Tests', () => {
     )
   })
 
-  it('throws an error when HTTP response is not ok', async () => {
+  it('throws a typed unavailable error when HTTP response keeps failing with 500', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
       status: 500,
       statusText: 'Internal Server Error'
     })
-    const service = new GoogleBooksService(fetchMock as unknown as typeof fetch)
+    const service = new GoogleBooksService(fetchMock as unknown as typeof fetch, null, {
+      retry: { sleep: async () => {} }
+    })
 
-    await expect(service.searchByQuery('Clean Code')).rejects.toThrow(
-      'Error en la consulta a Google Books API: HTTP 500 Internal Server Error'
+    await expect(service.searchByQuery('Clean Code')).rejects.toBeInstanceOf(
+      SearchServiceUnavailableError
     )
   })
 

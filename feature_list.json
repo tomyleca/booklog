@@ -417,6 +417,20 @@
         "Tests con fixtures anonimizados derivados de las dos muestras reales (nunca los originales); guía y ADR"
       ],
       "status": "done"
+    },
+    {
+      "id": 27,
+      "name": "google_books_resilience",
+      "title": "Fix: errores 503 frecuentes de Google Books",
+      "description": "El usuario recibe a menudo \"Error en la consulta a Google Books API: HTTP 503 Service Unavailable\". Google devuelve 503 transitorios, más frecuentes con ráfagas; desde #21 cada búsqueda hace 2 consultas en paralelo y desde #25 hay búsquedas automáticas. No hay reintentos. Decisión del usuario: reintento automático + caché corta + mensaje claro con botón Reintentar (se mantienen las 2 consultas en paralelo).",
+      "acceptance": [
+        "Reintento con backoff exponencial (hasta 2 reintentos, ~0,5 s y ~1,5 s con jitter) ante 503, 500, 502, 504 y 429, respetando Retry-After si viene (con un tope razonable); no reintenta 4xx de cliente (400, 403 por key inválida)",
+        "Caché en memoria en el main process por consulta normalizada (texto + autor) con TTL de unos minutos y tamaño acotado; solo cachea respuestas exitosas",
+        "Error tipado (p. ej. servicio no disponible vs. key inválida vs. cuota agotada) propagado por IPC con código; el renderer muestra un mensaje claro en castellano y un botón Reintentar en la búsqueda de AddBookModal (sin romper debounce/requestId ni la búsqueda automática de #25)",
+        "Lógica de reintento y caché testeable con reloj y fetch inyectados (sin esperas reales en tests)",
+        "ADR; pnpm test, lint:check y build en verde"
+      ],
+      "status": "done"
     }
   ]
 }

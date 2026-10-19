@@ -4,6 +4,10 @@ import type {
 } from '../../domain/ports/BookSearchService.js'
 import { mergeSearchResults } from '../../domain/services/mergeSearchResults.js'
 import { rankSearchResults } from '../../domain/services/rankSearchResults.js'
+import { SearchServiceUnavailableError } from '../../domain/errors/BookSearchErrors.js'
+import { classifyGoogleBooksError, pickMostRelevantError } from './classifyGoogleBooksError.js'
+import { fetchWithRetry, resolveRetryOptions } from './fetchWithRetry.js'
+import type { RetryOptions } from './fetchWithRetry.js'
 
 interface GoogleBooksVolumeItem {
   id?: string
@@ -33,19 +37,29 @@ interface GoogleBooksApiResponse {
 
 export const GOOGLE_BOOKS_MAX_RESULTS = 40
 
+export interface GoogleBooksServiceOptions {
+  /** Ajustes de reintento; los tests inyectan `sleep`, `random` y `now`. */
+  retry?: Partial<RetryOptions>
+}
+
 export class GoogleBooksService implements BookSearchService {
   private readonly baseUrl = 'https://www.googleapis.com/books/v1/volumes'
+  private readonly retryOptions: RetryOptions
 
   constructor(
     private readonly fetchFn: typeof fetch = fetch,
-    private readonly apiKeyProvider?: (() => string | null | undefined) | string | null
-  ) {}
+    private readonly apiKeyProvider?: (() => string | null | undefined) | string | null,
+    options: GoogleBooksServiceOptions = {}
+  ) {
+    this.retryOptions = resolveRetryOptions(options.retry)
+  }
 
   /**
    * Lanza en paralelo una consulta libre y otra con operadores de campo
    * (`intitle:` / `inauthor:`), combina ambas sin duplicados y delega el orden final en
    * el ranking de dominio. Si sólo una de las dos falla, se usan los resultados de la
-   * otra; si fallan ambas, se propaga el error de la consulta libre.
+   * otra; si fallan ambas, se propaga el error tipado más informativo (ADR 027). Cada
+   * consulta reintenta por su cuenta los fallos transitorios.
    */
   public async searchByQuery(query: string, author?: string | null): Promise<BookSearchResult[]> {
     const text = typeof query === 'string' ? query.trim() : ''
@@ -60,7 +74,7 @@ export class GoogleBooksService implements BookSearchService {
     ])
 
     if (freeOutcome.status === 'rejected' && fieldedOutcome.status === 'rejected') {
-      throw freeOutcome.reason
+      throw pickMostRelevantError([freeOutcome.reason, fieldedOutcome.reason])
     }
 
     const freeResults = freeOutcome.status === 'fulfilled' ? freeOutcome.value : []
@@ -102,10 +116,15 @@ export class GoogleBooksService implements BookSearchService {
       url += `&key=${encodeURIComponent(resolvedKey.trim())}`
     }
 
-    const res = await this.fetchFn(url)
+    let res: Response
+    try {
+      res = await fetchWithRetry(this.fetchFn, url, this.retryOptions)
+    } catch {
+      throw new SearchServiceUnavailableError()
+    }
 
     if (!res.ok) {
-      throw new Error(`Error en la consulta a Google Books API: HTTP ${res.status} ${res.statusText}`)
+      throw classifyGoogleBooksError(res.status, await this.readErrorBody(res))
     }
 
     const data = (await res.json()) as GoogleBooksApiResponse
@@ -115,6 +134,14 @@ export class GoogleBooksService implements BookSearchService {
     }
 
     return data.items.map((item) => this.mapVolumeToResult(item))
+  }
+
+  private async readErrorBody(res: Response): Promise<unknown> {
+    try {
+      return await res.json()
+    } catch {
+      return null
+    }
   }
 
   private mapVolumeToResult(item: GoogleBooksVolumeItem): BookSearchResult {

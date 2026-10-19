@@ -9,7 +9,8 @@ import {
   BookOpen,
   Calendar,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  RotateCcw
 } from 'lucide-react'
 import { BookStatus } from '../../../shared/domain/entities/BookStatus.js'
 import { bookService } from '../services/bookService.js'
@@ -18,6 +19,7 @@ import type { BookSearchResult } from '../../../shared/domain/ports/BookSearchSe
 import type { BookPrimitives } from '../../../shared/infrastructure/ipc/contracts.js'
 import { FinishedDateField } from './FinishedDateField.js'
 import { defaultFinishedDateInput, validateFinishedDateInput } from './finishedDate.js'
+import { searchErrorMessage } from './searchErrorMessage.js'
 
 export interface AddBookFormValues {
   title: string
@@ -98,6 +100,8 @@ export function AddBookModal({
   // Refs for search race conditions and debounce timer
   const searchRequestIdRef = useRef(0)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
+  // Última búsqueda lanzada: el botón "Reintentar" la repite tal cual (feature #27).
+  const lastSearchArgsRef = useRef<{ query: string; author: string } | null>(null)
   const canSearch = hasEnoughSearchInput(searchQuery, searchAuthor)
 
   useEffect(() => {
@@ -116,6 +120,7 @@ export function AddBookModal({
       }
       // Invalida cualquier búsqueda en curso de una apertura anterior.
       searchRequestIdRef.current++
+      lastSearchArgsRef.current = null
       setIsSearching(false)
       setSearchQuery(initialSearch?.query ?? '')
       setSearchAuthor(initialSearch?.author ?? '')
@@ -190,6 +195,7 @@ export function AddBookModal({
     }
 
     const requestId = ++searchRequestIdRef.current
+    lastSearchArgsRef.current = { query: trimmed, author: trimmedAuthor }
     setIsSearching(true)
     setSearchError(null)
     setLastSearchedQuery([trimmed, trimmedAuthor].filter(Boolean).join(' — '))
@@ -203,7 +209,7 @@ export function AddBookModal({
         setSearchResults(res.data)
         setHasSearched(true)
       } else {
-        setSearchError(res.error || 'Error al buscar libros en Google Books.')
+        setSearchError(searchErrorMessage(res.code, res.error))
         setSearchResults([])
         setHasSearched(true)
       }
@@ -274,6 +280,16 @@ export function AddBookModal({
       debounceTimerRef.current = null
     }
     executeSearch(searchQuery, searchAuthor)
+  }
+
+  const handleRetrySearch = (): void => {
+    const last = lastSearchArgsRef.current
+    if (!last) return
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+      debounceTimerRef.current = null
+    }
+    void executeSearch(last.query, last.author)
   }
 
   const handleSelectResult = (result: BookSearchResult): void => {
@@ -546,7 +562,17 @@ export function AddBookModal({
               data-testid="search-error-banner"
             >
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-danger" />
-              <span>{searchError}</span>
+              <span className="flex-1">{searchError}</span>
+              <button
+                type="button"
+                onClick={handleRetrySearch}
+                disabled={isSearching}
+                className="flex items-center gap-1 shrink-0 px-2 py-1 rounded-md border border-danger/40 text-danger font-medium hover:bg-danger/10 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-accent"
+                data-testid="search-retry-button"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Reintentar
+              </button>
             </div>
           )}
 
@@ -578,6 +604,7 @@ export function AddBookModal({
           {!isSearching &&
             canSearch &&
             hasSearched &&
+            !searchError &&
             searchResults.length === 0 && (
               <div
                 className="flex flex-col items-center justify-center py-10 text-ink-muted text-center gap-2"

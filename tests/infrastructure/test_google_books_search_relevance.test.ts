@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { GoogleBooksService } from '../../src/shared/infrastructure/api/GoogleBooksService.js'
+import { SearchQuotaExceededError } from '../../src/shared/domain/errors/BookSearchErrors.js'
 import {
   KING_EDITION_ID,
   KING_PLAIN_EDITION_ID,
@@ -42,7 +43,10 @@ function recordedFetch(free: RecordedResponse | Error, fielded: RecordedResponse
 }
 
 function serviceWith(fetchMock: ReturnType<typeof vi.fn>): GoogleBooksService {
-  return new GoogleBooksService(fetchMock as unknown as typeof fetch, null)
+  // Sin esperas reales: los reintentos de #27 usan un sleep inmediato.
+  return new GoogleBooksService(fetchMock as unknown as typeof fetch, null, {
+    retry: { sleep: async () => {} }
+  })
 }
 
 function calledQueries(fetchMock: ReturnType<typeof vi.fn>): string[] {
@@ -162,14 +166,14 @@ describe('GoogleBooksService - combined queries and local ranking (feature #21)'
     ])
   })
 
-  it('throws the current error message when both queries fail', async () => {
+  it('throws a typed quota error when both queries keep failing with 429 (feature #27)', async () => {
     const fetchMock = recordedFetch(
       httpError(429, 'Too Many Requests'),
       httpError(429, 'Too Many Requests')
     )
 
-    await expect(serviceWith(fetchMock).searchByQuery('pet sematary')).rejects.toThrow(
-      'Error en la consulta a Google Books API: HTTP 429 Too Many Requests'
+    await expect(serviceWith(fetchMock).searchByQuery('pet sematary')).rejects.toBeInstanceOf(
+      SearchQuotaExceededError
     )
   })
 })

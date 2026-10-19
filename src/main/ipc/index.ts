@@ -8,6 +8,7 @@ import { PrismaImportedNotebookFileRepository } from '../../shared/infrastructur
 import { CoverStorageService } from '../services/CoverStorageService.js'
 import type { BookSearchService } from '../../shared/domain/ports/BookSearchService.js'
 import { GoogleBooksService } from '../../shared/infrastructure/api/GoogleBooksService.js'
+import { CachedBookSearchService } from '../../shared/infrastructure/api/CachedBookSearchService.js'
 import { SettingsStorageService } from '../services/SettingsStorageService.js'
 import { KindleDeviceService } from '../services/KindleDeviceService.js'
 import { KindleNotebookScanner } from '../services/KindleNotebookScanner.js'
@@ -67,7 +68,10 @@ export function registerIpcHandlers(
   const noteRepository = new PrismaNoteRepository(prisma)
   const highlightRepository = new PrismaHighlightRepository(prisma)
   const actualSearchService =
-    searchService ?? new GoogleBooksService(fetch, () => settingsService.getCachedApiKey())
+    searchService ??
+    new CachedBookSearchService(
+      new GoogleBooksService(fetch, () => settingsService.getCachedApiKey())
+    )
 
   // Pre-warm settings cache in background
   settingsService.getSettings().catch(() => {})

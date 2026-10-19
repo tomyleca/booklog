@@ -9,6 +9,12 @@ import type {
 import { NoteOrigin } from '../../domain/entities/NoteOrigin.js'
 import { BookStatus } from '../../domain/entities/BookStatus.js'
 import { DomainError } from '../../domain/errors/DomainErrors.js'
+import {
+  SearchApiKeyInvalidError,
+  SearchQuotaExceededError,
+  SearchRequestFailedError,
+  SearchServiceUnavailableError
+} from '../../domain/errors/BookSearchErrors.js'
 import { BookNotFoundError } from '../../application/errors/BookNotFoundError.js'
 import { NoteNotFoundError } from '../../application/errors/NoteNotFoundError.js'
 import { HighlightNotFoundError } from '../../application/errors/HighlightNotFoundError.js'
@@ -78,6 +84,10 @@ export const IPC_ERROR_CODES = {
   KINDLE_DEVICE_ERROR: 'KINDLE_DEVICE_ERROR',
   KINDLE_FILE_ERROR: 'KINDLE_FILE_ERROR',
   KINDLE_SESSION_EXPIRED: 'KINDLE_SESSION_EXPIRED',
+  SEARCH_UNAVAILABLE: 'SEARCH_UNAVAILABLE',
+  SEARCH_QUOTA_EXCEEDED: 'SEARCH_QUOTA_EXCEEDED',
+  SEARCH_INVALID_API_KEY: 'SEARCH_INVALID_API_KEY',
+  SEARCH_FAILED: 'SEARCH_FAILED',
   INTERNAL_ERROR: 'INTERNAL_ERROR'
 } as const
 
@@ -92,6 +102,18 @@ export function formatIpcError(err: unknown): { success: false; error: string; c
   }
   if (err instanceof HighlightNotFoundError) {
     return { success: false, error: err.message, code: IPC_ERROR_CODES.HIGHLIGHT_NOT_FOUND }
+  }
+  if (err instanceof SearchServiceUnavailableError) {
+    return { success: false, error: err.message, code: IPC_ERROR_CODES.SEARCH_UNAVAILABLE }
+  }
+  if (err instanceof SearchQuotaExceededError) {
+    return { success: false, error: err.message, code: IPC_ERROR_CODES.SEARCH_QUOTA_EXCEEDED }
+  }
+  if (err instanceof SearchApiKeyInvalidError) {
+    return { success: false, error: err.message, code: IPC_ERROR_CODES.SEARCH_INVALID_API_KEY }
+  }
+  if (err instanceof SearchRequestFailedError) {
+    return { success: false, error: err.message, code: IPC_ERROR_CODES.SEARCH_FAILED }
   }
   if (err instanceof DomainError) {
     return { success: false, error: err.message, code: IPC_ERROR_CODES.VALIDATION_ERROR }
