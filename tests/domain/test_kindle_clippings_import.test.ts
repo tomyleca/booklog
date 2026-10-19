@@ -4,7 +4,7 @@ import {
   findCommentedHighlight,
   groupKindleClippings,
   highlightsOverlap,
-  isNoteDraft,
+  keepLatestNotePerLocation,
   kindleFingerprint,
   KindleClippingKind,
   matchKindleBook,
@@ -66,11 +66,11 @@ describe('Feature #23 — parseKindleClippings', () => {
   const parsed = parseKindleClippings(KINDLE_FIXTURE_TEXT)
 
   it('should count entries and drop bookmarks and empty highlights', () => {
-    expect(parsed.totalEntries).toBe(28)
+    expect(parsed.totalEntries).toBe(30)
     expect(parsed.ignoredBookmarks).toBe(2)
     expect(parsed.ignoredEmpty).toBe(1)
     expect(parsed.unrecognizedEntries).toBe(0)
-    expect(parsed.clippings).toHaveLength(25)
+    expect(parsed.clippings).toHaveLength(27)
   })
 
   it('should strip the BOM and CRLF from titles and bodies', () => {
@@ -241,7 +241,7 @@ describe('Feature #23 — matchKindleBook', () => {
   })
 })
 
-describe('Feature #23 — dedupe, note drafts and links', () => {
+describe('Feature #23/#25 — dedupe, note drafts and links', () => {
   it('should treat overlapping highlights that share text as edits', () => {
     const old = clipping({ position: { start: 300, end: 302 }, content: 'Frase corta' })
     const extended = clipping({ position: { start: 300, end: 305 }, content: 'Frase corta y más' })
@@ -254,7 +254,7 @@ describe('Feature #23 — dedupe, note drafts and links', () => {
     expect(highlightsOverlap(a, b)).toBe(false)
   })
 
-  it('should detect note drafts and exact duplicates but keep distinct notes', () => {
+  it('should keep only the newest note of each location, even with drafts and duplicates', () => {
     const note = (index: number, minute: number, content: string): KindleClipping =>
       clipping({
         index,
@@ -269,7 +269,7 @@ describe('Feature #23 — dedupe, note drafts and links', () => {
       note(2, 2, 'Hola mundo'),
       note(3, 3, 'Otra')
     ]
-    expect(notes.map((n) => isNoteDraft(n, notes))).toEqual([true, true, false, false])
+    expect(keepLatestNotePerLocation(notes).map((n) => n.content)).toEqual(['Otra'])
   })
 
   it('should link a note inside the range to the highlight whose end is closest', () => {
@@ -318,14 +318,12 @@ describe('Feature #23 — dedupe, note drafts and links', () => {
     expect(resolved.supersededHighlights).toBe(1)
     expect(resolved.notes.map((n) => n.content)).toEqual([
       'Nota inventada sobre el primer subrayado.',
-      'Borrador de nota terminado.',
-      'Otra idea distinta en el mismo lugar.'
+      'Borrador de nota terminado. una pelicula, influencia?'
     ])
-    expect(resolved.supersededNotes).toBe(3)
+    expect(resolved.supersededNotes).toBe(6)
     const [first, second] = resolved.highlights
     expect(resolved.notes.map((n) => n.highlightFingerprint)).toEqual([
       first?.fingerprint,
-      second?.fingerprint,
       second?.fingerprint
     ])
     expect(first?.location).toEqual({
@@ -346,6 +344,96 @@ describe('Feature #23 — dedupe, note drafts and links', () => {
     expect(kindleFingerprint(clipping({ content: 'Otro texto' }))).not.toBe(kindleFingerprint(a))
     expect(kindleFingerprint(clipping({ kind: KindleClippingKind.NOTE }))).not.toBe(
       kindleFingerprint(a)
+    )
+  })
+})
+
+describe('Feature #25 — one Kindle note per location', () => {
+  const note = (overrides: Partial<KindleClipping>): KindleClipping =>
+    clipping({ kind: KindleClippingKind.NOTE, position: { start: 700, end: null }, ...overrides })
+
+  it('should reduce autosaved corrections in the middle of the text to the newest note', () => {
+    const notes = [
+      note({
+        index: 0,
+        capturedAt: new Date(2025, 4, 2, 9, 0, 0),
+        content: 'una peli, influenxiq'
+      }),
+      note({ index: 1, capturedAt: new Date(2025, 4, 2, 9, 0, 2), content: 'una peli, influenx' }),
+      note({
+        index: 2,
+        capturedAt: new Date(2025, 4, 2, 9, 0, 4),
+        content: 'una peli, influencia?'
+      })
+    ]
+    expect(keepLatestNotePerLocation(notes).map((n) => n.content)).toEqual([
+      'una peli, influencia?'
+    ])
+  })
+
+  it('should keep the newest version when a word is inserted in the middle', () => {
+    const notes = [
+      note({ index: 0, capturedAt: new Date(2025, 4, 2, 9, 0), content: 'Y pq es mas dificil' }),
+      note({
+        index: 1,
+        capturedAt: new Date(2025, 4, 2, 9, 5),
+        content: 'Y tambien pq es mas dificil'
+      })
+    ]
+    expect(keepLatestNotePerLocation(notes)).toEqual([notes[1]])
+  })
+
+  it('should use the position when present and the page otherwise', () => {
+    const samePosition = [
+      note({ index: 0, page: { start: 3, end: null }, content: 'A' }),
+      note({ index: 1, page: { start: 4, end: null }, content: 'B' })
+    ]
+    expect(keepLatestNotePerLocation(samePosition).map((n) => n.content)).toEqual(['B'])
+
+    const byPage = [
+      note({ index: 0, position: null, page: { start: 9, end: null }, content: 'C' }),
+      note({ index: 1, position: null, page: { start: 9, end: null }, content: 'D' }),
+      note({ index: 2, position: null, page: { start: 10, end: null }, content: 'E' })
+    ]
+    expect(keepLatestNotePerLocation(byPage).map((n) => n.content)).toEqual(['D', 'E'])
+  })
+
+  it('should prefer the newest date over file order and break date ties by file order', () => {
+    const notes = [
+      note({ index: 0, capturedAt: new Date(2025, 4, 2, 10, 0), content: 'Más nueva' }),
+      note({ index: 1, capturedAt: new Date(2025, 4, 2, 9, 0), content: 'Más vieja' })
+    ]
+    expect(keepLatestNotePerLocation(notes).map((n) => n.content)).toEqual(['Más nueva'])
+
+    const tied = [
+      note({ index: 0, capturedAt: null, content: 'Primera' }),
+      note({ index: 1, capturedAt: null, content: 'Segunda' })
+    ]
+    expect(keepLatestNotePerLocation(tied).map((n) => n.content)).toEqual(['Segunda'])
+  })
+
+  it('should link the resulting note and give it a stable fingerprint', () => {
+    const highlight = clipping({
+      index: 0,
+      position: { start: 690, end: 705 },
+      capturedAt: new Date(2025, 4, 2, 8, 0),
+      content: 'Subrayado inventado'
+    })
+    const clippings = [
+      highlight,
+      note({ index: 1, capturedAt: new Date(2025, 4, 2, 9, 0, 0), content: 'influenxiq' }),
+      note({ index: 2, capturedAt: new Date(2025, 4, 2, 9, 0, 2), content: 'influencia?' })
+    ]
+    const resolved = resolveKindleAnnotations(clippings)
+    expect(resolved.notes).toHaveLength(1)
+    expect(resolved.supersededNotes).toBe(1)
+    expect(resolved.notes[0]).toMatchObject({
+      content: 'influencia?',
+      fingerprint: kindleFingerprint(clippings[2] as KindleClipping),
+      highlightFingerprint: resolved.highlights[0]?.fingerprint
+    })
+    expect(resolveKindleAnnotations([...clippings]).notes[0]?.fingerprint).toBe(
+      resolved.notes[0]?.fingerprint
     )
   })
 })

@@ -386,6 +386,20 @@
         "Tests y ADR"
       ],
       "status": "done"
+    },
+    {
+      "id": 25,
+      "name": "kindle_import_refinements",
+      "title": "Mejoras de la importación del Kindle",
+      "description": "Feedback del usuario tras probar #23 con su Kindle. (a) Las notas autoguardadas con correcciones en el medio (no prefijo) se siguen importando como variantes: decisión del usuario = una sola nota por ubicación, se conserva la más reciente. Las notas ya importadas no se tocan (las borra el usuario). (b) Orden de la vista previa por cantidad de subrayados (por defecto, mayor a menor), cantidad de notas, última fecha y título. (c) Al elegir \"crear libro\" desde un grupo del Kindle, la búsqueda de Google Books del AddBookModal se precarga con título y autor normalizados (campo de autor de #21) y se ejecuta sola.",
+      "acceptance": [
+        "Dedupe de notas del Kindle: dentro de un mismo grupo/libro, todas las notas con la misma ubicación (posición si existe, si no página) se reducen a la más reciente; el vínculo nota→subrayado se calcula sobre la nota resultante",
+        "La huella de las notas sigue siendo estable para que reimportar no duplique; las notas KINDLE ya guardadas no se modifican ni borran",
+        "Vista previa: selector de orden (subrayados desc por defecto, notas desc, última fecha desc, título A-Z); el orden no altera las asignaciones hechas",
+        "Crear libro desde un grupo: AddBookModal abre en la pestaña de búsqueda con título y autor normalizados precargados y la búsqueda se dispara automáticamente; al guardar, el libro nuevo queda asignado al grupo",
+        "Tests actualizados (incluido un fixture anonimizado con correcciones en el medio como \"influenxiq → influenx → influencia?\"); ADR; pnpm test, lint:check y build en verde"
+      ],
+      "status": "done"
     }
   ]
 }

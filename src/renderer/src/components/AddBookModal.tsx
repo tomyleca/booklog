@@ -29,6 +29,12 @@ export interface AddBookFormValues {
   googleBooksId?: string | null
 }
 
+/** Búsqueda de Google Books con la que abrir el modal (feature #25, importación del Kindle). */
+export interface AddBookInitialSearch {
+  query: string
+  author?: string
+}
+
 export interface AddBookModalProps {
   isOpen: boolean
   onClose: () => void
@@ -36,6 +42,12 @@ export interface AddBookModalProps {
   renderSearchSlot?: () => React.ReactNode
   /** Se llama con el libro recién guardado (p. ej. la importación del Kindle lo asigna). */
   onCreated?: (book: BookPrimitives) => void
+  /**
+   * Si viene, el modal abre en la pestaña de búsqueda con estos valores y busca de inmediato
+   * (sin debounce). `initialValues` sigue precargando la pestaña manual. Pasarlo memoizado:
+   * cada referencia nueva reinicia el modal y vuelve a buscar.
+   */
+  initialSearch?: AddBookInitialSearch
 }
 
 const MIN_SEARCH_CHARS = 3
@@ -49,7 +61,8 @@ export function AddBookModal({
   onClose,
   initialValues,
   renderSearchSlot,
-  onCreated
+  onCreated,
+  initialSearch
 }: AddBookModalProps): JSX.Element | null {
   const queryClient = useQueryClient()
 
@@ -96,9 +109,16 @@ export function AddBookModal({
             ? initialValues.authors.length > 0
             : Boolean(initialValues?.authors))
       )
-      setActiveTab(hasInitialData ? 'manual' : 'search')
-      setSearchQuery('')
-      setSearchAuthor('')
+      setActiveTab(initialSearch || !hasInitialData ? 'search' : 'manual')
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+        debounceTimerRef.current = null
+      }
+      // Invalida cualquier búsqueda en curso de una apertura anterior.
+      searchRequestIdRef.current++
+      setIsSearching(false)
+      setSearchQuery(initialSearch?.query ?? '')
+      setSearchAuthor(initialSearch?.author ?? '')
       setSearchResults([])
       setSearchError(null)
       setHasSearched(false)
@@ -128,7 +148,7 @@ export function AddBookModal({
       setPageCountError(null)
       setGeneralError(null)
     }
-  }, [isOpen, initialValues])
+  }, [isOpen, initialValues, initialSearch])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent): void => {
@@ -202,6 +222,12 @@ export function AddBookModal({
       }
     }
   }, [])
+
+  useEffect(() => {
+    if (isOpen && initialSearch) {
+      void executeSearch(initialSearch.query, initialSearch.author ?? '')
+    }
+  }, [isOpen, initialSearch, executeSearch])
 
   const scheduleSearch = (query: string, author: string): void => {
     setSearchError(null)

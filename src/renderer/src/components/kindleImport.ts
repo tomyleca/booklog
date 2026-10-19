@@ -67,3 +67,59 @@ export function matchBadge(match: KindleBookMatch | null): MatchBadge {
 export function pluralize(count: number, singular: string, plural: string): string {
   return `${count} ${count === 1 ? singular : plural}`
 }
+
+/** Criterios de orden de la vista previa (feature #25). */
+export const KindleGroupSort = {
+  HIGHLIGHTS: 'HIGHLIGHTS',
+  NOTES: 'NOTES',
+  LAST_DATE: 'LAST_DATE',
+  TITLE: 'TITLE'
+} as const
+
+export type KindleGroupSort = (typeof KindleGroupSort)[keyof typeof KindleGroupSort]
+
+export const DEFAULT_KINDLE_GROUP_SORT: KindleGroupSort = KindleGroupSort.HIGHLIGHTS
+
+export const KINDLE_GROUP_SORT_OPTIONS: { value: KindleGroupSort; label: string }[] = [
+  { value: KindleGroupSort.HIGHLIGHTS, label: 'Más subrayados' },
+  { value: KindleGroupSort.NOTES, label: 'Más notas' },
+  { value: KindleGroupSort.LAST_DATE, label: 'Más recientes' },
+  { value: KindleGroupSort.TITLE, label: 'Título (A-Z)' }
+]
+
+function lastCapturedTime(group: KindleImportGroupPreview): number {
+  if (!group.lastCapturedAt) return Number.NEGATIVE_INFINITY
+  const time = new Date(group.lastCapturedAt).getTime()
+  return Number.isNaN(time) ? Number.NEGATIVE_INFINITY : time
+}
+
+function compareTitles(a: KindleImportGroupPreview, b: KindleImportGroupPreview): number {
+  return a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }) || a.key.localeCompare(b.key)
+}
+
+/**
+ * Copia ordenada de los grupos. No toca la selección: está indexada por `group.key`, así que
+ * reordenar nunca cambia qué libro quedó asignado a cada grupo. Empates: por título A-Z.
+ * Los grupos sin fecha van al final al ordenar por fecha.
+ */
+export function sortKindleGroups(
+  groups: KindleImportGroupPreview[],
+  sort: KindleGroupSort
+): KindleImportGroupPreview[] {
+  const byNumber =
+    (value: (group: KindleImportGroupPreview) => number) =>
+    (a: KindleImportGroupPreview, b: KindleImportGroupPreview): number => {
+      const diff = value(b) - value(a)
+      return diff !== 0 && !Number.isNaN(diff) ? Math.sign(diff) : compareTitles(a, b)
+    }
+  const comparators: Record<
+    KindleGroupSort,
+    (a: KindleImportGroupPreview, b: KindleImportGroupPreview) => number
+  > = {
+    HIGHLIGHTS: byNumber((g) => g.highlightCount),
+    NOTES: byNumber((g) => g.noteCount),
+    LAST_DATE: byNumber(lastCapturedTime),
+    TITLE: compareTitles
+  }
+  return [...groups].sort(comparators[sort])
+}

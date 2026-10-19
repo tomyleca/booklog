@@ -2,7 +2,9 @@
 
 > Feature #23 (`kindle_clippings_import`). Usa el modelo de anotaciones de la #22
 > (`docs/guides/annotations-model.md`). Decisión de arquitectura:
-> `docs/decisions/023-kindle-clippings-import.md`.
+> `docs/decisions/023-kindle-clippings-import.md`. Ajustes de la #25
+> (`kindle_import_refinements`): una nota por ubicación, orden de la vista previa y búsqueda
+> automática al crear un libro — `docs/decisions/025-kindle-import-refinements.md`.
 
 ## 1. Qué es `My Clippings.txt`
 
@@ -127,9 +129,25 @@ asignarlos al mismo libro.
   se tocan **y** comparten texto (uno contiene al otro, o 25+ caracteres en común). Se
   conserva el **más reciente**. Dos subrayados contiguos que comparten solo la posición
   del borde no comparten texto y quedan los dos.
-- **Notas editadas**: una nota es un borrador si una nota **más nueva en la misma
-  ubicación** empieza con su texto (incluye duplicados exactos). Notas distintas en el
-  mismo lugar se importan todas.
+- **Notas editadas (#25)**: **una sola nota por ubicación, la más reciente** (fecha y, a
+  igual fecha, orden en el archivo). La ubicación es la posición si la nota la tiene y si no
+  la página (`noteLocationKey`, el mismo criterio que la huella). La regla de la #23 (borrador
+  = prefijo de una nota más nueva) no alcanzaba: el autoguardado también registra
+  correcciones **en el medio** del texto, que no son prefijos.
+
+```mermaid
+flowchart LR
+    A["10:00:00 · pos 304<br/>«una peli, influenxiq»"] --> B["10:00:02 · pos 304<br/>«una peli, influenx»"]
+    B --> C["10:00:04 · pos 304<br/>«una peli, influencia?»"]
+    C ==> K(("se importa"))
+    A -. "regla vieja: ninguna es prefijo<br/>de la siguiente → 3 notas" .-> X(("descartadas<br/>con la regla nueva"))
+    B -.-> X
+```
+
+  El vínculo con el subrayado y la huella se calculan sobre la nota que queda. Las notas
+  KINDLE guardadas con la regla vieja no se tocan: si el archivo sigue teniendo la versión
+  final, reimportar la agrega (si no estaba) y deja las otras; borrarlas es decisión del
+  usuario.
 - **Vínculo nota → subrayado**: la nota comenta al subrayado cuyo rango `[inicio, fin]`
   (inclusive) contiene la ubicación de la nota. Se compara por **posición**; si a alguna de
   las dos le falta, por página. Con varios candidatos gana el de **fin más cercano** a la
@@ -202,9 +220,12 @@ sequenceDiagram
     participant C as CommitKindleImport
 
     M-->>U: grupos con cantidades, badge de confianza y selector
+    U->>M: ordena (subrayados, notas, fecha, título)
     U->>M: corrige un libro / "No importar"
     U->>M: "+ Crear libro…"
-    M->>A: abre con título, autor e ISBN normalizados
+    M->>A: initialSearch {título, autor} + initialValues {título, autor, ISBN}
+    A->>A: pestaña de búsqueda, busca sin debounce (requestId)
+    U->>A: elige un resultado (o pasa a la pestaña manual precargada)
     A-->>M: onCreated(book) → selección del grupo = book.id
     U->>M: Importar
     M->>H: kindle:commit { sourceId, assignments }
@@ -218,6 +239,19 @@ sequenceDiagram
     M->>M: invalida queries highlights, notes, books, book
 ```
 
+**Orden de la vista previa (#25).** Selector "Ordenar por": más subrayados (por defecto),
+más notas, más recientes (última fecha del grupo; los grupos sin fecha al final) y título
+A-Z; los empates se resuelven por título. `sortKindleGroups` devuelve una copia ordenada y
+la selección sigue indexada por `group.key`, así que reordenar nunca cambia qué libro está
+asignado a cada grupo.
+
+**Crear libro con búsqueda automática (#25).** `AddBookModal` acepta `initialSearch`
+(`{ query, author? }`): abre en la pestaña de búsqueda con el título y el autor normalizados
+en los campos de la #21 y ejecuta la búsqueda de inmediato, sin esperar el debounce. Usa el
+mismo `executeSearch`, así que el `requestId` descarta la respuesta si el usuario busca otra
+cosa antes. `initialValues` sigue precargando la pestaña manual por si ningún resultado
+sirve. Sin `initialSearch`, el modal se comporta como antes.
+
 Reimportar el mismo archivo no duplica: el commit lee las huellas que el libro ya tiene y
 la base además tiene `@@unique([bookId, fingerprint])`. Una nota nueva puede vincularse a
 un subrayado importado en una corrida anterior.
@@ -228,3 +262,7 @@ un subrayado importado en una corrida anterior.
 0 sin reconocer), 38 títulos. Tras resolver: 1446 subrayados (329 versiones viejas
 descartadas) y 302 notas (550 borradores o duplicados descartados), 301 de ellas
 vinculadas a un subrayado.
+
+Con la regla de la #25 (una nota por ubicación): **46 notas** (806 descartadas), 45
+vinculadas a un subrayado. Las 256 que sobraban eran correcciones del autoguardado en el
+medio del texto que la regla del prefijo no detectaba.

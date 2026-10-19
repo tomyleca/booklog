@@ -83,11 +83,22 @@ export const KINDLE_FIXTURE_ENTRIES: FixtureEntry[] = [
     '- La nota en la página 20 | posición 304 | Añadido el martes, 15 de julio de 2025 10:02:30',
     'Borrador de nota terminado.'
   ),
-  // Otra nota distinta en la misma ubicación: se conserva.
+  // Autoguardado con correcciones en el medio (caso real anonimizado, feature #25): ninguna
+  // versión es prefijo de la siguiente. Solo queda la más reciente de la ubicación.
+  entry(
+    T.annasArchive,
+    '- La nota en la página 20 | posición 304 | Añadido el martes, 15 de julio de 2025 10:02:56',
+    'Borrador de nota terminado. una pelicula, influenxiq'
+  ),
+  entry(
+    T.annasArchive,
+    '- La nota en la página 20 | posición 304 | Añadido el martes, 15 de julio de 2025 10:02:58',
+    'Borrador de nota terminado. una pelicula, influenx'
+  ),
   entry(
     T.annasArchive,
     '- La nota en la página 20 | posición 304 | Añadido el martes, 15 de julio de 2025 10:03:00',
-    'Otra idea distinta en el mismo lugar.'
+    'Borrador de nota terminado. una pelicula, influencia?'
   ),
   // Marcador y resaltado vacío: se ignoran.
   entry(

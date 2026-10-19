@@ -561,3 +561,27 @@
 - **Pendientes menores:**
   - ADR 024: cambiar el estado "Aceptado (pendiente de revisión)" a "Aceptado".
   - `UpdateProgressModal`: el `useEffect` de reset depende de `initialFinishedDate`, así que si las queries de subrayados/notas llegan con el modal ya abierto, se reinician todos los campos del formulario (página, porcentaje, checkbox). Es poco probable, porque el modal se abre desde el detalle ya cargado.
+
+## Sesión 2026-10-19 — Feature #25: kindle_import_refinements
+
+- **Agente:** implementer
+- **Qué se hizo:** ajustes a la importación del Kindle después de la prueba del usuario.
+  (a) Notas: una sola por ubicación (posición si existe, si no página), la más reciente
+  (`keepLatestNotePerLocation` reemplaza la regla de prefijo `isNoteDraft`); vínculo y huella
+  (`kindle-v1`, sin cambios) sobre la nota resultante; no se tocan las notas KINDLE ya
+  guardadas. Muestra real: 302 → 46 notas (45 vinculadas). (b) Vista previa con selector de
+  orden (subrayados desc por defecto, notas desc, más recientes, título A-Z) vía
+  `sortKindleGroups`; la selección sigue indexada por `group.key`. (c) `AddBookModal` suma
+  `initialSearch` (`{ query, author? }`): abre en la pestaña de búsqueda precargada y busca
+  sin debounce, respetando el `requestId`; `KindleImportModal` lo usa al crear un libro desde
+  un grupo.
+- **Tests:** fixture anonimizado con corrección en el medio (influenxiq → influenx →
+  influencia?), dominio, use cases (notas previas intactas), persistencia, UI (orden, búsqueda
+  automática) y `test_add_book_initial_search`. 46 archivos / 689 tests en verde; lint y build OK.
+- **Docs:** ADR `docs/decisions/025-kindle-import-refinements.md`; guía
+  `docs/guides/kindle-clippings-import.md` actualizada (§5, §7, §8); el ADR 023 marca la regla
+  de notas como reemplazada.
+- Review: [review_kindle_import_refinements.md](review_kindle_import_refinements.md). El informe del implementer quedó en `progress/current.md` (sección "Reporte #25") porque el entorno no permitió crear el archivo de reporte.
+- **Pendientes menores:**
+  - ADR 025: cambiar el estado "Aceptado (pendiente de revisión)" a "Aceptado" y reemplazar las citas de notas reales del usuario en el Contexto (`mulholland drive…`, `Y pq es mas dificil…`) por ejemplos anonimizados.
+  - `AddBookModal.tsx` ya fallaba `prettier --check` en HEAD, antes de esta feature.

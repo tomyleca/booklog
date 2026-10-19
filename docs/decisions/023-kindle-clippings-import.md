@@ -1,7 +1,8 @@
 # ADR-023: Importar subrayados y notas desde My Clippings.txt (`kindle_clippings_import`)
 
 ## Estado
-Aceptado (pendiente de revisión)
+Aceptado. La regla de notas editadas (decisión 2) fue reemplazada por el ADR 025
+(una nota por ubicación, la más reciente).
 
 ## Contexto
 

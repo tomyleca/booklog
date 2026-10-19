@@ -139,7 +139,7 @@ describe('Feature #23 — CommitKindleImport against SQLite', () => {
     ]
 
     const first = await useCase.execute({ text: KINDLE_FIXTURE_TEXT, assignments })
-    expect(first).toMatchObject({ highlightsImported: 4, notesImported: 4 })
+    expect(first).toMatchObject({ highlightsImported: 4, notesImported: 3 })
 
     const saved = await highlights.findByBookId(bookId)
     expect(saved.map((h) => h.location.position?.start)).toEqual([98, 180, 300, 512])
@@ -157,9 +157,9 @@ describe('Feature #23 — CommitKindleImport against SQLite', () => {
       highlightsImported: 0,
       notesImported: 0,
       highlightsSkipped: 4,
-      notesSkipped: 4
+      notesSkipped: 3
     })
     expect(await prisma.highlight.count({ where: { bookId } })).toBe(4)
-    expect(await prisma.note.count({ where: { bookId } })).toBe(4)
+    expect(await prisma.note.count({ where: { bookId } })).toBe(3)
   })
 })

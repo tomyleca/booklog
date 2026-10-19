@@ -7,11 +7,14 @@ import { SettingsPage } from '../../src/renderer/src/pages/SettingsPage.js'
 import { settingsService } from '../../src/renderer/src/services/settingsService.js'
 import { kindleService } from '../../src/renderer/src/services/kindleService.js'
 import { bookService } from '../../src/renderer/src/services/bookService.js'
+import { searchService } from '../../src/renderer/src/services/searchService.js'
 import {
   buildKindleAssignments,
   countSelectedAnnotations,
   initialKindleSelection,
-  matchBadge
+  KindleGroupSort,
+  matchBadge,
+  sortKindleGroups
 } from '../../src/renderer/src/components/kindleImport.js'
 import { BookStatus } from '../../src/shared/domain/entities/BookStatus.js'
 import type {
@@ -249,11 +252,31 @@ describe('Feature #23 — Kindle import from Settings', () => {
     fireEvent.click(screen.getByTestId('kindle-import-button'))
     await screen.findAllByTestId('kindle-import-group')
 
+    const search = vi.spyOn(searchService, 'searchBooks').mockResolvedValue({
+      success: true,
+      data: [
+        {
+          googleBooksId: 'eisenhorn',
+          title: 'Eisenhorn: The Omnibus',
+          authors: ['Dan Abnett'],
+          coverUrl: null,
+          isbn: '9781849707251'
+        }
+      ]
+    })
     const selects = screen.getAllByTestId('kindle-import-group-select') as HTMLSelectElement[]
     fireEvent.change(selects[1]!, { target: { value: '__create__' } })
 
+    // Feature #25: abre en la pestaña de búsqueda, precargada, y busca sin esperar el debounce.
+    const query = (await screen.findByTestId('search-books-input')) as HTMLInputElement
+    expect(query.value).toBe('Eisenhorn The Omnibus')
+    expect((screen.getByTestId('search-author-input') as HTMLInputElement).value).toBe('Dan Abnett')
+    await waitFor(() => expect(search).toHaveBeenCalledWith('Eisenhorn The Omnibus', 'Dan Abnett'))
+    expect(search).toHaveBeenCalledTimes(1)
+    fireEvent.click(await screen.findByTestId('search-result-card-0'))
+
     const title = (await screen.findByTestId('input-book-title')) as HTMLInputElement
-    expect(title.value).toBe('Eisenhorn The Omnibus')
+    expect(title.value).toBe('Eisenhorn: The Omnibus')
     expect((screen.getByTestId('input-book-authors') as HTMLInputElement).value).toBe('Dan Abnett')
     fireEvent.click(screen.getByTestId('submit-book-button'))
 
@@ -263,5 +286,102 @@ describe('Feature #23 — Kindle import from Settings', () => {
       expect(current[1]!.value).toBe('9')
     })
     expect(screen.queryByTestId('add-book-modal')).toBeNull()
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Eisenhorn: The Omnibus', googleBooksId: 'eisenhorn' })
+    )
+  })
+
+  it('should keep the manual tab prefilled when the user skips the search', async () => {
+    vi.spyOn(kindleService, 'previewFromDevice').mockResolvedValue({
+      success: true,
+      data: previewResult
+    })
+    vi.spyOn(searchService, 'searchBooks').mockResolvedValue({ success: true, data: [] })
+    renderSettings()
+    fireEvent.click(screen.getByTestId('kindle-import-button'))
+    await screen.findAllByTestId('kindle-import-group')
+
+    const selects = screen.getAllByTestId('kindle-import-group-select') as HTMLSelectElement[]
+    fireEvent.change(selects[1]!, { target: { value: '__create__' } })
+    await screen.findByTestId('search-no-results')
+    fireEvent.click(screen.getByTestId('tab-manual'))
+
+    expect((screen.getByTestId('input-book-title') as HTMLInputElement).value).toBe(
+      'Eisenhorn The Omnibus'
+    )
+    expect((screen.getByTestId('input-book-authors') as HTMLInputElement).value).toBe('Dan Abnett')
+  })
+
+  it('should reorder the preview without changing the chosen books', async () => {
+    vi.spyOn(kindleService, 'previewFromDevice').mockResolvedValue({
+      success: true,
+      data: previewResult
+    })
+    renderSettings()
+    fireEvent.click(screen.getByTestId('kindle-import-button'))
+    await screen.findAllByTestId('kindle-import-group')
+
+    const sort = screen.getByTestId('kindle-import-sort') as HTMLSelectElement
+    expect(sort.value).toBe(KindleGroupSort.HIGHLIGHTS)
+    const titles = (): string[] =>
+      screen
+        .getAllByTestId('kindle-import-group')
+        .map(
+          (li) =>
+            within(li).getByTestId('kindle-import-group-select').getAttribute('aria-label') ?? ''
+        )
+    expect(titles()).toEqual(['Libro para Legado de cenizas', 'Libro para Eisenhorn The Omnibus'])
+
+    let selects = screen.getAllByTestId('kindle-import-group-select') as HTMLSelectElement[]
+    fireEvent.change(selects[1]!, { target: { value: '2' } })
+
+    fireEvent.change(sort, { target: { value: KindleGroupSort.TITLE } })
+    expect(titles()).toEqual(['Libro para Eisenhorn The Omnibus', 'Libro para Legado de cenizas'])
+    selects = screen.getAllByTestId('kindle-import-group-select') as HTMLSelectElement[]
+    expect(selects.map((select) => select.value)).toEqual(['2', '1'])
+  })
+})
+
+describe('Feature #25 — preview order', () => {
+  const group = (
+    key: string,
+    highlightCount: number,
+    noteCount: number,
+    lastCapturedAt: Date | null
+  ): KindleImportGroupPreview => ({
+    key,
+    rawTitle: key,
+    title: key,
+    author: null,
+    isbn: null,
+    highlightCount,
+    noteCount,
+    supersededHighlights: 0,
+    supersededNotes: 0,
+    lastCapturedAt,
+    match: null
+  })
+  const sample = [
+    group('Borges', 3, 0, new Date(2025, 0, 2)),
+    group('ábaco', 10, 1, null),
+    group('Cortázar', 3, 5, new Date(2025, 5, 1)),
+    group('Dune', 1, 2, new Date(2024, 0, 1))
+  ]
+  const keys = (sort: KindleGroupSort): string[] => sortKindleGroups(sample, sort).map((g) => g.key)
+
+  it('should sort by highlights (desc) by default and break ties by title', () => {
+    expect(keys(KindleGroupSort.HIGHLIGHTS)).toEqual(['ábaco', 'Borges', 'Cortázar', 'Dune'])
+  })
+
+  it('should sort by notes, by latest date (undated last) and by title A-Z', () => {
+    expect(keys(KindleGroupSort.NOTES)).toEqual(['Cortázar', 'Dune', 'ábaco', 'Borges'])
+    expect(keys(KindleGroupSort.LAST_DATE)).toEqual(['Cortázar', 'Borges', 'Dune', 'ábaco'])
+    expect(keys(KindleGroupSort.TITLE)).toEqual(['ábaco', 'Borges', 'Cortázar', 'Dune'])
+  })
+
+  it('should not mutate the original list', () => {
+    const before = sample.map((g) => g.key)
+    sortKindleGroups(sample, KindleGroupSort.TITLE)
+    expect(sample.map((g) => g.key)).toEqual(before)
   })
 })

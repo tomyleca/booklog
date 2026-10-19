@@ -25,7 +25,7 @@ export interface ResolvedKindleAnnotations {
   notes: ResolvedKindleNote[]
   /** Subrayados descartados por estar superpuestos con una versión más nueva. */
   supersededHighlights: number
-  /** Notas descartadas por ser un borrador (o un duplicado) de una nota más nueva. */
+  /** Notas descartadas por haber una más reciente en la misma ubicación (ADR 025). */
   supersededNotes: number
 }
 
@@ -86,25 +86,37 @@ function isNewer(a: KindleClipping, b: KindleClipping): boolean {
   return a.index > b.index
 }
 
-function sameSpot(a: KindleClipping, b: KindleClipping): boolean {
-  const ranges = comparableRanges(a, b)
-  return ranges !== null && ranges[0].start === ranges[1].start && ranges[0].end === ranges[1].end
+function rangeKey(range: KindleRange): string {
+  return range.end === null ? `${range.start}` : `${range.start}-${range.end}`
 }
 
 /**
- * Al editar una nota el Kindle agrega una entrada nueva en la misma ubicación. Una nota es
- * un borrador si una nota más nueva en la misma ubicación empieza con su texto (incluye los
- * duplicados exactos). Notas distintas en la misma ubicación se conservan todas.
+ * Ubicación de una nota para el dedupe: la posición si la tiene (más fina), si no la página.
+ * Es el mismo criterio que usa la huella, así dos notas con la misma clave también comparten
+ * la parte de ubicación de la huella. Sin página ni posición, la nota es única.
  */
-export function isNoteDraft(note: KindleClipping, notes: KindleClipping[]): boolean {
-  const text = note.content.trim()
-  return notes.some(
-    (other) =>
-      other !== note &&
-      isNewer(other, note) &&
-      sameSpot(other, note) &&
-      other.content.trim().startsWith(text)
-  )
+export function noteLocationKey(note: KindleClipping): string {
+  if (note.position) return `pos:${rangeKey(note.position)}`
+  if (note.page) return `page:${rangeKey(note.page)}`
+  return `entry:${note.index}`
+}
+
+/**
+ * Al escribir o corregir una nota el Kindle autoguarda una entrada nueva en la misma
+ * ubicación sin borrar las anteriores, y las correcciones pueden estar en el medio del texto
+ * (`influenxiq` → `influenx` → `influencia?`), así que comparar textos no alcanza. Decisión
+ * del usuario (ADR 025): una sola nota por ubicación, la más reciente (fecha y, a igual
+ * fecha, orden en el archivo).
+ */
+export function keepLatestNotePerLocation(notes: KindleClipping[]): KindleClipping[] {
+  const latest = new Map<string, KindleClipping>()
+  for (const note of notes) {
+    const key = noteLocationKey(note)
+    const current = latest.get(key)
+    if (!current || isNewer(note, current)) latest.set(key, note)
+  }
+  const kept = new Set(latest.values())
+  return notes.filter((note) => kept.has(note))
 }
 
 interface LinkCandidate {
@@ -153,7 +165,7 @@ export function findCommentedHighlight(
 /**
  * Resuelve las entradas de **un** título del Kindle (una edición: las posiciones solo son
  * comparables dentro de la misma): descarta subrayados superpuestos quedándose con el más
- * reciente, descarta borradores de notas editadas, vincula cada nota al subrayado que la
+ * reciente, deja una sola nota por ubicación (la más reciente), vincula cada nota al subrayado que la
  * contiene y calcula las huellas. Lógica pura, sin I/O.
  */
 export function resolveKindleAnnotations(clippings: KindleClipping[]): ResolvedKindleAnnotations {
@@ -172,7 +184,7 @@ export function resolveKindleAnnotations(clippings: KindleClipping[]): ResolvedK
   const fingerprintOf = new Map<KindleClipping, string>()
   for (const highlight of kept) fingerprintOf.set(highlight, kindleFingerprint(highlight))
 
-  const finalNotes = notes.filter((note) => !isNoteDraft(note, notes))
+  const finalNotes = keepLatestNotePerLocation(notes)
 
   return {
     highlights: kept.map((highlight) => ({

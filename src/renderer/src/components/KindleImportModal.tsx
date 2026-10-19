@@ -4,17 +4,20 @@ import { AlertCircle, CheckCircle2, FileText, Loader2, RefreshCw, Tablet, X } fr
 import { bookService } from '../services/bookService.js'
 import { kindleService } from '../services/kindleService.js'
 import { AddBookModal } from './AddBookModal.js'
-import type { AddBookFormValues } from './AddBookModal.js'
+import type { AddBookFormValues, AddBookInitialSearch } from './AddBookModal.js'
 import {
   buildKindleAssignments,
   countSelectedAnnotations,
+  DEFAULT_KINDLE_GROUP_SORT,
   initialKindleSelection,
+  KINDLE_GROUP_SORT_OPTIONS,
   matchBadge,
   pluralize,
   SELECT_CREATE,
-  SELECT_SKIP
+  SELECT_SKIP,
+  sortKindleGroups
 } from './kindleImport.js'
-import type { KindleSelection } from './kindleImport.js'
+import type { KindleGroupSort, KindleSelection } from './kindleImport.js'
 import type {
   BookPrimitives,
   KindleImportGroupPreview,
@@ -54,6 +57,7 @@ export function KindleImportModal({ initialSource, onClose }: KindleImportModalP
   const [selection, setSelection] = useState<KindleSelection>({})
   const [creatingFor, setCreatingFor] = useState<KindleImportGroupPreview | null>(null)
   const [commitError, setCommitError] = useState<string | null>(null)
+  const [sort, setSort] = useState<KindleGroupSort>(DEFAULT_KINDLE_GROUP_SORT)
   const started = useRef(false)
 
   const { data: books = [] } = useQuery<BookPrimitives[], Error>({
@@ -150,7 +154,8 @@ export function KindleImportModal({ initialSource, onClose }: KindleImportModalP
     }
   }
 
-  const groups = result?.preview.groups ?? []
+  const groups = useMemo(() => result?.preview.groups ?? [], [result])
+  const sortedGroups = useMemo(() => sortKindleGroups(groups, sort), [groups, sort])
   const totals = countSelectedAnnotations(groups, selection)
 
   // Memoizado: AddBookModal reinicia el formulario cada vez que cambia `initialValues`.
@@ -163,6 +168,13 @@ export function KindleImportModal({ initialSource, onClose }: KindleImportModalP
             isbn: creatingFor.isbn ?? null
           }
         : undefined,
+    [creatingFor]
+  )
+
+  // Feature #25: el modal abre en la pestaña de búsqueda y busca solo con título y autor.
+  const createSearch = useMemo<AddBookInitialSearch | undefined>(
+    () =>
+      creatingFor ? { query: creatingFor.title, author: creatingFor.author ?? '' } : undefined,
     [creatingFor]
   )
 
@@ -276,6 +288,25 @@ export function KindleImportModal({ initialSource, onClose }: KindleImportModalP
               </div>
             )}
 
+            {groups.length > 1 && (
+              <label className="flex items-center gap-2 text-xs text-ink-muted self-end">
+                <span>Ordenar por</span>
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as KindleGroupSort)}
+                  disabled={phase.name === 'committing'}
+                  className="px-2 py-1.5 rounded-md bg-card border border-rule text-xs text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+                  data-testid="kindle-import-sort"
+                >
+                  {KINDLE_GROUP_SORT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
             {groups.length === 0 ? (
               <p
                 className="text-sm text-ink-muted py-6 text-center"
@@ -285,7 +316,7 @@ export function KindleImportModal({ initialSource, onClose }: KindleImportModalP
               </p>
             ) : (
               <ul className="flex flex-col gap-2 max-h-[55vh] overflow-y-auto pr-1">
-                {groups.map((group) => {
+                {sortedGroups.map((group) => {
                   const badge = matchBadge(group.match)
                   const selected = selection[group.key]
                   const selectedMissing =
@@ -425,6 +456,7 @@ export function KindleImportModal({ initialSource, onClose }: KindleImportModalP
         isOpen={creatingFor !== null}
         onClose={() => setCreatingFor(null)}
         initialValues={createValues}
+        initialSearch={createSearch}
         onCreated={(book) => {
           if (creatingFor && book.id !== undefined) {
             const key = creatingFor.key

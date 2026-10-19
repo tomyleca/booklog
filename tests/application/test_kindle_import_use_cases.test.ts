@@ -111,7 +111,7 @@ describe('Feature #23 — PreviewKindleImport', () => {
     const preview = await new PreviewKindleImport(books).execute({ text: KINDLE_FIXTURE_TEXT })
 
     expect(preview).toMatchObject({
-      totalEntries: 28,
+      totalEntries: 30,
       ignoredBookmarks: 2,
       ignoredEmpty: 1,
       unrecognizedEntries: 0
@@ -123,9 +123,9 @@ describe('Feature #23 — PreviewKindleImport', () => {
       title: 'AI Engineering: Building Applications with Foundation Models',
       author: 'Chip Huyen',
       highlightCount: 2,
-      noteCount: 3,
+      noteCount: 2,
       supersededHighlights: 1,
-      supersededNotes: 3,
+      supersededNotes: 6,
       match: { bookId: 2, method: 'ISBN', confidence: 'HIGH' }
     })
     expect(ai?.lastCapturedAt).toEqual(new Date(2025, 6, 15, 10, 3, 0))
@@ -167,7 +167,7 @@ describe('Feature #23 — CommitKindleImport', () => {
 
     expect(report).toMatchObject({
       highlightsImported: 5,
-      notesImported: 5,
+      notesImported: 4,
       highlightsSkipped: 0,
       notesSkipped: 0,
       groupsNotImported: 9
@@ -177,7 +177,7 @@ describe('Feature #23 — CommitKindleImport', () => {
         bookId: 2,
         title: 'AI Engineering',
         highlightsImported: 2,
-        notesImported: 3
+        notesImported: 2
       }),
       expect.objectContaining({ bookId: 1, highlightsImported: 3, notesImported: 2 })
     ])
@@ -186,7 +186,7 @@ describe('Feature #23 — CommitKindleImport', () => {
     expect(aiNotes.every((n) => n.origin === NoteOrigin.KINDLE)).toBe(true)
     const aiHighlights = await highlights.findByBookId(2)
     const extended = aiHighlights.find((h) => h.content.includes('extendió'))
-    expect(aiNotes.filter((n) => n.highlightId === extended?.id)).toHaveLength(2)
+    expect(aiNotes.filter((n) => n.highlightId === extended?.id)).toHaveLength(1)
     expect(aiHighlights[0]?.location).toEqual({
       page: { start: 12, end: null },
       position: { start: 180, end: 183 }
@@ -205,10 +205,10 @@ describe('Feature #23 — CommitKindleImport', () => {
       highlightsImported: 0,
       notesImported: 0,
       highlightsSkipped: 5,
-      notesSkipped: 5
+      notesSkipped: 4
     })
     expect(highlights.items.size).toBe(5)
-    expect(notes.items.size).toBe(5)
+    expect(notes.items.size).toBe(4)
   })
 
   it('should link a new note to a highlight imported in a previous run', async () => {
@@ -223,6 +223,24 @@ describe('Feature #23 — CommitKindleImport', () => {
     const [note] = await notes.findByBookId(1)
     const target = (await highlights.findByBookId(1)).find((h) => h.content.includes('agencia'))
     expect(note?.highlightId).toBe(target?.id)
+  })
+
+  it('should keep KINDLE notes saved before (#25) and only add the newest one', async () => {
+    const ai = [{ groupKey: groupKey(KINDLE_TITLES.annasArchive), bookId: 2 }]
+    const beforeLastCorrection = KINDLE_FIXTURE_TEXT.split('==========')
+      .filter((block) => !block.includes('influencia?'))
+      .join('==========')
+    await useCase.execute({ text: beforeLastCorrection, assignments: ai })
+    const saved = await notes.findByBookId(2)
+    const draft = saved.find((n) => n.content.endsWith('influenx'))
+    expect(draft).toBeDefined()
+
+    const report = await useCase.execute({ text: KINDLE_FIXTURE_TEXT, assignments: ai })
+    expect(report).toMatchObject({ notesImported: 1, notesSkipped: 1 })
+    const after = await notes.findByBookId(2)
+    expect(after).toHaveLength(saved.length + 1)
+    expect(after.find((n) => n.id === draft?.id)?.toPrimitives()).toEqual(draft?.toPrimitives())
+    expect(after.some((n) => n.content.endsWith('influencia?'))).toBe(true)
   })
 
   it('should reject unknown groups or repeated assignments', async () => {
